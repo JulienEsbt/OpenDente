@@ -157,14 +157,16 @@ final class BatteryService: ObservableObject {
         var data = IOKitData()
 
         guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
-              let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [Any],
-              let first = sources.first,
-              let desc = IOPSGetPowerSourceDescription(snapshot, first as CFTypeRef)?.takeUnretainedValue() as? [String: Any]
+              let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [CFTypeRef],
+              let reading = try? InternalBatteryReading.read(sources.compactMap {
+                  IOPSGetPowerSourceDescription(snapshot, $0)?.takeUnretainedValue() as? [String: Any]
+              })
         else {
             return data
         }
 
-        data.percentage = desc[kIOPSCurrentCapacityKey] as? Int ?? 0
+        let desc = reading.description
+        data.percentage = reading.percentage
         data.isCharging = desc[kIOPSIsChargingKey] as? Bool ?? false
         data.maxCapacity = desc[kIOPSMaxCapacityKey] as? Int
         data.designCapacity = desc[kIOPSDesignCapacityKey] as? Int

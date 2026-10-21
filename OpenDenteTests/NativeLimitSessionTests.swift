@@ -103,3 +103,33 @@ extension NativeLimitSessionTests {
         XCTAssertEqual(decoded, NativeLimitSession.Snapshot(enabled: 1, limit: 100))
     }
 }
+
+
+extension NativeLimitSessionTests {
+    func testNativeGuardUsesInternalBatteryWhenUPSIsListedFirst() throws {
+        let ups: [String: Any] = ["Type": "UPS", "Current Capacity": 20, "Max Capacity": 100]
+        let internalBattery: [String: Any] = ["Type": "InternalBattery", "Current Capacity": 99, "Max Capacity": 100]
+        let reading = try InternalBatteryReading.read([ups, internalBattery])
+        XCTAssertEqual(reading.percentage, 99)
+        let store = Store()
+        XCTAssertThrowsError(try store.session().setLimit(80, currentPercentage: reading.percentage))
+        XCTAssertTrue(store.events.isEmpty)
+    }
+    func testNativeGuardRejectsMissingOrAmbiguousInternalBattery() {
+        let battery: [String: Any] = ["Type": "InternalBattery", "Current Capacity": 50, "Max Capacity": 100]
+        XCTAssertThrowsError(try InternalBatteryReading.read([]))
+        XCTAssertThrowsError(try InternalBatteryReading.read([["Type": "UPS"]]))
+        XCTAssertThrowsError(try InternalBatteryReading.read([battery, battery]))
+    }
+    func testNativeGuardRejectsImpossibleInternalCapacity() {
+        for (current, maximum) in [(-1, 100), (101, 100), (50, 0)] {
+            XCTAssertThrowsError(try InternalBatteryReading.read([["Type": "InternalBattery",
+                "Current Capacity": current, "Max Capacity": maximum]]))
+        }
+    }
+    func testNativeGuardRoundsUpFractionalInternalPercentage() throws {
+        let reading = try InternalBatteryReading.read([["Type": "InternalBattery",
+            "Current Capacity": 177, "Max Capacity": 200]])
+        XCTAssertEqual(reading.percentage, 89)
+    }
+}

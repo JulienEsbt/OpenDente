@@ -1,5 +1,22 @@
 # Changements de l’édition personnelle
 
+## 0.4.0 — réglages natifs et pause thermique, 21 octobre 2026
+
+- Reprise personnalisée disponible dans le moteur natif, y compris 20 % avec un plafond de 80 %. Maintien au niveau courant pendant l’attente, puis charge jusqu’au plafond ; aucun profil ne force une décharge.
+- Pause thermique supplémentaire configurable, prioritaire sur la charge ponctuelle. Reprise après 5 min sans dépassement et 2 °C de refroidissement ; une mesure perdue ne lève pas une pause. Défaut 40 °C présenté comme une précaution de l’app, distinct de la température ambiante recommandée par Apple.
+- État physique visible : demande de pause distincte de l’arrêt mesuré, avertissement après 90 s si la charge continue ; limites pendant la veille et sous 20 % explicites.
+- Section Charge réorganisée : contrôles disponibles activables, commandes SMC non portées regroupées à part. Bouton 80 % / reprise sous 75 % et liens vers les recommandations consultées.
+- Prévention facultative de veille automatique rétablie sur le moteur natif. Ouverture à la connexion fondée sur l’état réellement enregistré par macOS, avec erreurs visibles.
+- Réouverture du panneau en relançant l’app ; point d’entrée visible après mise à jour. Restauration possible même si la mesure de batterie est perdue ; erreur XPC de restauration remontée.
+- Lecture réservée à la batterie interne : un onduleur listé en premier ne peut plus fausser la garde contre une consigne inférieure au niveau actuel. Données incohérentes ou ambiguës refusées.
+- App 0.4.0 (6), service 1.5.2. **339 tests XCTest natifs réussis**, 30 scénarios portables, 28 scénarios de helper et Release universelle signée. Voir VALIDATION.md pour les essais physiques et ceux encore non réalisés.
+
+## 0.3.1 — correction du backend PowerUI, 21 octobre 2026
+
+- Activation par le setter PowerUI 80–100 % au lieu de supposer la valeur de l’état privé. Préférence de cible seule pour les valeurs inférieures à 80 % ; aucun appel dangereux du setter sous 80 %.
+- Journal de l’ensemble des préférences MCL, valeurs temporaires comprises ; libération de la politique active avant restauration du journal.
+- Arrêt natif, reprise à 100 %, annulation et retrait du plafond observés sur le Mac à 99 % avec le service 1.5.1. L’essai de préférence seule en 0.3.0 ne constituait pas un contrôle effectif de charge.
+
 ## 0.3.0 — mode natif expérimental, 21 octobre 2026
 
 - Nouveau backend PowerUI pour les firmwares sans CHTE/CH0B/CH0C, sur activation explicite. Interface privée détectée à l’exécution ; aucune modification des autorisations Apple ou des archives powerd.

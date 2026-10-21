@@ -1,68 +1,59 @@
 # Bilan de validation — 21 octobre 2026
 
-## Reprise et validation natives sur le Mac cible
+## État actuel : version 0.4.0 (6), service 1.5.2
 
-Machine vérifiée : MacBook Air M3 (`Mac15,12`), arm64, 16 Go de mémoire,
-macOS 27.2, build `26B118`. Xcode 27.1 (`27A9275`) installé depuis l’App Store,
-SDK macOS 27.0 et Swift 6.4. XcodeGen 2.46.0 installé. Les Command Line Tools
-préexistants fournissent aussi Swift 6.4.2 ; les commandes Xcode de cette reprise
-utilisent explicitement `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
+MacBook Air M3 (`Mac15,12`), arm64, 16 Go, macOS 27.2 (`26B118`). Xcode 27.1 (`27A9275`), SDK macOS 27.0, Swift 6.4, XcodeGen 2.46.0. Les commandes Xcode utilisent `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
-| Vérification exécutée | Résultat | Portée |
+| Contrôle exécuté | Résultat | Portée |
 |---|---:|---|
-| Projet XcodeGen et schéma Test | Réussite | Tests inclus ; marqueur d’isolation absent de l’action Run |
-| XCTest sur macOS arm64 | 313/313, aucun échec | Suite complète, avec accès matériels simulés et hôte sans services réels |
-| Workflow local signé Debug | Réussite | Compilation, XCTest, vérification stricte app/helper et certificats identiques |
-| Compilation Xcode Release 0.3.0 | Réussite | arm64/x86_64, signature Apple Development, vérification stricte et certificat app/helper identique |
-| Scénarios portables exécutés sur Mac | 30/30 | Méthodes de production extraites, frontières macOS inertes |
-| Récupération/cycle de vie/watchdog sur Mac | 28/28 | Dépendances matérielles simulées |
-| Helper complet avec API macOS | Réussite | Vérification des types, dont Security et XPC, sans exécuter le helper |
+| Suite XCTest native arm64 finale | **339/339**, aucun échec ni test ignoré | `build/NativeTests-20261021-final.xcresult` ; services matériels inertes |
+| Banc portable final | **30/30** | Méthodes de production extraites, nouveau type de politique inclus |
+| Récupération / cycle de vie / watchdog | **28/28** | Matériel et XPC simulés ; typecheck du helper complet sur le SDK Apple |
+| Release 0.4.0 universelle | Réussite | arm64 et x86_64 compilés ; exécution réelle arm64 uniquement |
+| Signature app et service | Réussite | Apple Development, vérification stricte et certificat identique ; aucune notarification |
+| Client ad hoc reprenant l’identifiant de l’app | Rejeté | Probe getVersion uniquement, après connexion positive de l’app signée ; aucun contournement Debug |
 
-La compilation native a révélé un passage de `SecCode` à une API exigeant
-`SecStaticCode`. Le contrôle ajouté aux sources complètes du helper échoue avant
-la correction, puis réussit après conversion explicite et validation du code en
-mémoire et sur disque. Les contrôles extraits masquaient auparavant ce défaut.
+La suite finale ajoute les transitions 80/20, le maintien pendant l’attente, la poursuite d’un cycle jusqu’au plafond, la priorité thermique sur le Top Up, la baisse de 2 °C et le délai de 5 min, les températures absentes/non finies, le redémarrage du délai lors d’un pic, les erreurs de commande, la prévention de veille, et la restauration même sans lecture de batterie. Quatre tests supplémentaires vérifient qu’un onduleur listé en premier ne remplace pas la batterie interne, et que des données absentes, ambiguës ou incohérentes bloquent la commande. La valeur interne réelle a été lue : Type=InternalBattery, Current Capacity=99, Max Capacity=100. Le helper 1.5.2 renforce uniquement cette sélection, sans changer les commandes PowerUI. Les deux scénarios demandés (reprise à 20 % et maintien thermique natif) échouaient avant implémentation dans `native-policy-red.log`, puis réussissent. Les scénarios thermiques historiques conservent leurs assertions avec un seuil explicitement fixé à 35 °C ; le nouveau défaut de 40 °C est testé séparément.
 
-Le premier workflow signé a ensuite révélé une syntaxe incorrecte du préfixe
-`codesign --extract-certificates`. La correction utilise
-`--extract-certificates=préfixe`. Le script complet termine désormais avec le
-code 0 et confirme la présence et l’égalité des certificats feuilles.
+Les journaux finaux sont `build/validation/final-xctest.log`, `final-release.log`, `final-portable/` et `final-helper/`. Aucun avertissement Swift de concurrence dans les sources de production. Les avertissements AppIntents sans dépendance et les diagnostics système com.apple.linkd.autoShortcut ne sont pas des échecs de charge.
 
-Les fixtures XCTest utilisent les points d’entrée `setUp` / `tearDown`
-asynchrones sur le MainActor ; les tests de vues sont eux aussi isolés sur le
-MainActor. Les 299 méthodes et leurs assertions sont conservées. Après correction,
-aucun avertissement Swift de concurrence n’est présent dans le journal de tests.
-Xcode émet encore son avertissement d’extraction AppIntents sans dépendance
-AppIntents et des diagnostics système `com.apple.linkd.autoShortcut` ; ils
-n’empêchent pas la réussite de la suite et ne sont pas des résultats de charge.
+## Observations matérielles
 
-Une identité Apple Development a été créée par Xcode avec l’autorisation du
-propriétaire. Les signatures Debug sont valides sur disque et satisfont leurs
-exigences désignées. La clé privée reste gérée par le Trousseau ; aucune clé privée
-n’est stockée dans le dépôt. Une signature valide ne prouve pas à elle seule le
-rejet d’un client tiers ni la fiabilité des commandes matérielles.
+1. Les clés CHTE, CH0B, CH0C et CH0I sont absentes même depuis le helper root. CHIE et ACLC existent. Le contrôle de charge SMC d’origine est donc indisponible ; aucun succès SMC n’est revendiqué.
+2. L’app et son service signés communiquent réellement. L’ancienne version du service est refusée ; la mise à jour vers 1.5.1 a été effectuée par SMAppService. Le premier refus d’installation a été résolu par l’action Activer le service après désenregistrement, sans contourner les autorisations macOS.
+3. Le premier backend 0.3.0 écrivait un état de préférence supposé actif et recevait une relecture concordante, sans plafond enregistré dans powerd. Cet essai a échoué. Le correctif appelle le setter PowerUI plutôt que de deviner l’énumération privée de l’état.
+4. Avec le helper corrigé 1.5.1 et la batterie à 99 %, le plafond natif 99 est enregistré par macOS (pmset battlimit), `ExternalConnected=Yes`, `IsCharging=No`, `Amperage=0`, `NotChargingReason=16777216`. PowerUI indique PausedForMCL.
+5. La charge ponctuelle à 100 % retire ce plafond : batterie toujours à 99 %, `ExternalConnected=Yes`, `IsCharging=Yes`, `Amperage=1274` mA, puissance batterie d’environ 16,5 W, NotChargingReason=0. L’annulation rétablit le plafond 99 et le courant nul. Ce contrôle aller-retour permet de distinguer la pause d’une simple fin de charge normale.
+6. Désactiver le contrôle retire le plafond enregistré : pmset ne rapporte plus de limite. Le service ne remonte pas d’erreur de restauration. Le réglage natif sauvegardé était 100 % pour ces essais ; il est restauré en quittant le contrôle.
 
-Les preuves locales sont conservées dans `build/validation/` et les résultats
-XCTest dans `build/NativeTests-20261021-concurrency.xcresult` ainsi que
-`build/DerivedData/Logs/Test/`. Les journaux et sorties de compilation sont ignorés
-par Git. Les commandes de reproduction figurent dans `README-PERSONAL.md` et
-`scripts/build-local.sh`.
+Ces observations de charge concernent le service 1.5.1 dans l’app 0.3.1. Le même service, le même certificat et le chemin de consigne restent utilisés par 0.4.0. La politique de reprise/thermique ajoutée dans 0.4.0 est vérifiée par les tests et les contrôles d’interface, avec les limites matérielles ci-dessous.
 
-### Diagnostic matériel et extension expérimentale
+## Interface et configuration retenue
 
-Le service 1.4.0 a effectivement tourné en tant que root (PID 16383). Il a confirmé l’absence de CHTE, CH0B, CH0C et CH0I ; CHIE et ACLC existent. Le contrôle SMC de charge est donc indisponible sur ce firmware. Aucune commande de décharge par coupure d’adaptateur n’a été ajoutée.
+La version 0.4.0 est installée dans `/Users/julienesbt/Applications/OpenDente.app` avec sauvegarde de la précédente. Dans la section Charge, le curseur de reprise a été placé à 20 % et la température à 41 °C, puis les valeurs finales ont été appliquées : plafond 80 %, reprise sous 75 %, pause supplémentaire activée à 40 °C. Les champs sont actifs ; le texte suit les valeurs. L’ouverture à la connexion est enregistrée : l’interface confirme le statut enabled de SMAppService.mainApp, pas seulement une préférence locale.
 
-Le panneau et les réglages ont été vus sur le Mac, avec les mesures réelles et les commandes désactivées. L’état « service absent » était resté figé après l’approbation macOS. Le correctif publie l’état du service et actualise la connexion au retour dans l’app et pendant l’affichage des réglages. Le cas notFound vérifie aussi les fichiers du bundle au lieu de conclure directement qu’ils sont absents.
+Avec le build 5 de 0.4.0 et le service 1.5.1, le maintien 99 % est de nouveau observé chargeur branché, IsCharging=No et courant nul. Un client ad hoc est rejeté pendant que la véritable app est connectée. Le build 6 embarque la garde de sélection interne et exige le service 1.5.2.
 
-La Release signée 0.3.0 installée a obtenu la version 1.4.0 du service actif, puis a correctement refusé d’utiliser ce service trop ancien. Un client ad hoc reprenant l’identifiant com.opendente.app a reçu « Couldn’t communicate with a helper application » et terminé avec le code 0 du test négatif. Le premier outil de test négatif avait lui-même échoué sur une assertion d’isolation de thread ; ses callbacks ont été corrigés, et seul le nouveau résultat est retenu. Le refus d’un autre certificat et toutes les variantes Debug/Release ne sont pas encore revendiqués.
+AlDente est arrêté et son autorisation de fonctionnement en arrière-plan a été désactivée avec validation locale du propriétaire ; l’app reste installée. La configuration Apple initiale était 80 % avec recharge optimisée. Pour les essais, la limite Apple a été passée à 100 % et la recharge optimisée suspendue temporairement jusqu’à 06:00. Le moteur natif restaure la limite 100 % sauvegardée lorsqu’il est désactivé : ce choix d’essai n’est pas le plafond habituel 80 % stocké dans OpenDente.
 
-Le propriétaire a choisi le mode natif expérimental pour macOS 27. Le code utilise PowerUI, un journal root et la même authentification XPC. Les 14 nouveaux tests natifs vérifient notamment l’opt-in, l’absence de commandes SMC sur ce backend, le maintien au niveau courant au-dessus du plafond, l’absence de fausse pause thermique, le Top Up, la restauration et les échecs de journal/écriture/récupération. Ils n’exécutent pas PowerUI et ne prouvent pas un arrêt physique.
+## Éléments qui restent à observer en usage réel
 
-Résultat final : 313 tests réussis dans `build/NativeTests-20261021-native-final.xcresult`, 30 scénarios portables, 28 scénarios de helper, typecheck du service complet et Release signée. Les journaux courants sont `build/validation/native-final-*` et `native-mode-portable/`.
+- Descente naturelle depuis le plafond jusqu’au seuil bas, puis retour au plafond : ni 80/75 ni 80/20 n’ont fait l’objet d’un cycle physique complet durant cette séance.
+- Pause lors d’une température réellement élevée et reprise après refroidissement : pas de chauffe volontaire du Mac. Les transitions et erreurs sont simulées dans XCTest ; l’action native de maintien est celle observée à 99 %.
+- Veille/réveil complète et ouverture après déconnexion/reconnexion de session : pas de suspension ou fermeture de session imposée pendant l’usage du propriétaire. L’enregistrement du démarrage automatique est contrôlé dans l’interface ; ce n’est pas une exécution après reconnexion.
+- Comportement pendant une calibration firmware, après redémarrage complet, sous charge prolongée et sur x86_64. Rejet d’un client signé avec un autre certificat non testé ; le test négatif ad hoc est distinct.
 
-**Essais matériels du mode natif encore en cours :** remplacement du service 1.4.0 par le 1.5.0, activation native, limite atteinte, reprise, charge ponctuelle, annulation, restauration réelle et ouverture à la connexion. Le Mac s’est verrouillé avant le remplacement du service ; l’app 0.3.0 est installée mais le mode natif reste désactivé. Aucun succès de gestion de charge 0.3.0 n’est encore revendiqué.
+Le propriétaire n’était pas disponible pour le précédent essai de débranchement de cinq minutes ; aucune réussite n’en est déduite. La version reste expérimentale et ne garantit pas un arrêt thermique immédiat. Une consigne privée peut changer de comportement lors d’une mise à jour de macOS.
 
-Au début de la reprise, Apple était réglé à 80 % avec recharge optimisée activée. Pour les essais, une remise d’AlDente à 100 % a été demandée puis l’app a été arrêtée. La charge normale a repris. La limite Apple et la recharge optimisée ont ensuite été suspendues temporairement par le propriétaire jusqu’à 06:00 ; ce n’est pas une désactivation permanente. Le chargeur a été débranché puis rebranché pendant le travail. La restauration de la configuration finale et les essais veille/réveil/reconnexion utilisateur restent à consigner.
+## Provenance et préparation conservées
+
+Les corrections initiales ont porté sur la conversion SecCode/SecStaticCode, la vérification du service complet plutôt que de seules extractions, l’isolation de l’hôte XCTest, les fixtures MainActor, la détection de Xcode complet et la syntaxe `codesign --extract-certificates=préfixe`. La suite initiale 299 tests est conservée.
+
+L’identité Apple Development a été créée dans Xcode avec l’autorisation du propriétaire, sans export de clé privée. Les certificats app/helper correspondent. La signature de code et la signature Git avec clé matérielle sont deux mécanismes distincts.
+
+Le fork JulienEsbt/OpenDente est relié à origin ; upstream reste killerk3emstar/OpenDente. Le bundle, la base amont, la licence GPL et les crédits ont été conservés. Les mécanismes adaptés d’Ampere sont crédités avec leur licence MIT dans THIRD-PARTY-NOTICES.md et dans l’app.
+
+La section suivante reproduit le bilan Linux de la préparation initiale. Ses limites « Xcode non exécuté » décrivent cette étape historique, pas l’état actuel ci-dessus.
 
 ## Validation initiale portable, conservée pour provenance
 

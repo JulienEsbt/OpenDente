@@ -36,14 +36,14 @@ final class NativeChargeLimit {
     func setLimit(_ percent: Int) throws {
         guard Self.isAvailable,
               let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
-              let sources = IOPSCopyPowerSourcesList(info)?.takeRetainedValue() as? [CFTypeRef],
-              let source = sources.first,
-              let description = IOPSGetPowerSourceDescription(info, source)?.takeUnretainedValue() as? [String: Any],
-              let capacity = description[kIOPSCurrentCapacityKey] as? Int,
-              let maximum = description[kIOPSMaxCapacityKey] as? Int, maximum > 0 else {
+              let sources = IOPSCopyPowerSourcesList(info)?.takeRetainedValue() as? [CFTypeRef] else {
             throw NativeLimitSession.Failure(message: "Native charge control or current battery reading unavailable")
         }
-        try session.setLimit(percent, currentPercentage: Int(ceil(Double(capacity) * 100 / Double(maximum))))
+        let descriptions = sources.compactMap {
+            IOPSGetPowerSourceDescription(info, $0)?.takeUnretainedValue() as? [String: Any]
+        }
+        let reading = try InternalBatteryReading.read(descriptions)
+        try session.setLimit(percent, currentPercentage: reading.percentage)
     }
     func restore() throws { try session.restore() }
 
