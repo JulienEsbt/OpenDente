@@ -134,7 +134,7 @@
     "entries": [
       {
         "title": "Ouvrir à la connexion",
-        "detail": "Enregistre l’app auprès de macOS pour qu’elle démarre après ouverture de ta session. Cela ne maintient pas l’app active lorsque le Mac est éteint. Le démarrage a été observé après ton redémarrage du 21 octobre."
+        "detail": "Démarre discrètement dans la barre des menus, sans ouvrir le panneau ni les réglages. Fermer une fenêtre laisse l’app en arrière-plan ; clique sur son icône pour le panneau. Enregistre l’app auprès de macOS pour qu’elle démarre après ouverture de ta session. Cela ne maintient pas l’app active lorsque le Mac est éteint. Le démarrage a été observé après ton redémarrage du 21 octobre."
       },
       {
         "title": "Activer le service",

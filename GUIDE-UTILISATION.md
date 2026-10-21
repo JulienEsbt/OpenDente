@@ -1,6 +1,6 @@
 # Guide d’utilisation — OpenDente personnel
 
-Aide embarquée hors ligne dans Réglages > Guide. Édition 0.6.0.
+Aide embarquée hors ligne dans Réglages > Guide. Édition 0.6.1.
 
 ## Panneau principal et modes
 
@@ -130,7 +130,7 @@ Aperçus temporaires des motifs. Attends plusieurs secondes pour voir une pério
 
 ### Ouvrir à la connexion
 
-Enregistre l’app auprès de macOS pour qu’elle démarre après ouverture de ta session. Cela ne maintient pas l’app active lorsque le Mac est éteint. Le démarrage a été observé après ton redémarrage du 21 octobre.
+Démarre discrètement dans la barre des menus, sans ouvrir le panneau ni les réglages. Fermer une fenêtre laisse l’app en arrière-plan ; clique sur son icône pour le panneau. Enregistre l’app auprès de macOS pour qu’elle démarre après ouverture de ta session. Cela ne maintient pas l’app active lorsque le Mac est éteint. Le démarrage a été observé après ton redémarrage du 21 octobre.
 
 ### Activer le service
 

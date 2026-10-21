@@ -28,6 +28,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             || environment["XCTestConfigurationFilePath"] != nil
     }
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        guard !Self.isRunningTests else { return }
+        // Applies only to this app; reopening Settings must remain an explicit action.
+        settings.defaults.set(false, forKey: "NSQuitAlwaysKeepsWindows")
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
@@ -41,12 +47,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupEventMonitor()
         setupSleepWakeNotifications()
 
-        // An upgrade needs a visible entry point, even for a menu-bar-only app.
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
-        if settings.defaults.string(forKey: "lastOpenedBuild") != version {
-            settings.defaults.set(version, forKey: "lastOpenedBuild")
-            togglePopover()
-        }
+        // Launch quietly, including after upgrades. The status item and explicit
+        // application reopen remain the entry points to the panel.
 
         // Check helper status and prompt for registration if needed
         checkHelperStatus()
@@ -101,6 +103,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
             .store(in: &cancellables)
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

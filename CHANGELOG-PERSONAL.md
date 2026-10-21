@@ -1,5 +1,12 @@
 # Changements de l’édition personnelle
 
+## 0.6.1 — lancement discret et installation unique, 21 octobre 2026
+
+- Démarrage silencieux dans la barre des menus, y compris après mise à jour ; suppression de l’ouverture automatique du panneau au changement de build.
+- Restauration automatique des fenêtres désactivée pour cette app. Fermer les fenêtres laisse explicitement le processus actif ; clic sur l’icône et réouverture manuelle disponibles.
+- Application regroupée dans le dossier standard Applications ; sources Git conservées. Les anciennes copies et compilations vont dans la Corbeille sans effacement définitif.
+- App 0.6.1 (11), service 1.7.0 inchangé. Validation et portée des essais dans VALIDATION.md.
+
 ## 0.6.0 — retour au plafond, veille et signaux distincts, 21 octobre 2026
 
 - Retour automatique au plafond sur secteur, sur activation explicite : une batterie au-dessus du plafond y redescend au lancement ou au branchement, puis maintien sans cycles forcés. Commande distincte du maintien ordinaire et du stockage 50 %, journalisée et authentifiée.

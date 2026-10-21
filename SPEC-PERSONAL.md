@@ -1,4 +1,4 @@
-# OpenDente — édition personnelle 0.6.0
+# OpenDente — édition personnelle 0.6.1
 
 Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6a75f50df8` ; reprise personnelle initiale `0f53a5e`. Développement local dans `/Users/julienesbt/Dev/OpenDente`, branche `feature/personal-battery-care`, fork JulienEsbt/OpenDente. Historique, licence et crédits conservés.
 
@@ -8,7 +8,7 @@ Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6
 - Plafond modifiable, reprise configurable sous un seuil bas, dont 20 % pour un plafond de 80 %. Le retour au plafond sur secteur est une option explicite, conservée au relancement. Aucun cycle continu n’est forcé.
 - Charge ponctuelle à 100 %, plafond habituel conservé ; fin au débranchement ou à l’annulation. Une pause thermique conserve la demande.
 - Pause thermique supplémentaire configurable ; défaut de précaution à 40 °C, distinct des recommandations de température ambiante Apple. Ce seuil n’est pas certifié par Apple.
-- Fonctionnement panneau fermé, prévention facultative de la veille automatique et ouverture à la connexion enregistrée auprès de macOS. La fermeture du capot reste une demande de veille.
+- Lancement silencieux dans la barre des menus, sans panneau de mise à jour ni restauration automatique des réglages. Fermer les fenêtres conserve le processus ; réouverture manuelle du panneau disponible. Fonctionnement panneau fermé, prévention facultative de la veille automatique et ouverture à la connexion enregistrée auprès de macOS. La fermeture du capot reste une demande de veille.
 - Mode stockage explicite à 50 % : demande de décharge sur secteur au-dessus, recharge en dessous, conservation des seuils quotidiens et arrêt manuel. Aucun calcul pour accroître la consommation, aucune extinction automatique. Guide Apple pour la conservation après extinction.
 - Règles MagSafe natives vert/orange/éteint/automatique, aperçus de 10 s et restitution journalisée indépendante des commandes de charge SMC. Motifs lents par alternance des commandes connues, sur le rythme de mesure existant ; retour au système pendant la veille. Guide hors ligne consultable et recherchable pour tous les réglages.
 - Aucun réseau, analytics, mise à jour automatique ou nouvelle dépendance externe à l’exécution.
@@ -34,7 +34,7 @@ Le service authentifie l’identifiant de l’app et son certificat identique au
 
 ## Validation
 
-376 XCTest natifs réussis ; 36 scénarios de récupération/cycle de vie/watchdog ; contrôle des types du helper complet et Release universelle signée. Les bancs n’exécutent pas les accès matériels de production.
+377 XCTest natifs réussis ; 36 scénarios de récupération/cycle de vie/watchdog ; contrôle des types du helper complet et Release universelle signée. Les bancs n’exécutent pas les accès matériels de production.
 
 Des arrêts et reprises physiques ont été observés à 99 % avec le service 1.5.2, ainsi que le retrait du plafond lors de la restauration. Une veille réelle de 27 secondes avec maintien après réveil et une reprise après baisse naturelle de 99 à 97 % sont observées avec une plage temporaire 100/98, ainsi que la poursuite du cycle à 98 % et le retour au maintien après restauration 80 % / 70 %. Le passage complet 80 vers 75 ou 20, l’arrêt à chaud et un essai USB-C ne sont pas revendiqués. Voir VALIDATION.md pour les preuves et la configuration réellement laissée sur le Mac.
 

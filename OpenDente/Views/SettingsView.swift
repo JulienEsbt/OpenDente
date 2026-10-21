@@ -46,6 +46,7 @@ struct GeneralTab: View {
             Section {
                 Toggle("Ouvrir à la connexion", isOn: Binding(
                     get: { loginEnabled }, set: { setLaunchAtLogin($0) }))
+                    .help("Démarrer discrètement dans la barre des menus, sans ouvrir le panneau ni les réglages")
                 if let loginIssue { Text(loginIssue).font(.caption).foregroundStyle(.orange) }
             }
 

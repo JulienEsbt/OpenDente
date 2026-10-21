@@ -1,8 +1,14 @@
 # OpenDente — édition personnelle
 
-Version de développement **0.6.0 expérimentale**, préparée le 21 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
+Version de développement **0.6.1 expérimentale**, préparée le 21 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
 
-Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 376 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
+Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 377 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
+
+## Installation quotidienne et lancement discret
+
+L’application unique est installée dans `/Applications/OpenDente.app`. Les sources et tout l’historique Git restent dans `/Users/julienesbt/Dev/OpenDente`. L’ouverture à la connexion se règle dans Général et reflète l’enregistrement effectif auprès de macOS.
+
+Chaque lancement commence discrètement dans la barre des menus, y compris après une mise à jour. La fenêtre des réglages n’est pas restaurée automatiquement. Fermer le panneau ou les réglages laisse le suivi actif. Cliquer sur l’icône ouvre le panneau ; rouvrir l’app déjà lancée depuis Applications permet aussi de retrouver le panneau. Seule l’action Quitter arrête le processus et demande la restitution des réglages Apple.
 
 ## macOS 27 : mode natif expérimental
 
