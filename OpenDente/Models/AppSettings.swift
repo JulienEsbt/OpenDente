@@ -134,6 +134,12 @@ final class AppSettings: ObservableObject {
 
     // MARK: - General
 
+    /// Opt-in: private PowerUI implementation with firmware-controlled hysteresis.
+    var nativeChargeLimitEnabled: Bool {
+        get { defaults.bool(forKey: "nativeChargeLimitEnabled") }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "nativeChargeLimitEnabled") }
+    }
+
     var launchAtLogin: Bool {
         get { defaults.bool(forKey: "launchAtLogin") }
         set { objectWillChange.send(); defaults.set(newValue, forKey: "launchAtLogin") }

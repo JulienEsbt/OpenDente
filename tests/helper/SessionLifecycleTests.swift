@@ -29,6 +29,14 @@ enum HelperState {
     static func wasChargingInhibited() -> Bool { state == .inhibited }
 }
 struct SMCValue { let bytes: [UInt8] }
+final class NativeChargeLimit {
+    static let isAvailable = false
+    var needsRecovery = false
+    var restorationPending = false
+    func restore() throws {}
+    func setLimit(_ percent: Int) throws {}
+}
+
 final class SMCService {
     nonisolated(unsafe) static var shared = SMCService()
     var keys: [String: [UInt8]] = ["CHIE": [0], "CHTE": [0, 0, 0, 0], "ACLC": [0]]

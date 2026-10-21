@@ -13,6 +13,12 @@ enum HelperInstaller {
         SMAppService.daemon(plistName: HelperConstants.launchdPlistName)
     }
 
+    static var bundleIsComplete: Bool {
+        let root = Bundle.main.bundleURL
+        return FileManager.default.fileExists(atPath: root.appendingPathComponent("Contents/Library/LaunchDaemons/" + HelperConstants.launchdPlistName).path)
+            && FileManager.default.isExecutableFile(atPath: root.appendingPathComponent("Contents/Library/HelperTools/" + HelperConstants.machServiceName).path)
+    }
+
     /// Current registration status
     static var status: SMAppService.Status {
         service.status
@@ -71,7 +77,7 @@ enum HelperInstaller {
         case .enabled:          return "Enabled"
         case .notRegistered:    return "Not Installed"
         case .requiresApproval: return "Requires Approval"
-        case .notFound:         return "Not Found in Bundle"
+        case .notFound:         return bundleIsComplete ? "Not Registered" : "Not Found in Bundle"
         @unknown default:       return "Unknown"
         }
     }

@@ -35,7 +35,9 @@ enum HelperConstants {
     static let stateFilePath = "/Library/Application Support/OpenDente/helper-state"
 
     /// Helper version (bump when protocol changes)
-    static let helperVersion = "1.4.0"
+    static let helperVersion = "1.5.0"
+
+    static let minVersionNativeLimit = "1.5.0"
 
     /// First helper with certificate-bound XPC and transactional recovery.
     static let minVersionSafeControl = "1.4.0"

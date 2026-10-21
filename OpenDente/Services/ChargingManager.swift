@@ -1,11 +1,13 @@
 import Foundation
 import Combine
+import ServiceManagement
 import os.log
 
 private let log = Logger(subsystem: "com.opendente.app", category: "Charging")
 
 /// Protocol for SMC charging control operations. Enables testing without real hardware.
 protocol ChargingControl: Sendable {
+    func setNativeChargeLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?)
     func enableCharging(completion: (@Sendable (Bool, String?) -> Void)?)
     func inhibitCharging(completion: (@Sendable (Bool, String?) -> Void)?)
     func forceDischarge(enable: Bool, completion: (@Sendable (Bool, String?) -> Void)?)
@@ -15,6 +17,9 @@ protocol ChargingControl: Sendable {
 }
 
 extension ChargingControl {
+    func setNativeChargeLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
+        completion?(false, "Native charge limit unavailable")
+    }
     nonisolated func resetToDefaultsSync() {
         resetToDefaultsSync(timeout: 2.0)
     }
@@ -47,6 +52,19 @@ final class ChargingManager: ObservableObject {
     @Published var isHelperInstalled = false
     @Published private(set) var helperConnectionIssue: String?
     @Published private(set) var isPreventingSleep = false
+    @Published var nativeLimitAvailable = false
+    @Published private(set) var nativeLimitTarget: Int?
+    @Published private(set) var nativeLimitIssue: String?
+    @Published private(set) var helperServiceStatus: SMAppService.Status = .notRegistered
+    private var nativeLastAttempt = Date.distantPast
+    private var nativeCommandPending = false
+    private var nativeSessionActive = false
+    private var helperHandshakeInProgress = false
+
+    var usesNativeLimit: Bool { nativeLimitAvailable && settings.nativeChargeLimitEnabled }
+    var chargeControlAvailable: Bool {
+        isHelperInstalled && (chargingAPI != .unknown || usesNativeLimit)
+    }
 
     private let smc = SMCService.shared
     private let battery: BatteryService
@@ -132,6 +150,7 @@ final class ChargingManager: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 guard let self else { return }
+                self.releaseNativeLimitIfDisabled()
                 self.evaluateState(self.battery.batteryState)
                 // Resync sleep setting with helper on any settings change.
                 // Lightweight: sends a single bool over XPC, no SMC writes.
@@ -146,8 +165,17 @@ final class ChargingManager: ObservableObject {
 
     /// Connect to the helper daemon and start heartbeat.
     /// Called at startup and after helper installation.
+    func refreshHelperStatus() {
+        let status = HelperInstaller.status
+        if status != helperServiceStatus { helperServiceStatus = status }
+        if status == .enabled && !isHelperInstalled && !helperHandshakeInProgress && helperConnectionIssue == nil {
+            connectToHelper()
+        }
+    }
+
     func connectToHelper() {
         let status = HelperInstaller.status
+        helperServiceStatus = status
         isHelperInstalled = false
         helperVersion = nil
         helperConnectionIssue = nil
@@ -172,11 +200,13 @@ final class ChargingManager: ObservableObject {
     private func syncWithHelper() {
         isHelperInstalled = false
         helperConnectionIssue = nil
+        helperHandshakeInProgress = true
         let handshakeID = UUID()
         helperHandshakeID = handshakeID
         DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
             guard let self, self.helperHandshakeID == handshakeID,
                   !self.isHelperInstalled, self.helperConnectionIssue == nil else { return }
+            self.helperHandshakeInProgress = false
             self.helperHandshakeID = UUID() // Ignore replies from the expired attempt.
             self.helperConnectionIssue = "Le service ne répond pas. Réessaie la connexion dans les réglages."
         }
@@ -185,7 +215,8 @@ final class ChargingManager: ObservableObject {
             Task { @MainActor in
                 guard let self, self.helperHandshakeID == handshakeID else { return }
                 self.helperVersion = version
-                guard version.isVersionAtLeast(HelperConstants.minVersionSafeControl) else {
+                guard version.isVersionAtLeast(HelperConstants.helperVersion) else {
+                    self.helperHandshakeInProgress = false
                     self.helperConnectionIssue = version.isEmpty
                         ? "Connexion au service impossible. Vérifie sa signature et son autorisation."
                         : "Le service installé est trop ancien. Réinstalle le service de cette version."
@@ -196,6 +227,7 @@ final class ChargingManager: ObservableObject {
                     Task { @MainActor in
                         guard let self, self.helperHandshakeID == handshakeID else { return }
                         guard !api.isEmpty else {
+                            self.helperHandshakeInProgress = false
                             self.helperConnectionIssue = "Le service n’a pas répondu à la détection de charge. Réessaie la connexion."
                             return
                         }
@@ -204,13 +236,16 @@ final class ChargingManager: ObservableObject {
                         case "tahoe": self.chargingAPI = .tahoe
                         default: self.chargingAPI = .unknown
                         }
+                        self.nativeLimitAvailable = api == "native" && version.isVersionAtLeast(HelperConstants.minVersionNativeLimit)
+                        self.helperHandshakeInProgress = false
                         client.markHandshakeCompleted()
                         self.helperConnectionIssue = nil
                         self.isHelperInstalled = true
                         self.lastLEDColor = nil
                         self.updateMagSafeLED()
                         self.syncSleepSettingsWithHelper()
-                        self.resyncChargingState()
+                        if self.nativeLimitAvailable { self.evaluateState(self.battery.batteryState) }
+                        else { self.resyncChargingState() }
                     }
                 }
             }
@@ -220,7 +255,7 @@ final class ChargingManager: ObservableObject {
     /// Sync the stopChargingWhenSleeping setting to the helper (version-gated).
     /// Also computes the LED color the helper should use when inhibiting on sleep.
     private func syncSleepSettingsWithHelper() {
-        guard isHelperInstalled else { return }
+        guard isHelperInstalled, !nativeLimitAvailable, chargingAPI != .unknown else { return }
         guard let version = helperVersion,
               version.isVersionAtLeast(HelperConstants.minVersionSleepSync) else {
             return
@@ -309,6 +344,10 @@ final class ChargingManager: ObservableObject {
 
     /// Evaluate battery state and decide charging mode. Internal for testability.
     func evaluateState(_ state: BatteryState) {
+        if nativeLimitAvailable {
+            evaluateNativeLimit(state)
+            return
+        }
         let pct = state.effectivePercentage(useHardware: settings.useHardwareBatteryPercentage)
 
         // Skip evaluation if data looks uninitialized (startup race / IOKit not ready).
@@ -688,15 +727,68 @@ final class ChargingManager: ObservableObject {
         }
     }
 
+    func releaseNativeLimitIfDisabled() {
+        guard nativeLimitAvailable, !settings.nativeChargeLimitEnabled else { return }
+        nativeLastAttempt = .distantPast
+        evaluateNativeLimit(battery.batteryState)
+    }
+
+    /// Experimental fixed ceiling: hardware truth drives the displayed state.
+    /// Custom thermal inhibition, force-discharge and custom hysteresis are absent.
+    private func evaluateNativeLimit(_ state: BatteryState) {
+        guard state.percentage > 0 || state.isPluggedIn else { return }
+        if !state.isPluggedIn { topUpRequested = false }
+        lastIsCharging = state.isCharging
+        mode = !state.isPluggedIn ? .onBattery : (topUpRequested ? .topUp : (state.isCharging ? .charging : .paused))
+        guard isHelperInstalled, !nativeCommandPending else { return }
+        guard settings.nativeChargeLimitEnabled else {
+            topUpRequested = false
+            guard nativeSessionActive, Date().timeIntervalSince(nativeLastAttempt) >= 5 else { return }
+            nativeLastAttempt = Date()
+            nativeCommandPending = true
+            helper.resetToDefaults { [weak self] success, error in
+                Task { @MainActor in
+                    guard let self else { return }
+                    self.nativeCommandPending = false
+                    if success { self.nativeSessionActive = false; self.nativeLimitTarget = nil; self.nativeLimitIssue = nil }
+                    else { self.nativeLimitIssue = error ?? "Restauration macOS en attente." }
+                }
+            }
+            return
+        }
+        // Never lower the target below the observed level: firmware can actively
+        // drain to a lower target. The helper independently checks its fresh read.
+        let target = max(topUpRequested ? 100 : settings.chargeLimit, state.percentage)
+        guard nativeLimitTarget != target || Date().timeIntervalSince(nativeLastAttempt) >= 60 else { return }
+        guard Date().timeIntervalSince(nativeLastAttempt) >= 5 else { return }
+        nativeLastAttempt = Date()
+        nativeCommandPending = true
+        nativeSessionActive = true // also require restore after a failed/uncertain call
+        helper.setNativeChargeLimit(percent: target) { [weak self] success, error in
+            Task { @MainActor in
+                guard let self else { return }
+                self.nativeCommandPending = false
+                self.nativeLimitTarget = success ? target : nil
+                self.nativeLimitIssue = success ? nil : (error ?? "La consigne native n’a pas été acceptée.")
+            }
+        }
+    }
+
     // MARK: - Actions
 
     /// Whether SMC commands can be sent (helper installed and API detected)
     private var canControlCharging: Bool {
-        isHelperInstalled && chargingAPI != .unknown
+        chargeControlAvailable
     }
 
     /// Start Top Up - temporarily charge to 100%
     func startTopUp() {
+        if usesNativeLimit && isHelperInstalled {
+            topUpRequested = true
+            nativeLastAttempt = .distantPast
+            evaluateNativeLimit(battery.batteryState)
+            return
+        }
         guard canControlCharging else {
             log.warning("Cannot start Top Up: \(self.controlUnavailableReason, privacy: .public)")
             return
@@ -723,6 +815,11 @@ final class ChargingManager: ObservableObject {
     func cancelTopUp() {
         guard topUpRequested || mode == .topUp else { return }
         topUpRequested = false
+        if nativeLimitAvailable {
+            nativeLastAttempt = .distantPast
+            evaluateNativeLimit(battery.batteryState)
+            return
+        }
         // Cancelling the request must not cancel an active thermal cooldown.
         guard mode != .heatProtection else { return }
         log.notice("Top Up cancelled by user at \(self.battery.batteryState.percentage, privacy: .public)%")
@@ -733,6 +830,7 @@ final class ChargingManager: ObservableObject {
 
     /// Manually start discharge
     func startDischarge() {
+        guard !nativeLimitAvailable else { return }
         guard canControlCharging else {
             log.warning("Cannot start discharge: \(self.controlUnavailableReason, privacy: .public)")
             return
@@ -752,6 +850,7 @@ final class ChargingManager: ObservableObject {
 
     /// Manually pause charging at current level
     func pauseCharging() {
+        guard !nativeLimitAvailable else { return }
         guard canControlCharging else {
             log.warning("Cannot pause charging: \(self.controlUnavailableReason, privacy: .public)")
             return
@@ -867,7 +966,7 @@ final class ChargingManager: ObservableObject {
     /// Gated behind helper version check — calling setMagSafeLED on an old helper
     /// that doesn't implement it would disrupt the XPC connection.
     private func updateMagSafeLED() {
-        guard isHelperInstalled else { return }
+        guard isHelperInstalled, !nativeLimitAvailable, chargingAPI != .unknown else { return }
         guard settings.controlMagSafeLED else {
             // If disabled, reset to auto (only if we previously set something)
             if lastLEDColor != nil && lastLEDColor != HelperConstants.ledAuto {

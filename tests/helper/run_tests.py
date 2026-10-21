@@ -71,7 +71,7 @@ watchdog_extracted.write_text(watchdog_text)
 }, indent=2) + "\n")
 for name, files in [
     ("hardware", [model, controller, ROOT / "tests/helper/HardwareRecoveryTests.swift"]),
-    ("lifecycle", [model, controller, ROOT / "Shared/HelperConstants.swift", extracted, ROOT / "tests/helper/SessionLifecycleTests.swift"]),
+    ("lifecycle", [ROOT / "Shared/NativeLimitSession.swift", model, controller, ROOT / "Shared/HelperConstants.swift", extracted, ROOT / "tests/helper/SessionLifecycleTests.swift"]),
     ("watchdog", [model, controller, ROOT / "Shared/HelperConstants.swift", watchdog_extracted, ROOT / "tests/helper/WatchdogRecoveryTests.swift"])
 ]:
     if args.suite not in ("all", name):

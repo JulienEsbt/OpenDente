@@ -1,5 +1,15 @@
 # Changements de l’édition personnelle
 
+## 0.3.0 — mode natif expérimental, 21 octobre 2026
+
+- Nouveau backend PowerUI pour les firmwares sans CHTE/CH0B/CH0C, sur activation explicite. Interface privée détectée à l’exécution ; aucune modification des autorisations Apple ou des archives powerd.
+- Plafond et charge ponctuelle à 100 %, sans coupure de l’adaptateur. Les cibles inférieures au niveau courant sont refusées côté service.
+- Sauvegarde du réglage Apple avant modification ; restauration sur désactivation, perte de connexion, watchdog et redémarrage. Un échec conserve le journal.
+- Limites visibles : application différée, reprise firmware, calibration pouvant dépasser le plafond ; seuil de reprise et arrêt thermique personnalisés désactivés sur ce backend.
+- Correction de l’état de service resté figé après approbation macOS. Une présence effective des fichiers est vérifiée avant d’annoncer un service manquant.
+- Service 1.5.0 ; version de l’app 0.3.0 (3). Les licences GPL et MIT ainsi que les crédits adaptés d’Ampere sont inclus dans le bundle.
+- 313 tests XCTest réussis, dont 14 nouveaux tests de politique native et de restauration. Compilation Release signée réussie.
+
 ## Après reprise sur Mac — 21 octobre 2026
 
 ### Corrections

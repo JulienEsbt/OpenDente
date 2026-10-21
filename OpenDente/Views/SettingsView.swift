@@ -77,11 +77,17 @@ struct GeneralTab: View {
             }
         }
         .formStyle(.grouped)
+        .task {
+            while !Task.isCancelled {
+                charging.refreshHelperStatus()
+                do { try await Task.sleep(for: .seconds(2)) } catch { break }
+            }
+        }
     }
 
     @ViewBuilder
     private var helperActions: some View {
-        let status = HelperInstaller.status
+        let status = charging.helperServiceStatus
         if status == .requiresApproval {
             Button("Ouvrir les Réglages Système") {
                 HelperInstaller.openSystemSettings()
@@ -123,11 +129,12 @@ struct GeneralTab: View {
     }
 
     private var helperStatusText: String {
-        switch HelperInstaller.status {
+        if charging.isHelperInstalled { return charging.nativeLimitAvailable ? "Connecté — mode natif disponible" : "Connecté" }
+        switch charging.helperServiceStatus {
         case .enabled: return "Activé"
         case .notRegistered: return "Non activé"
         case .requiresApproval: return "Autorisation nécessaire"
-        case .notFound: return "Service absent de l’application"
+        case .notFound: return HelperInstaller.bundleIsComplete ? "Non enregistré" : "Service absent de l’application"
         @unknown default: return "État inconnu"
         }
     }
@@ -200,6 +207,16 @@ struct ChargingTab: View {
 
     var body: some View {
         Form {
+            if charging.nativeLimitAvailable {
+                Section("Mode natif expérimental — macOS 27") {
+                    Toggle("Confier la limite à macOS", isOn: $settings.nativeChargeLimitEnabled)
+                    Text("Application sous environ une minute. La reprise est décidée par macOS (environ 5 points), et sa calibration peut charger à 100 %. Le seuil de reprise et la protection thermique personnalisés ci-dessous ne s’appliquent pas. Aucun arrêt thermique immédiat n’est garanti par OpenDente.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text("Au-dessus de ta limite, OpenDente demande de rester au niveau actuel, sans coupure du chargeur. Après débranchement, la consigne suit le niveau jusqu’à la limite habituelle. L’arrêt du mode restaure le réglage Apple précédent.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    if let issue = charging.nativeLimitIssue { Text(issue).foregroundStyle(.orange) }
+                }
+            }
             Section("Limite de charge") {
                 HStack {
                     Text("Limite")
@@ -217,85 +234,87 @@ struct ChargingTab: View {
                 }
             }
 
-            Section("Seuil de reprise") {
-                Toggle("Espacer les reprises de charge", isOn: $settings.sailingModeEnabled)
+            Group {
+                Section("Seuil de reprise") {
+                    Toggle("Espacer les reprises de charge", isOn: $settings.sailingModeEnabled)
 
-                if settings.sailingModeEnabled {
-                    HStack {
-                        Text("Écart souhaité")
-                        Slider(
-                            value: Binding(
-                                get: { Double(settings.sailingRange) },
-                                set: { settings.sailingRange = Int($0.rounded()) }
-                            ),
-                            in: 2...25
-                        )
-                        .accessibilityLabel("Écart entre la limite et le seuil de reprise")
-                        Text("\(settings.sailingRange)%")
-                            .font(.system(.body, design: .monospaced))
-                            .frame(width: 35, alignment: .trailing)
-                    }
-                    Text("Reprise sous \(settings.sailingLowerBound) %. Le seuil reste au minimum à 10 %. Le niveau baisse naturellement ; aucune décharge n’est nécessaire.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Section("Protection thermique") {
-                Toggle("Activer la protection thermique", isOn: $settings.heatProtectionEnabled)
-
-                if settings.heatProtectionEnabled {
-                    HStack {
-                        Text("Température maximale")
-                        Slider(
-                            value: Binding(
-                                get: { TemperatureDisplay.toDisplay(settings.heatProtectionTemp) },
-                                set: {
-                                    let step = TemperatureDisplay.sliderStep
-                                    let snapped = ($0 / step).rounded() * step
-                                    settings.heatProtectionTemp = TemperatureDisplay.toCelsius(snapped)
-                                }
-                            ),
-                            in: TemperatureDisplay.sliderRange
-                        )
-                        .accessibilityLabel("Température maximale de la batterie")
-                        Text(TemperatureDisplay.format(settings.heatProtectionTemp, fractionDigits: 0))
-                            .font(.system(.body, design: .monospaced))
-                            .frame(width: 50, alignment: .trailing)
+                    if settings.sailingModeEnabled {
+                        HStack {
+                            Text("Écart souhaité")
+                            Slider(
+                                value: Binding(
+                                    get: { Double(settings.sailingRange) },
+                                    set: { settings.sailingRange = Int($0.rounded()) }
+                                ),
+                                in: 2...25
+                            )
+                            .accessibilityLabel("Écart entre la limite et le seuil de reprise")
+                            Text("\(settings.sailingRange)%")
+                                .font(.system(.body, design: .monospaced))
+                                .frame(width: 35, alignment: .trailing)
+                        }
+                        Text("Reprise sous \(settings.sailingLowerBound) %. Le seuil reste au minimum à 10 %. Le niveau baisse naturellement ; aucune décharge n’est nécessaire.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
-            }
 
-            Section("Options avancées") {
-                Toggle("Décharger automatiquement vers la limite", isOn: $settings.automaticDischarge)
-                Text("Désactivé dans les profils : laisser le niveau baisser naturellement évite une décharge imposée.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Toggle("Personnaliser le voyant MagSafe", isOn: $settings.controlMagSafeLED)
-                if settings.controlMagSafeLED {
-                    Toggle("Éteindre le voyant quand la charge est suspendue", isOn: $settings.magSafeLEDOffWhenInactive)
-                        .padding(.leading, 16)
-                    Text(settings.magSafeLEDOffWhenInactive
-                         ? "Voyant éteint à la limite, orange pendant la charge."
-                         : "Voyant vert à la limite, orange pendant la charge.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.leading, 16)
-                } else {
-                    Text("Le voyant du connecteur MagSafe reste géré par macOS. Aucun effet sur un câble USB-C.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                Section("Protection thermique") {
+                    Toggle("Activer la protection thermique", isOn: $settings.heatProtectionEnabled)
+
+                    if settings.heatProtectionEnabled {
+                        HStack {
+                            Text("Température maximale")
+                            Slider(
+                                value: Binding(
+                                    get: { TemperatureDisplay.toDisplay(settings.heatProtectionTemp) },
+                                    set: {
+                                        let step = TemperatureDisplay.sliderStep
+                                        let snapped = ($0 / step).rounded() * step
+                                        settings.heatProtectionTemp = TemperatureDisplay.toCelsius(snapped)
+                                    }
+                                ),
+                                in: TemperatureDisplay.sliderRange
+                            )
+                            .accessibilityLabel("Température maximale de la batterie")
+                            Text(TemperatureDisplay.format(settings.heatProtectionTemp, fractionDigits: 0))
+                                .font(.system(.body, design: .monospaced))
+                                .frame(width: 50, alignment: .trailing)
+                        }
+                    }
                 }
-                Toggle("Suspendre la charge pendant la veille", isOn: $settings.stopChargingWhenSleeping)
-                Text("Demande l’arrêt de la charge avant la veille. Le comportement doit être vérifié sur ton Mac.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Toggle("Empêcher la veille automatique jusqu’à la limite", isOn: $settings.disableSleepUntilChargeLimit)
-                Text("Maintient le Mac éveillé pendant la charge ou la décharge vers la limite.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Toggle("Utiliser le pourcentage matériel de la batterie", isOn: $settings.useHardwareBatteryPercentage)
-            }
+
+                Section("Options avancées") {
+                    Toggle("Décharger automatiquement vers la limite", isOn: $settings.automaticDischarge)
+                    Text("Désactivé dans les profils : laisser le niveau baisser naturellement évite une décharge imposée.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Toggle("Personnaliser le voyant MagSafe", isOn: $settings.controlMagSafeLED)
+                    if settings.controlMagSafeLED {
+                        Toggle("Éteindre le voyant quand la charge est suspendue", isOn: $settings.magSafeLEDOffWhenInactive)
+                            .padding(.leading, 16)
+                        Text(settings.magSafeLEDOffWhenInactive
+                             ? "Voyant éteint à la limite, orange pendant la charge."
+                             : "Voyant vert à la limite, orange pendant la charge.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.leading, 16)
+                    } else {
+                        Text("Le voyant du connecteur MagSafe reste géré par macOS. Aucun effet sur un câble USB-C.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Toggle("Suspendre la charge pendant la veille", isOn: $settings.stopChargingWhenSleeping)
+                    Text("Demande l’arrêt de la charge avant la veille. Le comportement doit être vérifié sur ton Mac.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Toggle("Empêcher la veille automatique jusqu’à la limite", isOn: $settings.disableSleepUntilChargeLimit)
+                    Text("Maintient le Mac éveillé pendant la charge ou la décharge vers la limite.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Toggle("Utiliser le pourcentage matériel de la batterie", isOn: $settings.useHardwareBatteryPercentage)
+                }
+            }.disabled(charging.nativeLimitAvailable)
         }
         .formStyle(.grouped)
     }

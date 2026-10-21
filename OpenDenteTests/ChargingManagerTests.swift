@@ -7,6 +7,7 @@ import XCTest
 /// Completes with success by default. Set `shouldFail` to simulate helper failures.
 final class MockChargingControl: ChargingControl, @unchecked Sendable {
     enum Call: Equatable, Sendable {
+        case nativeLimit(Int)
         case enableCharging
         case inhibitCharging
         case forceDischarge(enable: Bool)
@@ -21,6 +22,11 @@ final class MockChargingControl: ChargingControl, @unchecked Sendable {
 
     /// If true, completion reports failure (simulates helper crash/disconnect)
     var shouldFail = false
+
+    func setNativeChargeLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
+        calls.append(.nativeLimit(percent))
+        completion?(!shouldFail, shouldFail ? "native mock failure" : nil)
+    }
 
     func enableCharging(completion: (@Sendable (Bool, String?) -> Void)?) {
         calls.append(.enableCharging)

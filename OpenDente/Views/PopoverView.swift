@@ -119,7 +119,7 @@ struct PopoverView: View {
     @ViewBuilder
     private var availabilityMessage: some View {
         if !charging.isHelperInstalled {
-            let helperStatus = HelperInstaller.status
+            let helperStatus = charging.helperServiceStatus
             let needsApproval = helperStatus == .requiresApproval
             let canRetry = helperStatus == .enabled
             notice(
@@ -133,6 +133,10 @@ struct PopoverView: View {
                 else if canRetry { charging.connectToHelper() }
                 else { openSettings() }
             }
+        } else if charging.nativeLimitAvailable {
+            notice(title: "Mode natif expérimental", text: charging.nativeLimitIssue ?? (charging.usesNativeLimit
+                ? "Plafond confié à macOS. Délai possible : 1 min. Reprise et protection thermique gérées par macOS ; une calibration peut dépasser le plafond."
+                : "Active le mode natif dans les réglages Charge. Les commandes SMC ne sont pas disponibles sur ce Mac."), button: "Réglages…", action: openSettings)
         } else if charging.chargingAPI == .unknown {
             notice(title: "Contrôle indisponible", text: "L’interface de charge de ce Mac n’est pas encore détectée.", button: "Réglages…", action: openSettings)
         }
@@ -189,6 +193,11 @@ struct PopoverView: View {
 
     private var statusDetail: String {
         if !hasReading { return "Les données apparaîtront ici." }
+        if charging.nativeLimitAvailable {
+            if !charging.usesNativeLimit { return "Suivi de batterie — mode natif désactivé." }
+            if let target = charging.nativeLimitTarget { return "Consigne macOS : \(target) %. Arrêt à vérifier dans l’état réel." }
+            return "Consigne native en attente de confirmation."
+        }
         if !charging.isHelperInstalled || charging.chargingAPI == .unknown { return "Les commandes d’OpenDente sont indisponibles." }
         if charging.systemChargeLimitConflict { return "Vérifie les réglages Batterie." }
         if charging.mode == .heatProtection {

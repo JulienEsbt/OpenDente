@@ -15,6 +15,9 @@ import Foundation
     /// Reset all SMC charging keys to defaults (enable charging, stop discharge)
     func resetToDefaults(reply: @escaping (Bool, String?) -> Void)
 
+    /// Experimental native ceiling. Never cuts adapter power.
+    func setNativeChargeLimit(percent: Int, reply: @escaping (Bool, String?) -> Void)
+
     /// Heartbeat from app to keep watchdog alive
     func heartbeat(reply: @escaping (Bool) -> Void)
 

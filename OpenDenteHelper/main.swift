@@ -26,7 +26,7 @@ delegate = HelperDelegate(watchdog: watchdog)
 // MARK: - Crash Recovery (Layer 2)
 
 // If previous instance had charging inhibited (crash), reset immediately
-if HelperState.wasChargingInhibited() {
+if delegate.needsRecovery {
     log.warning("Previous instance had charging inhibited — resetting to safe defaults")
     delegate.resetChargingDirect()
 }

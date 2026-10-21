@@ -102,3 +102,6 @@ struct FailedAssertion: Error, CustomStringConvertible { let description: String
 func expect(_ condition: @autoclosure () -> Bool, _ message: String) throws {
     if !condition() { throw FailedAssertion(description: message) }
 }
+
+// Service registration is not exercised by the portable state-machine tests.
+enum SMAppService { enum Status: Sendable { case notRegistered } }

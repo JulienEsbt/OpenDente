@@ -9,6 +9,7 @@ private let log = Logger(subsystem: HelperConstants.machServiceName, category: "
 /// Verifies callers via code signing, performs SMC writes, manages state.
 final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
 
+    private let native = NativeChargeLimit()
     private let smc = SMCService.shared
     private let watchdog: Watchdog
     private let lock = NSLock()
@@ -208,6 +209,15 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         }
     }
 
+    func setNativeChargeLimit(percent: Int, reply: @escaping (Bool, String?) -> Void) {
+        perform(reply) {
+            guard chargingAPI == .unknown, NativeChargeLimit.isAvailable else {
+                throw NativeLimitSession.Failure(message: "Native limit unavailable on this backend")
+            }
+            try native.setLimit(percent)
+        }
+    }
+
     func enableCharging(reply: @escaping (Bool, String?) -> Void) {
         perform(reply) { try hardware.restoreDefaults(resetLED: false) }
     }
@@ -223,7 +233,7 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
     func resetToDefaults(reply: @escaping (Bool, String?) -> Void) {
         perform(reply) {
             clearSleepPolicyLocked()
-            try hardware.restoreDefaults()
+            try restoreAllDefaultsLocked()
         }
     }
 
@@ -256,7 +266,7 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         switch chargingAPI {
         case .legacy: reply("legacy")
         case .tahoe: reply("tahoe")
-        case .unknown: reply("unknown")
+        case .unknown: reply(NativeChargeLimit.isAvailable ? "native" : "unknown")
         }
     }
 
@@ -302,13 +312,13 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
     var needsRecovery: Bool {
         lock.lock()
         defer { lock.unlock() }
-        return hardware.recoveryRequired || HelperState.wasChargingInhibited()
+        return native.needsRecovery || hardware.recoveryRequired || HelperState.wasChargingInhibited()
     }
 
     var hasPendingRestoration: Bool {
         lock.lock()
         defer { lock.unlock() }
-        return hardware.restorationPending
+        return native.restorationPending || hardware.restorationPending
     }
 
     /// Watchdog, signal and restart paths also discard the departed app's policy.
@@ -319,9 +329,18 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         _ = resetChargingDirectLocked()
     }
 
+    private func restoreAllDefaultsLocked() throws {
+        var failures: [String] = []
+        do { try native.restore() } catch { failures.append(error.localizedDescription) }
+        if chargingAPI != .unknown {
+            do { try hardware.restoreDefaults() } catch { failures.append(error.localizedDescription) }
+        }
+        guard failures.isEmpty else { throw NativeLimitSession.Failure(message: failures.joined(separator: "; ")) }
+    }
+
     private func resetChargingDirectLocked() -> Bool {
         do {
-            try hardware.restoreDefaults()
+            try restoreAllDefaultsLocked()
             log.info("Safe defaults restored")
             return true
         } catch {

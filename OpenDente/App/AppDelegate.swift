@@ -96,6 +96,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
     }
 
+    func applicationDidBecomeActive(_ notification: Notification) {
+        guard !Self.isRunningTests else { return }
+        charging.refreshHelperStatus()
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         guard !Self.isRunningTests else { return }
         // Synchronous reset with timeout to ensure charging is re-enabled before exit
@@ -164,6 +169,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if popover.isShown {
             popover.performClose(nil)
         } else {
+            charging.refreshHelperStatus()
             battery.popoverDidOpen()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
@@ -198,7 +204,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .enabled:
             NSLog("[OpenDente] Helper is enabled")
         case .notFound:
-            NSLog("[OpenDente] Helper binary not found in app bundle")
+            if HelperInstaller.bundleIsComplete && HelperInstaller.register() { charging.connectToHelper() }
+            else { NSLog("[OpenDente] Helper registration unavailable") }
         @unknown default:
             break
         }

@@ -27,7 +27,7 @@ manifest = {
     "source_ref": args.source_ref or "working tree",
     "production_sha256": {},
     "extractions": [],
-    "not_tested": ["SwiftUI/AppKit/Combine integration", "XPC and signing", "SMC hardware",
+    "not_tested": ["SwiftUI/AppKit/Combine integration", "XPC and signing", "SMC hardware", "native PowerUI integration",
                    "full macOS application build", "the complete native XCTest suite"],
 }
 
@@ -102,6 +102,8 @@ for name in ["evaluateState", "verifyChargingInhibition", "updateSleepAssertion"
              "enableCharging", "forceDischarge", "updateMagSafeLED", "sendLEDColor",
              "resetToDefaults", "resetToDefaultsSync"]:
     methods.append(member(manager, name, required=name != "verifyChargingInhibition"))
+for name in ["evaluateNativeLimit", "releaseNativeLimitIfDisabled"]:
+    methods.append(member(manager, name, required=False))
 for name in ["canControlCharging", "controlUnavailableReason"]:
     methods.append(member(manager, name, kind="var"))
 

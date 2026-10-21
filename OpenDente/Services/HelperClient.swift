@@ -170,6 +170,14 @@ final class HelperClient: @unchecked Sendable {
 
     // MARK: - Protocol Methods
 
+    func setNativeChargeLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
+        withProxy { helper in
+            helper.setNativeChargeLimit(percent: percent) { success, error in
+                if let completion { DispatchQueue.main.async { completion(success, error) } }
+            }
+        }
+    }
+
     func enableCharging(completion: (@Sendable (Bool, String?) -> Void)? = nil) {
         withProxy { helper in
             helper.enableCharging { success, error in

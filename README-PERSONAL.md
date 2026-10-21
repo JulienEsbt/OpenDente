@@ -1,10 +1,27 @@
 # OpenDente — édition personnelle
 
-Version de développement **0.2.0**, préparée le 21 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
+Version de développement **0.3.0 expérimentale**, préparée le 21 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
 
-Cette édition contient les sources modifiées, les tests et un script de compilation. **La compilation complète et les essais sur macOS restent à effectuer.** Aucun binaire macOS signé ou notarifié n’est fourni.
+Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 313 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
 
-## Ce que cette version change
+## macOS 27 : mode natif expérimental
+
+Sur le Mac cible, les clés SMC CHTE/CH0B/CH0C sont absentes, même depuis le service root. Le moteur SMC d’origine ne peut donc pas suspendre la charge. Le service 1.5.0 propose un autre moteur, activé explicitement dans **Réglages > Charge > Confier la limite à macOS**. Sans cette activation, l’app reste un outil de suivi.
+
+Ce moteur transmet un plafond au service PowerUI de macOS. Il utilise des interfaces et préférences Apple privées, susceptibles de changer ; sa disponibilité est contrôlée à l’exécution. Il ne modifie pas les autorisations Apple, les archives de politiques powerd ou les règles sudoers. Les mécanismes adaptés d’Ampere et leur licence MIT figurent dans `THIRD-PARTY-NOTICES.md`, également embarqué dans l’app avec la licence GPL.
+
+Différences avec le moteur SMC décrit plus bas :
+
+- La consigne est appliquée par macOS, avec un délai pouvant atteindre environ une minute. La confirmation des préférences ne prouve pas l’arrêt du courant ; le panneau continue d’afficher l’état réel de la batterie.
+- La reprise est gérée par le firmware, avec une marge d’environ 5 points. Le seuil de reprise personnalisé et l’arrêt thermique personnalisé d’OpenDente sont désactivés ; les protections thermiques de macOS restent celles qui s’appliquent.
+- macOS peut temporairement dépasser le plafond pour calibrer sa mesure de batterie, jusqu’à 100 %. OpenDente ne supprime pas cette politique système.
+- Le service refuse une consigne inférieure au niveau qu’il vient de lire : le firmware peut décharger activement vers un plafond inférieur. Si le niveau dépasse la limite habituelle, l’app demande de tenir le niveau actuel ; après débranchement la consigne descend avec le niveau vers la limite habituelle. Les profils ne coupent jamais le chargeur.
+- La charge ponctuelle demande 100 %. L’annulation ou le débranchement efface cette demande sans écraser la limite habituelle ; une consigne adaptée au niveau courant évite de demander une décharge après la charge complète.
+- Le réglage Apple précédent est sauvegardé dans un journal root avant la première modification. Désactivation, arrêt de l’app, perte du client, watchdog et redémarrage du service passent par sa restauration. Un échec conserve le journal pour réessayer.
+
+Ce mode est expérimental. La plage 20–100 % correspond aux consignes admises par ce backend privé, et non à la plage 80–100 % du curseur public Apple. Seuls les essais matériels consignés dans `VALIDATION.md` établissent ce qui a été observé sur ce Mac.
+
+## Interface et politique du moteur SMC
 
 L’application conserve son interface native SwiftUI dans la barre de menus. Le panneau principal est en français, avec un pourcentage lisible, le plafond habituel, le seuil réel de reprise, les mesures de batterie disponibles et des messages expliquant pourquoi la charge est interrompue ou attendue. Un arrêt demandé reste distingué d’un arrêt confirmé par les données de la batterie.
 
@@ -30,7 +47,7 @@ Le compteur de cycles, la capacité, la température, la puissance et le schéma
 - **Veille :** la politique de veille est effacée au reset et à la déconnexion ; elle ne s’applique plus sans client actif. Une simple demande de veille annulable ne suspend plus le watchdog.
 - **Température :** la vérification de l’arrêt réel de charge s’exécute aussi pendant les branches de chaleur et de refroidissement. Un échec de commande conserve la pause thermique.
 - **Seuil bas :** il reste au minimum à 10 %, y compris avec un plafond de 20 % et une plage de 25 points.
-- **Compatibilité du service :** les commandes de politique de charge attendent un handshake avec le service 1.4.0 ou ultérieur. Une ancienne version affiche une erreur explicite. Les commandes de restauration restent disponibles pour revenir aux réglages macOS.
+- **Compatibilité du service :** les commandes de politique de charge attendent un handshake avec le service 1.5.0 ou ultérieur. Une ancienne version affiche une erreur explicite. Les commandes de restauration restent disponibles pour revenir aux réglages macOS.
 
 Ces changements corrigent des chemins précis du code. Ils ne garantissent pas l’absence d’autres défauts ni la compatibilité avec un matériel non testé.
 
@@ -72,13 +89,63 @@ build/DerivedData/Build/Products/Debug/OpenDente.app
 
 Pour travailler dans Xcode : `xcodegen generate`, puis ouvrir `OpenDente.xcodeproj`. Sélectionner le schéma OpenDente et la même identité de signature pour l’application, le helper et les tests. Le numéro de build reste numérique ; un hash Git est enregistré séparément lorsqu’un dépôt Git est présent.
 
+### Xcode complet et accès au Trousseau
+
+Les Command Line Tools seuls ne suffisent pas à exécuter ce projet et XCTest.
+Si `xcode-select -p` pointe encore vers les Command Line Tools, sélectionner Xcode
+ou préciser son emplacement pour la commande locale :
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+  bash scripts/build-local.sh "Nom exact du certificat" "TEAMID"
+```
+
+Xcode demande les composants nécessaires au premier lancement. Pour cette app,
+macOS suffit ; les composants iOS, watchOS, tvOS et visionOS restent facultatifs
+et peuvent être ajoutés plus tard.
+
+Le Trousseau peut demander le mot de passe de session pour laisser l’outil Apple
+`codesign` utiliser la clé du certificat choisi. Une autorisation ponctuelle peut
+être redemandée pour chaque cible. « Toujours autoriser » accorde à cet outil un
+accès durable à cette clé de signature ; ce choix se fait dans la fenêtre macOS,
+pour le certificat attendu. L’utilisation normale d’OpenDente ne signe pas de code
+et ne doit pas demander cette clé.
+
+Pour exécuter uniquement les tests avant de disposer d’un certificat :
+
+```sh
+xcodegen generate
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+  xcodebuild test -project OpenDente.xcodeproj -scheme OpenDente \
+  -configuration Debug -destination 'platform=macOS,arch=arm64' \
+  -derivedDataPath build/DerivedData CODE_SIGNING_ALLOWED=NO
+```
+
+Ce mode valide la compilation et XCTest, pas l’identité de signature ni le
+service. Le marqueur `OPENDENTE_TESTING=1`, réservé à l’action Test du schéma,
+empêche l’app hôte de démarrer les services réels de batterie.
+
+### Fork personnel
+
+Le développement se poursuit sur `feature/personal-battery-care` dans le fork
+[JulienEsbt/OpenDente](https://github.com/JulienEsbt/OpenDente). Les remotes sont :
+
+```text
+origin    https://github.com/JulienEsbt/OpenDente.git
+upstream  https://github.com/killerk3emstar/OpenDente.git
+```
+
+Le bundle d’origine reste dans l’archive de sources. L’historique amont, sa
+licence et ses crédits sont conservés ; le remote `origin` ne désigne plus le
+bundle.
+
 ### Essais natifs avant usage quotidien
 
 Le modèle, la puce et la version exacte de macOS doivent être consignés. Le projet amont est une bêta dont la documentation cite un test sur M4/Tahoe ; les essais portables n’élargissent pas cette compatibilité.
 
 1. Faire réussir les tests Xcode et vérifier le rendu du panneau, les réglages, le clavier et les tailles de texte.
 2. Placer l’app construite à son emplacement définitif avant le premier lancement. Vérifier l’autorisation de son service dans les éléments d’ouverture de macOS. En cas d’ancien service, utiliser **Réinstaller le service** dans les réglages de cette édition.
-3. Vérifier qu’un seul outil gère la politique de charge pendant les essais. L’app signale un conflit avec la limite native lorsqu’elle le détecte ; elle ne modifie pas automatiquement les réglages de macOS.
+3. Vérifier qu’un seul outil gère la politique de charge pendant les essais. L’app signale un conflit avec la limite native lorsqu’elle le détecte ; le mode natif expérimental est une exception explicite : il sauvegarde, applique puis restaure le réglage Apple.
 4. Observer une limite atteinte, la baisse naturelle sous le seuil de reprise et la charge ponctuelle. Vérifier l’annulation et le débranchement. Utiliser les tests simulés pour les températures anormales ; il n’est pas nécessaire de chauffer volontairement le Mac.
 5. Vérifier la veille, le réveil et l’arrêt de l’app : quitter doit demander le retour au comportement macOS, et une veille ultérieure ne doit pas réactiver l’ancienne politique.
 6. Effectuer les contrôles d’identité du service décrits dans `tests/helper/README.md`, en Debug et Release. La validation des signatures locales ne remplace pas le test de rejet d’un autre client.
