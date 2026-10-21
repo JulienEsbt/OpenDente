@@ -218,7 +218,7 @@ final class HelperClient: @unchecked Sendable {
     }
 
     func resetToDefaults(completion: (@Sendable (Bool, String?) -> Void)? = nil) {
-        withProxy { helper in
+        withProxy(onError: { error in completion?(false, error) }) { helper in
             helper.resetToDefaults { success, error in
                 if let error {
                     log.error("resetToDefaults failed: \(error, privacy: .public)")

@@ -59,9 +59,23 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.sailingRange, 2)
     }
 
-    func testSailingRange_clampsToMax25() {
-        settings.sailingRange = 50
-        XCTAssertEqual(settings.sailingRange, 25)
+    func testSailingRange_clampsToMax90() {
+        settings.sailingRange = 150
+        XCTAssertEqual(settings.sailingRange, 90)
+    }
+
+    func testResumeAt20WithLimit80IsAvailableAndPersists() {
+        settings.chargeLimit = 80
+        settings.sailingRange = 60
+        XCTAssertEqual(settings.sailingLowerBound, 20)
+        let reloaded = AppSettings(defaults: settings.defaults)
+        XCTAssertEqual(reloaded.sailingLowerBound, 20)
+    }
+
+    func testThermalDefaultIsAnAppPrecautionAt40AndDoesNotReplaceSavedValues() {
+        XCTAssertEqual(settings.heatProtectionTemp, 40)
+        settings.heatProtectionTemp = 35
+        XCTAssertEqual(AppSettings(defaults: settings.defaults).heatProtectionTemp, 35)
     }
 
     // MARK: - Sailing Lower Bound

@@ -83,6 +83,7 @@ final class Scenario {
     let manager: ChargingManager
     init() {
         settings = AppSettings(defaults: UserDefaults(suiteName: name)!)
+        settings.heatProtectionTemp = 35 // The regression inputs intentionally cross this threshold.
         settings.controlMagSafeLED = false
         battery.batteryState = state()
         manager = ChargingManager(settings: settings, helper: controller, battery: battery,

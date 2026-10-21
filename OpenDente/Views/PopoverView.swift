@@ -134,8 +134,8 @@ struct PopoverView: View {
                 else { openSettings() }
             }
         } else if charging.nativeLimitAvailable {
-            notice(title: "Mode natif expérimental", text: charging.nativeLimitIssue ?? (charging.usesNativeLimit
-                ? "Plafond confié à macOS. Délai possible : 1 min. Reprise et protection thermique gérées par macOS ; une calibration peut dépasser le plafond."
+            notice(title: "Mode natif expérimental", text: charging.nativeLimitIssue ?? charging.nativePauseWarning ?? (charging.usesNativeLimit
+                ? "Limite et pauses confiées à macOS. Délai possible : 1 min ; une calibration peut dépasser la consigne. Surveillance thermique quand le Mac est éveillé."
                 : "Active le mode natif dans les réglages Charge. Les commandes SMC ne sont pas disponibles sur ce Mac."), button: "Réglages…", action: openSettings)
         } else if charging.chargingAPI == .unknown {
             notice(title: "Contrôle indisponible", text: "L’interface de charge de ce Mac n’est pas encore détectée.", button: "Réglages…", action: openSettings)
@@ -179,7 +179,7 @@ struct PopoverView: View {
     private var statusTitle: String {
         if !hasReading { return "Lecture en cours…" }
         if charging.systemChargeLimitConflict { return "Limite macOS" }
-        if !charging.isHelperInstalled || charging.chargingAPI == .unknown {
+        if !charging.chargeControlAvailable {
             return state.isCharging ? "Charge en cours" : "Lecture seule"
         }
         if [.paused, .sailing, .heatProtection].contains(charging.mode), state.isCharging {
@@ -194,11 +194,23 @@ struct PopoverView: View {
     private var statusDetail: String {
         if !hasReading { return "Les données apparaîtront ici." }
         if charging.nativeLimitAvailable {
-            if !charging.usesNativeLimit { return "Suivi de batterie — mode natif désactivé." }
-            if let target = charging.nativeLimitTarget { return "Consigne macOS : \(target) %. Arrêt à vérifier dans l’état réel." }
-            return "Consigne native en attente de confirmation."
+            if !charging.usesNativeLimit { return "Suivi de batterie — contrôle désactivé." }
+            if let issue = charging.nativeLimitIssue ?? charging.nativePauseWarning { return issue }
+            if !state.isPluggedIn { return "Réglages conservés pour le prochain branchement." }
+            guard let target = charging.nativeLimitTarget else { return "Consigne native en attente de confirmation." }
+            if charging.mode == .heatProtection {
+                return state.isCharging
+                    ? "Pause thermique demandée ; macOS charge encore."
+                    : "Charge arrêtée. Reprise après refroidissement de 2 °C et délai de 5 min."
+            }
+            if [.paused, .sailing].contains(charging.mode) {
+                if state.isCharging { return "Pause demandée à macOS ; la batterie charge encore." }
+                if displayPercentage > settings.chargeLimit { return "Maintien à \(target) %. Baisse naturelle vers \(settings.chargeLimit) %, sans décharge forcée." }
+                return settings.sailingModeEnabled ? "Charge arrêtée. Reprise sous \(settings.sailingLowerBound) %." : "Charge arrêtée à la limite habituelle."
+            }
+            return "Objectif macOS : \(target) %. \(state.isCharging ? "La batterie charge." : "Reprise de charge en attente.")"
         }
-        if !charging.isHelperInstalled || charging.chargingAPI == .unknown { return "Les commandes d’OpenDente sont indisponibles." }
+        if !charging.chargeControlAvailable { return "Les commandes d’OpenDente sont indisponibles." }
         if charging.systemChargeLimitConflict { return "Vérifie les réglages Batterie." }
         if charging.mode == .heatProtection {
             return state.isCharging ? "Protection thermique : arrêt à confirmer." : "Reprise après refroidissement et délai de 5 min."
@@ -223,7 +235,7 @@ struct PopoverView: View {
 
     private var statusColor: Color {
         if charging.systemChargeLimitConflict || charging.mode == .heatProtection { return .orange }
-        if !hasReading || !charging.isHelperInstalled || charging.chargingAPI == .unknown { return .secondary }
+        if !hasReading || !charging.chargeControlAvailable { return .secondary }
         if displayPercentage <= 20 || charging.mode == .discharging { return .orange }
         return .teal
     }

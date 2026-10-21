@@ -56,6 +56,10 @@ final class ChargingManager: ObservableObject {
     @Published private(set) var nativeLimitTarget: Int?
     @Published private(set) var nativeLimitIssue: String?
     @Published private(set) var helperServiceStatus: SMAppService.Status = .notRegistered
+    @Published private(set) var nativePauseWarning: String?
+    private var nativePolicy = NativeChargingPolicy()
+    private var nativePauseStarted: Date?
+    var nativeNow: () -> Date = { Date() }
     private var nativeLastAttempt = Date.distantPast
     private var nativeCommandPending = false
     private var nativeSessionActive = false
@@ -578,6 +582,12 @@ final class ChargingManager: ObservableObject {
     /// If stopChargingWhenSleeping is on: inhibits charging so the battery doesn't
     /// charge to 100% during sleep. Also stops discharge (pointless during sleep).
     func handleWillSleep() {
+        if nativeLimitAvailable {
+            modeBeforeSleep = mode
+            // Firmware keeps the last ceiling while the app sleeps. No new
+            // temperature samples or threshold transitions are promised asleep.
+            return
+        }
         modeBeforeSleep = mode
         log.notice("Will sleep: mode=\(self.mode.displayName, privacy: .public), stopCharging=\(self.settings.stopChargingWhenSleeping, privacy: .public), disableSleep=\(self.settings.disableSleepUntilChargeLimit, privacy: .public)")
 
@@ -618,6 +628,12 @@ final class ChargingManager: ObservableObject {
     /// Called by AppDelegate after macOS wakes from sleep.
     /// Clears stale state and re-evaluates — the state machine handles all transitions.
     func handleDidWake(_ currentState: BatteryState) {
+        if nativeLimitAvailable {
+            modeBeforeSleep = nil
+            nativeLastAttempt = .distantPast
+            evaluateNativeLimit(currentState)
+            return
+        }
         let previousMode = modeBeforeSleep
         let pct = currentState.effectivePercentage(useHardware: settings.useHardwareBatteryPercentage)
         log.notice("Did wake: modeBeforeSleep=\(previousMode?.displayName ?? "nil", privacy: .public), battery=\(pct, privacy: .public)%, pluggedIn=\(currentState.isPluggedIn, privacy: .public), isCharging=\(currentState.isCharging, privacy: .public)")
@@ -688,7 +704,7 @@ final class ChargingManager: ObservableObject {
 
         let pct = state.effectivePercentage(useHardware: settings.useHardwareBatteryPercentage)
         // Keep awake while actively working toward the charge limit
-        let shouldPrevent = state.isPluggedIn
+        let shouldPrevent = chargeControlAvailable && state.isPluggedIn
             && pct != settings.chargeLimit
             && (mode == .charging || mode == .discharging)
 
@@ -733,18 +749,21 @@ final class ChargingManager: ObservableObject {
         evaluateNativeLimit(battery.batteryState)
     }
 
-    /// Experimental fixed ceiling: hardware truth drives the displayed state.
-    /// Custom thermal inhibition, force-discharge and custom hysteresis are absent.
+    /// The same user intents are available through a delayed firmware ceiling.
+    /// Mode describes the request; the UI separately reports observed charging.
     private func evaluateNativeLimit(_ state: BatteryState) {
-        guard state.percentage > 0 || state.isPluggedIn else { return }
-        if !state.isPluggedIn { topUpRequested = false }
+        let now = nativeNow()
         lastIsCharging = state.isCharging
-        mode = !state.isPluggedIn ? .onBattery : (topUpRequested ? .topUp : (state.isCharging ? .charging : .paused))
-        guard isHelperInstalled, !nativeCommandPending else { return }
-        guard settings.nativeChargeLimitEnabled else {
+        defer { updateSleepAssertion(state) }
+        guard isHelperInstalled, settings.nativeChargeLimitEnabled else {
+            mode = state.isPluggedIn ? (state.isCharging ? .charging : .idle) : .onBattery
             topUpRequested = false
-            guard nativeSessionActive, Date().timeIntervalSince(nativeLastAttempt) >= 5 else { return }
-            nativeLastAttempt = Date()
+            nativePolicy = NativeChargingPolicy()
+            nativePauseStarted = nil
+            nativePauseWarning = nil
+            guard isHelperInstalled, nativeSessionActive, !nativeCommandPending,
+                  now.timeIntervalSince(nativeLastAttempt) >= 5 else { return }
+            nativeLastAttempt = now
             nativeCommandPending = true
             helper.resetToDefaults { [weak self] success, error in
                 Task { @MainActor in
@@ -756,20 +775,48 @@ final class ChargingManager: ObservableObject {
             }
             return
         }
-        // Never lower the target below the observed level: firmware can actively
-        // drain to a lower target. The helper independently checks its fresh read.
-        let target = max(topUpRequested ? 100 : settings.chargeLimit, state.percentage)
-        guard nativeLimitTarget != target || Date().timeIntervalSince(nativeLastAttempt) >= 60 else { return }
-        guard Date().timeIntervalSince(nativeLastAttempt) >= 5 else { return }
-        nativeLastAttempt = Date()
+        guard state.percentage > 0 || state.isPluggedIn else {
+            mode = .idle
+            nativePauseWarning = "Mesure de batterie indisponible ; dernière consigne conservée."
+            return
+        }
+        if !state.isPluggedIn { topUpRequested = false }
+        let decision = nativePolicy.evaluate(state, limit: settings.chargeLimit,
+            resumeAt: settings.sailingModeEnabled ? settings.sailingLowerBound : nil,
+            heatLimit: settings.heatProtectionEnabled ? settings.heatProtectionTemp : nil,
+            topUp: topUpRequested, now: now)
+        mode = decision.mode
+        let asksForPause = [.paused, .sailing, .heatProtection].contains(mode)
+        if asksForPause && state.isCharging {
+            if nativePauseStarted == nil { nativePauseStarted = now }
+            nativePauseWarning = now.timeIntervalSince(nativePauseStarted!) >= 90
+                ? "macOS charge encore malgré la demande de pause. Arrêt non confirmé ; une calibration système peut dépasser la consigne."
+                : nil
+        } else {
+            nativePauseStarted = nil
+            nativePauseWarning = nil
+        }
+        if mode == .heatProtection && state.percentage < 20 {
+            nativePauseWarning = "Sous 20 %, ce moteur ne peut pas demander une pause au niveau courant. Les protections de macOS restent actives."
+        }
+        let target = decision.target
+        guard !nativeCommandPending,
+              nativeLimitTarget != target || now.timeIntervalSince(nativeLastAttempt) >= 60,
+              now.timeIntervalSince(nativeLastAttempt) >= 5 else { return }
+        nativeLastAttempt = now
         nativeCommandPending = true
-        nativeSessionActive = true // also require restore after a failed/uncertain call
+        nativeSessionActive = true
         helper.setNativeChargeLimit(percent: target) { [weak self] success, error in
             Task { @MainActor in
                 guard let self else { return }
                 self.nativeCommandPending = false
                 self.nativeLimitTarget = success ? target : nil
                 self.nativeLimitIssue = success ? nil : (error ?? "La consigne native n’a pas été acceptée.")
+                if success {
+                    log.info("Native target acknowledged: \(target, privacy: .public)% — physical state remains authoritative")
+                } else {
+                    log.error("Native target failed: \(error ?? "unknown", privacy: .public)")
+                }
             }
         }
     }

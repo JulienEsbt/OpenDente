@@ -41,7 +41,7 @@ struct ChargeControlsView: View {
                 ForEach(ChargeProfile.allCases) { profile in profileButton(profile) }
             }
             .disabled(!controlAvailable)
-            Text(charging.nativeLimitAvailable ? "Reprise gérée par macOS, avec environ 5 points d’écart. Seuil personnalisé indisponible." : settings.sailingModeEnabled
+            Text(settings.sailingModeEnabled
                  ? "La charge reprend sous \(settings.sailingLowerBound) %. Le niveau peut baisser naturellement entre les deux seuils."
                  : "La charge reprend dès que le niveau passe sous \(settings.chargeLimit) %.")
                 .font(.caption).foregroundStyle(.secondary)
@@ -69,18 +69,15 @@ struct ChargeControlsView: View {
                 .help("Charge ponctuelle à 100 %, avec retour à la limite habituelle au débranchement")
             }
             HStack {
-                if charging.nativeLimitAvailable {
-                    Label("Protection thermique de macOS", systemImage: "thermometer.medium")
-                        .font(.caption2).foregroundStyle(.secondary)
-                } else if settings.heatProtectionEnabled {
-                    Label("Protection thermique", systemImage: "thermometer.medium")
+                if settings.heatProtectionEnabled {
+                    Label("Pause thermique à \(TemperatureDisplay.format(settings.heatProtectionTemp, fractionDigits: 0))", systemImage: "thermometer.medium")
                         .font(.caption2).foregroundStyle(.secondary)
                         .help("Pause à partir de \(TemperatureDisplay.format(settings.heatProtectionTemp))")
                 }
                 Spacer(minLength: 4)
                 if charging.mode == .discharging {
                     Button("Arrêter la décharge") { charging.stopDischarge() }.controlSize(.small)
-                } else {
+                } else if !charging.nativeLimitAvailable {
                     Menu {
                         Button("Décharger jusqu’à \(settings.chargeLimit) %") { charging.startDischarge() }
                             .disabled(!canDischarge)
@@ -118,8 +115,8 @@ struct ChargeControlsView: View {
             .contentShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(charging.nativeLimitAvailable ? "Profil \(profile.title), limite \(profile.chargeLimit) pour cent, reprise gérée par macOS" : "Profil \(profile.title), limite \(profile.chargeLimit) pour cent, reprise sous \(profile.resumeAt) pour cent")
+        .accessibilityLabel("Profil \(profile.title), limite \(profile.chargeLimit) pour cent, reprise sous \(profile.resumeAt) pour cent")
         .accessibilityValue(selected ? "Sélectionné" : "Non sélectionné")
-        .help(charging.nativeLimitAvailable ? "Plafond \(profile.chargeLimit) %, reprise et protection thermique gérées par macOS" : "Limite \(profile.chargeLimit) %, reprise sous \(profile.resumeAt) %, protection thermique active, décharge automatique désactivée")
+        .help("Limite \(profile.chargeLimit) %, reprise sous \(profile.resumeAt) %, protection thermique active, décharge automatique désactivée")
     }
 }

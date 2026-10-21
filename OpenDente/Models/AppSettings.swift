@@ -41,15 +41,15 @@ final class AppSettings: ObservableObject {
         set { objectWillChange.send(); defaults.set(newValue, forKey: "sailingModeEnabled") }
     }
 
-    /// Sailing range percentage (2-25), clamped on set
+    /// Sailing range percentage (2-90), clamped on set
     var sailingRange: Int {
         get {
             let v = defaults.integer(forKey: "sailingRange")
-            return v == 0 ? 10 : min(25, max(2, v))
+            return v == 0 ? 10 : min(90, max(2, v))
         }
         set {
             objectWillChange.send()
-            defaults.set(min(25, max(2, newValue)), forKey: "sailingRange")
+            defaults.set(min(90, max(2, newValue)), forKey: "sailingRange")
         }
     }
 
@@ -64,7 +64,7 @@ final class AppSettings: ObservableObject {
     var heatProtectionTemp: Double {
         get {
             let v = defaults.double(forKey: "heatProtectionTemp")
-            return (v == 0 ? 35.0 : v).clamped(to: 30...45)
+            return (v == 0 ? 40.0 : v).clamped(to: 30...45)
         }
         set {
             objectWillChange.send()

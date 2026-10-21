@@ -41,6 +41,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupEventMonitor()
         setupSleepWakeNotifications()
 
+        // An upgrade needs a visible entry point, even for a menu-bar-only app.
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        if settings.defaults.string(forKey: "lastOpenedBuild") != version {
+            settings.defaults.set(version, forKey: "lastOpenedBuild")
+            togglePopover()
+        }
+
         // Check helper status and prompt for registration if needed
         checkHelperStatus()
 
@@ -94,6 +101,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
             .store(in: &cancellables)
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        guard !Self.isRunningTests else { return false }
+        if !flag && !popover.isShown { togglePopover() }
+        return true
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {

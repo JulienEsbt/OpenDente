@@ -15,6 +15,7 @@ final class BatteryCareRegressionTests: XCTestCase {
         try await super.setUp()
         suiteName = "com.opendente.tests.battery-care.\(UUID().uuidString)"
         settings = AppSettings(defaults: UserDefaults(suiteName: suiteName)!)
+        settings.heatProtectionTemp = 35 // These regression scenarios deliberately cross a 35 °C threshold.
         settings.controlMagSafeLED = false
         settings.showNotifications = false
         battery = BatteryService(settings: settings)

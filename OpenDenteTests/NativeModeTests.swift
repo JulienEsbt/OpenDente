@@ -49,12 +49,12 @@ final class NativeModeTests: XCTestCase {
         manager.evaluateState(battery.batteryState)
         XCTAssertEqual(helper.calls, [.nativeLimit(95)])
     }
-    func testThermalThresholdDoesNotClaimNativeThermalInhibition() {
+    func testThermalThresholdRequestsNativeHoldWithoutSMC() {
         settings.nativeChargeLimitEnabled = true
         settings.heatProtectionEnabled = true
         manager.evaluateState(makeBatteryState(percentage: 50, isCharging: true, temperature: 45))
-        XCTAssertEqual(helper.calls, [.nativeLimit(80)])
-        XCTAssertNotEqual(manager.mode, .heatProtection)
+        XCTAssertEqual(helper.calls, [.nativeLimit(50)])
+        XCTAssertEqual(manager.mode, .heatProtection)
     }
     func testTopUpRestoresUsualTargetAtUnplugWithoutChangingSettings() async {
         settings.nativeChargeLimitEnabled = true
@@ -82,4 +82,69 @@ final class NativeModeTests: XCTestCase {
         manager.evaluateState(battery.batteryState)
         XCTAssertEqual(helper.calls, [.nativeLimit(80)])
     }
+    func testNativeFailureIsVisibleWithoutCallingLegacyChargingControls() async {
+        settings.nativeChargeLimitEnabled = true
+        helper.shouldFail = true
+        manager.evaluateState(battery.batteryState)
+        for _ in 0..<10 { await Task.yield() }
+        XCTAssertNil(manager.nativeLimitTarget)
+        XCTAssertEqual(manager.nativeLimitIssue, "native mock failure")
+        XCTAssertEqual(helper.calls, [.nativeLimit(80)])
+    }
+
+    func testNativeSleepAndWakeNeverUseLegacyInhibitOrLEDCommands() async {
+        settings.nativeChargeLimitEnabled = true
+        settings.stopChargingWhenSleeping = true
+        manager.evaluateState(battery.batteryState)
+        for _ in 0..<10 { await Task.yield() }
+        manager.handleWillSleep()
+        manager.handleDidWake(battery.batteryState)
+        XCTAssertTrue(helper.calls.allSatisfy { if case .nativeLimit = $0 { return true }; return false })
+    }
+
+    func testNativeChargeCanPreventIdleSleepAndReleasesItWhenDisabled() async {
+        let sleep = MockSleepAssertionControl()
+        manager = ChargingManager(settings: settings, helper: helper, battery: battery, sleepAssertion: sleep)
+        manager.nativeLimitAvailable = true
+        manager.isHelperInstalled = true
+        settings.nativeChargeLimitEnabled = true
+        settings.disableSleepUntilChargeLimit = true
+        manager.evaluateState(battery.batteryState)
+        XCTAssertTrue(sleep.isPreventingSleep)
+        for _ in 0..<10 { await Task.yield() }
+        settings.nativeChargeLimitEnabled = false
+        manager.releaseNativeLimitIfDisabled()
+        XCTAssertFalse(sleep.isPreventingSleep)
+    }
+
+    func testThermalHoldRequestRetainsTopUpAndSurfacesAnUnconfirmedPhysicalStop() async {
+        settings.nativeChargeLimitEnabled = true
+        settings.heatProtectionTemp = 40
+        var clock = Date(timeIntervalSince1970: 1000)
+        manager.nativeNow = { clock }
+        battery.batteryState = makeBatteryState(percentage: 50, isCharging: true, temperature: 41)
+        manager.startTopUp()
+        XCTAssertTrue(manager.topUpRequested)
+        XCTAssertEqual(manager.mode, .heatProtection)
+        XCTAssertEqual(helper.calls, [.nativeLimit(50)])
+        for _ in 0..<10 { await Task.yield() }
+        clock = clock.addingTimeInterval(91)
+        manager.evaluateState(battery.batteryState)
+        XCTAssertNotNil(manager.nativePauseWarning)
+        XCTAssertEqual(manager.mode, .heatProtection)
+        manager.cancelTopUp()
+        XCTAssertFalse(manager.topUpRequested)
+        XCTAssertEqual(manager.mode, .heatProtection)
+    }
+
+    func testDisablingNativeModeRestoresEvenWhenBatteryReadingIsLost() async {
+        settings.nativeChargeLimitEnabled = true
+        manager.evaluateState(battery.batteryState)
+        for _ in 0..<10 { await Task.yield() }
+        battery.batteryState = .unknown
+        settings.nativeChargeLimitEnabled = false
+        manager.releaseNativeLimitIfDisabled()
+        XCTAssertEqual(helper.calls, [.nativeLimit(80), .resetToDefaults])
+    }
+
 }
