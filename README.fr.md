@@ -48,8 +48,8 @@ Température, capacité, cycles, puissances, courant et informations du chargeur
 <summary><strong>Pause thermique, signaux MagSafe et guide intégré</strong></summary>
 
 <p align="center">
-  <img src="docs/images/thermal.jpg" width="420" alt="Réglages de la pause thermique supplémentaire et du fonctionnement en arrière-plan">
-  <img src="docs/images/magsafe.jpg" width="420" alt="Six règles de signalisation MagSafe et boutons d’aperçu de dix secondes">
+  <img src="docs/images/thermal.jpg" width="390" alt="Réglages de la pause thermique supplémentaire et du fonctionnement en arrière-plan">
+  <img src="docs/images/magsafe.jpg" width="390" alt="Six règles de signalisation MagSafe et boutons d’aperçu de dix secondes">
 </p>
 <p align="center">
   <img src="docs/images/guide.jpg" width="560" alt="Recherche dans le guide hors ligne, avec le mode stockage et les commandes de charge">

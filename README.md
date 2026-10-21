@@ -48,8 +48,8 @@ Battery temperature, capacity, cycles, power, current and adapter information re
 <summary><strong>Thermal controls, MagSafe signals and the offline guide</strong></summary>
 
 <p align="center">
-  <img src="docs/images/thermal.jpg" width="420" alt="Additional thermal pause and background-operation settings">
-  <img src="docs/images/magsafe.jpg" width="420" alt="Six customizable MagSafe signals and ten-second previews">
+  <img src="docs/images/thermal.jpg" width="390" alt="Additional thermal pause and background-operation settings">
+  <img src="docs/images/magsafe.jpg" width="390" alt="Six customizable MagSafe signals and ten-second previews">
 </p>
 <p align="center">
   <img src="docs/images/guide.jpg" width="560" alt="Searchable offline guide showing the storage mode and everyday charge controls">
