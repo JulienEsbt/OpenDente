@@ -215,3 +215,49 @@ extension NativeModeTests {
         XCTAssertTrue(manager.topUpRequested)
     }
 }
+
+extension NativeModeTests {
+    func testPersistentReturnToCapWorksOnFirstEvaluationAndCanBeStopped() async {
+        settings.nativeChargeLimitEnabled = true
+        settings.nativeReturnToLimitEnabled = true
+        XCTAssertTrue(AppSettings(defaults: settings.defaults).nativeReturnToLimitEnabled)
+        battery.batteryState = makeBatteryState(percentage: 93, isCharging: false)
+        manager.evaluateState(battery.batteryState)
+        XCTAssertEqual(helper.calls, [.dischargeToLimit(80)])
+        XCTAssertEqual(manager.mode, .discharging)
+        for _ in 0..<10 { await Task.yield() }
+        manager.stopDischarge()
+        XCTAssertFalse(settings.nativeReturnToLimitEnabled)
+        XCTAssertEqual(helper.calls.last, .nativeLimit(93))
+        XCTAssertEqual(settings.chargeLimit, 80)
+    }
+    func testNativeSleepPreservesCeilingAndWakeResendsWithoutResettingToFull() async {
+        settings.nativeChargeLimitEnabled = true
+        settings.nativeReturnToLimitEnabled = true
+        battery.batteryState = makeBatteryState(percentage: 93, isCharging: false)
+        manager.evaluateState(battery.batteryState)
+        for _ in 0..<10 { await Task.yield() }
+        XCTAssertEqual(manager.nativeLimitTarget, 80)
+        helper.clearCalls()
+        manager.handleWillSleep()
+        XCTAssertTrue(helper.calls.isEmpty)
+        XCTAssertEqual(manager.nativeLimitTarget, 80)
+        manager.handleDidWake(battery.batteryState)
+        XCTAssertEqual(helper.calls, [.dischargeToLimit(80)])
+        XCTAssertFalse(helper.calls.contains(.nativeLimit(100)))
+        XCTAssertFalse(helper.calls.contains(.resetToDefaults))
+    }
+    func testTopUpCanOverrideReturnThenCancelResumesReturn() async {
+        settings.nativeChargeLimitEnabled = true
+        settings.nativeReturnToLimitEnabled = true
+        battery.batteryState = makeBatteryState(percentage: 93, isCharging: false)
+        manager.evaluateState(battery.batteryState)
+        for _ in 0..<10 { await Task.yield() }
+        manager.startTopUp()
+        XCTAssertEqual(helper.calls.last, .nativeLimit(100))
+        for _ in 0..<10 { await Task.yield() }
+        manager.cancelTopUp()
+        XCTAssertEqual(helper.calls.last, .dischargeToLimit(80))
+        XCTAssertTrue(settings.nativeReturnToLimitEnabled)
+    }
+}

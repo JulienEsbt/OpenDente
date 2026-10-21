@@ -204,6 +204,11 @@ struct PopoverView: View {
                     ? "Pause thermique demandée ; macOS charge encore."
                     : "Charge arrêtée. Reprise après refroidissement de 2 °C et délai de 5 min."
             }
+            if charging.mode == .discharging {
+                return (state.amperage ?? 0) < -0.05
+                    ? "Descente sur secteur vers \(settings.chargeLimit) %. Puis maintien, sans cycle forcé."
+                    : "Retour à \(settings.chargeLimit) % demandé. Décharge non encore confirmée."
+            }
             if [.paused, .sailing].contains(charging.mode) {
                 if state.isCharging { return "Pause demandée à macOS ; la batterie charge encore." }
                 if displayPercentage > settings.chargeLimit { return "Maintien à \(target) %. Baisse naturelle vers \(settings.chargeLimit) %, sans décharge forcée." }

@@ -237,6 +237,15 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         }
     }
 
+    func dischargeToLimit(percent: Int, reply: @escaping (Bool, String?) -> Void) {
+        perform(reply) {
+            guard chargingAPI == .unknown, NativeChargeLimit.isAvailable else {
+                throw NativeLimitSession.Failure(message: "Native return to cap unavailable on this backend")
+            }
+            try native.dischargeToLimit(percent)
+        }
+    }
+
     func enableCharging(reply: @escaping (Bool, String?) -> Void) {
         perform(reply) { try hardware.restoreDefaults(resetLED: false) }
     }

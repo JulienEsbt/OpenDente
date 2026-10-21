@@ -7,6 +7,7 @@ private let log = Logger(subsystem: "com.opendente.app", category: "Charging")
 
 /// Protocol for SMC charging control operations. Enables testing without real hardware.
 protocol ChargingControl: Sendable {
+    func dischargeToLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?)
     func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?)
     func setNativeChargeLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?)
     func enableCharging(completion: (@Sendable (Bool, String?) -> Void)?)
@@ -18,6 +19,9 @@ protocol ChargingControl: Sendable {
 }
 
 extension ChargingControl {
+    func dischargeToLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
+        completion?(false, "Return to cap unavailable")
+    }
     func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?) {
         completion?(false, "Storage preparation unavailable")
     }
@@ -77,6 +81,7 @@ final class ChargingManager: ObservableObject {
     private var nativeCommandPending = false
     private var nativeSessionActive = false
     private var nativeLastWasStorageDrain = false
+    private var nativeLastWasLimitDrain = false
     var isPreparingStorage: Bool { nativeLimitAvailable && settings.storagePreparationEnabled }
     var activeChargeLimit: Int { isPreparingStorage ? 50 : settings.chargeLimit }
     private var helperHandshakeInProgress = false
@@ -730,7 +735,7 @@ final class ChargingManager: ObservableObject {
         let pct = state.effectivePercentage(useHardware: settings.useHardwareBatteryPercentage)
         // Keep awake while actively working toward the charge limit
         let shouldPrevent = chargeControlAvailable && state.isPluggedIn
-            && pct != settings.chargeLimit
+            && pct != activeChargeLimit
             && (mode == .charging || mode == .discharging)
 
         if shouldPrevent && !isPreventingSleep {
@@ -810,7 +815,8 @@ final class ChargingManager: ObservableObject {
         let decision = nativePolicy.evaluate(state, limit: settings.chargeLimit,
             resumeAt: settings.sailingModeEnabled ? settings.sailingLowerBound : nil,
             heatLimit: settings.heatProtectionEnabled ? settings.heatProtectionTemp : nil,
-            topUp: topUpRequested, now: now, storage: settings.storagePreparationEnabled)
+            topUp: topUpRequested, now: now, storage: settings.storagePreparationEnabled,
+            returnToLimit: settings.nativeReturnToLimitEnabled)
         mode = decision.mode
         let asksForPause = [.paused, .sailing, .heatProtection].contains(mode)
         if asksForPause && state.isCharging {
@@ -827,12 +833,13 @@ final class ChargingManager: ObservableObject {
         }
         let target = decision.target
         guard !nativeCommandPending,
-              nativeLimitTarget != target || nativeLastWasStorageDrain != decision.allowsStorageDrain || now.timeIntervalSince(nativeLastAttempt) >= 60,
+              nativeLimitTarget != target || nativeLastWasStorageDrain != decision.allowsStorageDrain || nativeLastWasLimitDrain != decision.allowsLimitDrain || now.timeIntervalSince(nativeLastAttempt) >= 60,
               now.timeIntervalSince(nativeLastAttempt) >= 5 else { return }
         nativeLastAttempt = now
         nativeCommandPending = true
         nativeSessionActive = true
         nativeLastWasStorageDrain = decision.allowsStorageDrain
+        nativeLastWasLimitDrain = decision.allowsLimitDrain
         let completion: @Sendable (Bool, String?) -> Void = { [weak self] success, error in
             Task { @MainActor in
                 guard let self else { return }
@@ -847,6 +854,7 @@ final class ChargingManager: ObservableObject {
             }
         }
         if decision.allowsStorageDrain { helper.prepareStorage(completion: completion) }
+        else if decision.allowsLimitDrain { helper.dischargeToLimit(percent: target, completion: completion) }
         else { helper.setNativeChargeLimit(percent: target, completion: completion) }
     }
 
@@ -938,6 +946,12 @@ final class ChargingManager: ObservableObject {
     /// Stop discharge
     func stopDischarge() {
         if isPreparingStorage { cancelStoragePreparation(); return }
+        if nativeLimitAvailable {
+            settings.nativeReturnToLimitEnabled = false
+            nativeLastAttempt = .distantPast
+            evaluateNativeLimit(battery.batteryState)
+            return
+        }
         log.notice("Discharge stopped at \(self.battery.batteryState.percentage, privacy: .public)%")
         forceDischarge(false)
         mode = .idle

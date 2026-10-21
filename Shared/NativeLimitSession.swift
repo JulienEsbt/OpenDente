@@ -50,6 +50,15 @@ final class NativeLimitSession {
         try applyWithRecovery(50)
     }
 
+    /// Separate explicit intent: below-current targets are never accepted by setLimit.
+    func setDischargeLimit(_ percent: Int, currentPercentage: Int) throws {
+        guard (20...100).contains(percent), (0...100).contains(currentPercentage),
+              percent <= currentPercentage else {
+            throw Failure(message: "Retour au plafond refusé : cible ou niveau courant incohérent.")
+        }
+        try applyWithRecovery(percent)
+    }
+
     private func applyWithRecovery(_ percent: Int) throws {
         if restorationPending { try restore() }
         if try load() == nil { try save(capture()) }

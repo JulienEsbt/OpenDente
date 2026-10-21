@@ -178,6 +178,14 @@ final class HelperClient: @unchecked Sendable {
         }
     }
 
+    func dischargeToLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
+        withProxy { helper in
+            helper.dischargeToLimit(percent: percent) { success, error in
+                if let completion { DispatchQueue.main.async { completion(success, error) } }
+            }
+        }
+    }
+
     func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?) {
         withProxy { helper in
             helper.prepareStorage { success, error in

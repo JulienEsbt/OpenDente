@@ -9,6 +9,7 @@ final class MockChargingControl: ChargingControl, @unchecked Sendable {
     enum Call: Equatable, Sendable {
         case nativeLimit(Int)
         case prepareStorage
+        case dischargeToLimit(Int)
         case enableCharging
         case inhibitCharging
         case forceDischarge(enable: Bool)
@@ -24,6 +25,11 @@ final class MockChargingControl: ChargingControl, @unchecked Sendable {
     /// If true, completion reports failure (simulates helper crash/disconnect)
     var shouldFailLED = false
     var shouldFail = false
+
+    func dischargeToLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
+        calls.append(.dischargeToLimit(percent))
+        completion?(!shouldFail, shouldFail ? "return mock failure" : nil)
+    }
 
     func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?) {
         calls.append(.prepareStorage)

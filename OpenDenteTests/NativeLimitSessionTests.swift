@@ -34,6 +34,17 @@ final class NativeLimitSessionTests: XCTestCase {
         XCTAssertEqual(store.events, ["save", "apply:70", "apply:100"])
         XCTAssertEqual(store.marker, store.original)
     }
+    func testExplicitLimitDrainIsJournaledAndRejectsInvalidOrHigherTargets() throws {
+        let store = Store(), session = store.session()
+        for (target, current) in [(19, 93), (101, 100), (80, 79), (80, 101), (80, -1)] {
+            XCTAssertThrowsError(try session.setDischargeLimit(target, currentPercentage: current))
+        }
+        XCTAssertTrue(store.events.isEmpty)
+        try session.setDischargeLimit(80, currentPercentage: 93)
+        XCTAssertEqual(store.events, ["save", "apply:80"])
+        try session.setLimit(93, currentPercentage: 93)
+        XCTAssertEqual(store.marker, store.original)
+    }
     func testInvalidOrLowerTargetNeverWrites() {
         let store = Store(), session = store.session()
         for (target, current) in [(19, 10), (101, 50), (70, 85), (80, -1), (80, 101)] {

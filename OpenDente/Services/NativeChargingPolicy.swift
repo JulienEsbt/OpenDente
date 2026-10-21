@@ -14,10 +14,11 @@ struct NativeChargingPolicy {
         let mode: ChargingMode
         let target: Int
         var allowsStorageDrain = false
+        var allowsLimitDrain = false
     }
 
     mutating func evaluate(_ state: BatteryState, limit: Int, resumeAt: Int?,
-                           heatLimit: Double?, topUp: Bool, now: Date, storage: Bool = false) -> Decision {
+                           heatLimit: Double?, topUp: Bool, now: Date, storage: Bool = false, returnToLimit: Bool = false) -> Decision {
         let level = state.percentage
         guard state.isPluggedIn else {
             chargingToLimit = false
@@ -48,6 +49,10 @@ struct NativeChargingPolicy {
             chargingToLimit = false
             return Decision(mode: level > 50 ? .discharging : (level < 50 ? .charging : .paused),
                             target: 50, allowsStorageDrain: level > 50)
+        }
+        if returnToLimit && level > limit {
+            chargingToLimit = false
+            return Decision(mode: .discharging, target: limit, allowsLimitDrain: true)
         }
         if level >= limit { chargingToLimit = false }
         else if resumeAt == nil || level < resumeAt! { chargingToLimit = true }

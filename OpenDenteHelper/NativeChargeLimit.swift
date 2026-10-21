@@ -46,6 +46,14 @@ final class NativeChargeLimit {
         try session.setStorageLimit(currentPercentage: reading.percentage)
     }
 
+    func dischargeToLimit(_ percent: Int) throws {
+        let reading = try currentReading()
+        guard reading.description[kIOPSPowerSourceStateKey] as? String == kIOPSACPowerValue else {
+            throw NativeLimitSession.Failure(message: "Le retour au plafond nécessite un chargeur branché.")
+        }
+        try session.setDischargeLimit(percent, currentPercentage: reading.percentage)
+    }
+
     private func currentReading() throws -> InternalBatteryReading {
         guard Self.isAvailable,
               let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),

@@ -244,8 +244,13 @@ struct ChargingTab: View {
                     .accessibilityLabel("Limite habituelle de charge")
                     Text("\(settings.chargeLimit) %").monospacedDigit().frame(width: 50, alignment: .trailing)
                 }
-                Text("Si la batterie dépasse déjà cette limite, elle baisse naturellement. Aucune décharge forcée n’est nécessaire.")
-                    .font(.caption).foregroundStyle(.secondary)
+                if charging.nativeLimitAvailable {
+                    Toggle("Redescendre au plafond sur secteur", isOn: $settings.nativeReturnToLimitEnabled)
+                    Text(settings.nativeReturnToLimitEnabled
+                         ? "Au lancement, au branchement ou après un changement de limite, un niveau trop élevé redescend vers le plafond choisi. Ensuite le Mac reste alimenté par le secteur ; aucun cycle continu n’est forcé."
+                         : "Au-dessus du plafond, le niveau reste maintenu et baisse naturellement à l’usage. Active le retour au plafond pour demander une descente sur secteur.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
             Section("Seuil de reprise") {
                 Toggle("Choisir quand la charge reprend", isOn: $settings.sailingModeEnabled)
@@ -297,7 +302,7 @@ struct ChargingTab: View {
                 Text("Le panneau peut rester fermé. Cette option retarde seulement la veille automatique pendant la charge ; fermer le capot reste une demande de veille.")
                     .font(.caption).foregroundStyle(.secondary)
                 if charging.nativeLimitAvailable {
-                    Text("Pendant la veille, macOS conserve le dernier plafond transmis. OpenDente réévalue les seuils et la température au réveil. Désactiver le contrôle ou quitter l’app restaure le réglage Apple sauvegardé.")
+                    Text("Panneau fermé : OpenDente continue en arrière-plan. Mac en veille : ses mesures s’arrêtent, mais macOS conserve la dernière consigne. La veille ne retire pas la limite et ne demande pas 100 %. Au réveil, les contrôles reprennent. Quitter l’app ou éteindre le Mac demande la restauration de la limite Apple précédente.")
                         .font(.caption).foregroundStyle(.secondary)
                     DisclosureGroup("Autres commandes du moteur SMC") {
                         Text("La décharge libre vers un plafond quelconque, le pourcentage matériel pour la régulation et la pause dédiée à la veille ne sont pas proposés par ce moteur natif. Les anciens réglages SMC sont conservés pour les Mac compatibles.")

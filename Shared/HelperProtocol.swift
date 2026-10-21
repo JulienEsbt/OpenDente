@@ -22,6 +22,9 @@ import Foundation
     /// below the current level. Authenticated and journaled like ordinary limits.
     func prepareStorage(reply: @escaping (Bool, String?) -> Void)
 
+    /// Explicit return to the user-selected cap. Fresh internal-battery/AC checks.
+    func dischargeToLimit(percent: Int, reply: @escaping (Bool, String?) -> Void)
+
     /// Heartbeat from app to keep watchdog alive
     func heartbeat(reply: @escaping (Bool) -> Void)
 

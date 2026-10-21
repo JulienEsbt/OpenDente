@@ -69,7 +69,7 @@ struct ChargeControlsView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent).controlSize(.large)
-                .disabled(!controlAvailable || !state.isPluggedIn || (charging.mode == .discharging && !charging.isPreparingStorage))
+                .disabled(!controlAvailable || !state.isPluggedIn || (charging.mode == .discharging && !charging.nativeLimitAvailable))
                 .help("Charge ponctuelle à 100 %, avec retour à la limite habituelle au débranchement")
             }
             HStack {

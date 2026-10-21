@@ -40,6 +40,7 @@ final class NativeChargeLimit {
     func restore() throws { Self.restores += 1 }
     func setLimit(_ percent: Int) throws {}
     func prepareStorage() throws {}
+    func dischargeToLimit(_ percent: Int) throws {}
 }
 
 final class SMCService {
@@ -198,6 +199,11 @@ struct SessionLifecycleTests {
             helper.retryPendingRestoration()
             try require(!helper.hasPendingRestoration && !HelperState.ledOwned, "LED retry did not finish")
             try require(NativeChargeLimit.restores == 0, "successful LED recovery reset native charge policy")
+        }
+        try test("unauthenticated return to cap cannot change charging", nativeOnly: true) { helper, smc in
+            var accepted = true
+            withRequest(NSXPCConnection()) { helper.dischargeToLimit(percent: 80) { ok, _ in accepted = ok } }
+            try require(!accepted && smc.writes.isEmpty, "unauthenticated below-current target accepted")
         }
         print("\(count) lifecycle tests passed; no real XPC, signature or hardware tested.")
     }

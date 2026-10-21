@@ -156,6 +156,12 @@ final class AppSettings: ObservableObject {
     // MARK: - General
 
     /// Opt-in: private PowerUI implementation with firmware-controlled hysteresis.
+    /// Explicit opt-in: drain on external power only when above the usual cap.
+    var nativeReturnToLimitEnabled: Bool {
+        get { defaults.bool(forKey: "nativeReturnToLimitEnabled") }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "nativeReturnToLimitEnabled") }
+    }
+
     var storagePreparationEnabled: Bool {
         get { defaults.bool(forKey: "storagePreparationEnabled") }
         set { objectWillChange.send(); defaults.set(newValue, forKey: "storagePreparationEnabled") }
