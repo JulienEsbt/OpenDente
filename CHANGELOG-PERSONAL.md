@@ -4,6 +4,9 @@
 
 ### Corrections
 
+- Extraction des certificats avec la syntaxe `--extract-certificates=préfixe` :
+  le contrôle des signatures ne traite plus le préfixe temporaire comme un fichier
+  de code à vérifier.
 - Fixtures XCTest exécutées sur le MainActor via les points d'entrée asynchrones ;
   tests de vues isolés sur le MainActor. Les 299 tests natifs réussissent sans
   avertissement Swift de concurrence, avec les mêmes assertions.

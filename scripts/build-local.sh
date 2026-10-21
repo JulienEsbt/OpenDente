@@ -55,8 +55,8 @@ codesign --verify --strict --verbose=2 "$helper_path"
 certificate_dir="$(mktemp -d "${TMPDIR:-/tmp}/opendente-certificates.XXXXXX")"
 # The trap removes only the private temporary directory created immediately above.
 trap 'rm -rf -- "$certificate_dir"' EXIT
-codesign -d --extract-certificates "$certificate_dir/app-" "$app_path"
-codesign -d --extract-certificates "$certificate_dir/helper-" "$helper_path"
+codesign -d --extract-certificates="$certificate_dir/app-" "$app_path"
+codesign -d --extract-certificates="$certificate_dir/helper-" "$helper_path"
 if [[ ! -s "$certificate_dir/app-0" || ! -s "$certificate_dir/helper-0" ]]; then
   echo 'Signature sans certificat : le service refuserait la connexion.' >&2
   exit 3
