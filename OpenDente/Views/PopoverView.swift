@@ -1,424 +1,223 @@
 import SwiftUI
 
-/// Main popover content shown when clicking the status bar icon
+/// Native menu-bar dashboard. Requested hardware changes remain visibly pending.
 struct PopoverView: View {
     @ObservedObject var battery = BatteryService.shared
     @ObservedObject var charging = ChargingManager.shared
     @ObservedObject var settings = AppSettings.shared
     @Environment(\.openSettings) private var openSettingsAction
 
+    private var state: BatteryState { battery.batteryState }
+    private var hasReading: Bool { state != .unknown }
     private var displayPercentage: Int {
-        battery.batteryState.effectivePercentage(useHardware: settings.useHardwareBatteryPercentage)
+        state.effectivePercentage(useHardware: settings.useHardwareBatteryPercentage)
     }
 
-    private var adapterVisible: Bool {
-        Self.adapterVisible(isPluggedIn: battery.batteryState.isPluggedIn, mode: charging.mode)
-    }
-
-    /// Adapter details show when charger is connected — including during force discharge
-    /// where isPluggedIn may be false (IOKit reports battery source) but charger is physically present.
     static func adapterVisible(isPluggedIn: Bool, mode: ChargingMode) -> Bool {
         isPluggedIn || mode == .discharging
     }
 
-    private var canDischarge: Bool {
-        Self.canDischarge(
-            isPluggedIn: battery.batteryState.isPluggedIn,
-            percentage: displayPercentage,
-            chargeLimit: settings.chargeLimit,
-            isHelperInstalled: charging.isHelperInstalled,
-            chargingAPI: charging.chargingAPI
-        )
-    }
-
-    /// Pure function for testability
-    static func canDischarge(isPluggedIn: Bool, percentage: Int, chargeLimit: Int, isHelperInstalled: Bool, chargingAPI: SMCChargingAPI) -> Bool {
+    static func canDischarge(isPluggedIn: Bool, percentage: Int, chargeLimit: Int,
+                             isHelperInstalled: Bool, chargingAPI: SMCChargingAPI) -> Bool {
         isPluggedIn && percentage > chargeLimit && isHelperInstalled && chargingAPI != .unknown
     }
 
     var body: some View {
         VStack(spacing: 0) {
             header
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
-
             Divider()
-
-            batteryBar
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-
-            if settings.showPowerFlow {
-                PowerFlowView(battery: battery.batteryState, mode: charging.mode)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    batterySummary
+                    availabilityMessage
+                    ChargeControlsView(charging: charging, settings: settings, state: state)
+                    if settings.showPowerFlow && hasReading {
+                        PowerFlowView(battery: state, mode: charging.mode)
+                            .accessibilityLabel("Alimentation du Mac et de la batterie")
+                    }
+                    BatteryDetailsView(battery: battery, charging: charging, settings: settings)
+                }
+                .padding(16)
             }
-
-            if !charging.isHelperInstalled {
-                helperWarning
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-            }
-
-            if charging.systemChargeLimitConflict {
-                systemLimitWarning
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-            }
-
             Divider()
-
-            detailsGrid
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-
-            Divider()
-
-            bottomBar
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+            footer
         }
-        .frame(width: 320)
+        .frame(width: 360, height: 640)
+        .tint(.teal)
     }
-
-    // MARK: - Header
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 8) {
+            Image(systemName: "leaf")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(.teal)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Limit: \(settings.chargeLimit)%")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary)
-
-                HStack(spacing: 4) {
-                    Image(systemName: charging.systemChargeLimitConflict
-                          ? "exclamationmark.triangle.fill"
-                          : charging.mode.statusBarIcon)
-                        .font(.system(size: 10))
-                    Text(charging.systemChargeLimitConflict
-                         ? "System Limit Active"
-                         : charging.mode.displayName)
-                        .font(.system(size: 11))
-                }
-                .foregroundStyle(charging.systemChargeLimitConflict ? .orange : .secondary)
+                Text("OpenDente").font(.headline)
+                Text("Édition personnelle").font(.caption).foregroundStyle(.secondary)
             }
-
             Spacer()
-
-            if charging.mode == .topUp {
-                Button(action: { charging.cancelTopUp() }) {
-                    Image(systemName: "xmark.circle")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .tint(.red)
-                .help("Cancel Top Up")
-            } else if charging.mode == .discharging {
-                Button(action: { charging.stopDischarge() }) {
-                    Image(systemName: "stop.circle")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .tint(.red)
-                .help("Stop Discharge")
-            } else {
-                Button(action: { charging.startTopUp() }) {
-                    Image(systemName: "arrow.up.to.line.circle")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .disabled(!battery.batteryState.isPluggedIn || !charging.isHelperInstalled || charging.chargingAPI == .unknown)
-                .help("Top Up to 100%")
-
-                Button(action: { charging.startDischarge() }) {
-                    Image(systemName: "arrow.down.circle")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .disabled(!canDischarge)
-                .help("Discharge to Limit")
+            Button(action: openSettings) {
+                Image(systemName: "slider.horizontal.3").frame(width: 28, height: 28)
             }
-
-            Button(action: { openSettings() }) {
-                Image(systemName: "gear")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderless)
+            .help("Ouvrir les réglages")
+            .accessibilityLabel("Réglages d’OpenDente")
+            .keyboardShortcut(",", modifiers: .command)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
-    // MARK: - Battery Bar
-
-    private var batteryBar: some View {
-        GeometryReader { geometry in
-            let width = geometry.size.width
-            let percentage = CGFloat(displayPercentage) / 100.0
-            let limitPosition = CGFloat(settings.chargeLimit) / 100.0
-            let sailingLower = CGFloat(settings.sailingLowerBound) / 100.0
-
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(nsColor: .quaternarySystemFill))
-
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(batteryColor)
-                    .frame(width: width * percentage)
-
-                if settings.sailingModeEnabled {
-                    Rectangle()
-                        .fill(Color.secondary.opacity(0.3))
-                        .frame(width: 1)
-                        .offset(x: width * sailingLower)
+    private var batterySummary: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 16) {
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(hasReading ? "\(displayPercentage)" : "—")
+                        .font(.system(size: 44, weight: .medium, design: .rounded))
+                        .monospacedDigit()
+                    if hasReading { Text("%").font(.title3).foregroundStyle(.secondary) }
                 }
-
-                Rectangle()
-                    .fill(Color.primary.opacity(0.6))
-                    .frame(width: 2)
-                    .offset(x: width * limitPosition - 1)
-
-                HStack {
-                    modeIcon
-                        .font(.system(size: 11, weight: .bold))
-                    Text("\(displayPercentage)%")
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(hasReading ? "Batterie : \(displayPercentage) pour cent" : "Lecture de la batterie en cours")
+                VStack(alignment: .leading, spacing: 4) {
+                    Label(statusTitle, systemImage: statusIcon)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(statusColor)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(statusDetail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .foregroundStyle(percentage > 0.3 ? .white : .primary)
-                .padding(.leading, 8)
+                Spacer(minLength: 0)
             }
+            GeometryReader { geometry in
+                let fill = CGFloat(min(100, max(0, displayPercentage))) / 100
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color(nsColor: .quaternarySystemFill))
+                    Capsule().fill(statusColor)
+                        .frame(width: hasReading ? geometry.size.width * fill : 0)
+                    Rectangle().fill(Color.primary)
+                        .frame(width: 2, height: 12)
+                        .offset(x: geometry.size.width * CGFloat(settings.chargeLimit) / 100 - 1)
+                }
+            }
+            .frame(height: 8)
+            .accessibilityHidden(true)
+            HStack {
+                Text(state.isPluggedIn || charging.mode == .discharging ? "Chargeur branché" : "Sur batterie")
+                Spacer()
+                Text("Repère : \(settings.chargeLimit) %")
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .opacity(hasReading ? 1 : 0)
         }
-        .frame(height: 28)
     }
 
     @ViewBuilder
-    private var modeIcon: some View {
-        switch charging.mode {
-        case .charging, .topUp:
-            Image(systemName: "bolt.fill")
-        case .discharging:
-            Image(systemName: "bolt.fill")
-                .rotationEffect(.degrees(180))
-        case .sailing:
-            Image(systemName: "wind")
-        case .heatProtection:
-            Image(systemName: "thermometer.sun.fill")
-        default:
-            EmptyView()
-        }
-    }
-
-    private var batteryColor: Color {
-        switch charging.mode {
-        case .charging, .topUp:
-            return .green
-        case .discharging:
-            return .orange
-        case .heatProtection:
-            return .red
-        case .sailing:
-            return .blue
-        default:
-            if displayPercentage <= 20 {
-                return .red
+    private var availabilityMessage: some View {
+        if !charging.isHelperInstalled {
+            let helperStatus = HelperInstaller.status
+            let needsApproval = helperStatus == .requiresApproval
+            let canRetry = helperStatus == .enabled
+            notice(
+                title: needsApproval ? "Autorisation nécessaire" : "Contrôle de charge indisponible",
+                text: charging.helperConnectionIssue ?? (needsApproval
+                    ? "Autorise OpenDente dans les éléments d’ouverture de macOS."
+                    : "Vérifie le service de contrôle dans les réglages d’OpenDente."),
+                button: needsApproval ? "Autoriser…" : (canRetry ? "Réessayer" : "Configurer…")
+            ) {
+                if needsApproval { HelperInstaller.openSystemSettings() }
+                else if canRetry { charging.connectToHelper() }
+                else { openSettings() }
             }
-            return .green
+        } else if charging.chargingAPI == .unknown {
+            notice(title: "Contrôle indisponible", text: "L’interface de charge de ce Mac n’est pas encore détectée.", button: "Réglages…", action: openSettings)
         }
-    }
-
-    // MARK: - Details Grid
-
-    private var detailsGrid: some View {
-        let state = battery.batteryState
-        let items = settings.popoverDetailItems
-
-        return VStack(spacing: 6) {
-            ForEach(items) { item in
-                if let row = detailValue(for: item, state: state) {
-                    detailRow(row.label, value: row.value)
+        if charging.systemChargeLimitConflict {
+            notice(title: "Limite macOS active", text: "Le réglage de macOS empêche actuellement la charge demandée.", button: "Batterie…") {
+                if let url = URL(string: "x-apple.systempreferences:com.apple.Battery-Settings.extension") {
+                    NSWorkspace.shared.open(url)
                 }
             }
-
-            if !battery.smcAvailable {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 10))
-                    Text("SMC not available — detailed data unavailable")
-                        .font(.system(size: 10))
-                }
-                .foregroundStyle(.orange)
-                .padding(.top, 4)
-            }
         }
     }
 
-    private func detailValue(for item: PopoverDetailItem, state: BatteryState) -> (label: String, value: String)? {
-        switch item {
-        case .temperature:
-            guard let temp = state.temperature else { return nil }
-            return ("Temperature", TemperatureDisplay.format(temp))
-        case .batteryHealth:
-            guard let health = state.healthPercentage else { return nil }
-            return ("Battery Health", String(format: "%.1f%%", health))
-        case .cycleCount:
-            guard let cycles = state.cycleCount else { return nil }
-            return ("Cycle Count", "\(cycles)")
-        case .timeRemaining:
-            return charging.mode.timeRemainingDisplay(
-                chargeLimit: settings.chargeLimit,
-                percentage: displayPercentage,
-                timeToFull: state.timeToFull,
-                timeToEmpty: state.timeToEmpty
-            )
-        case .systemPower:
-            guard let power = state.systemPower, power > 0 else { return nil }
-            return ("System Power", String(format: "%.1f W", power))
-        case .adapterPower:
-            guard adapterVisible, let power = state.adapterPower, power > 0 else { return nil }
-            if let max = state.adapterInfo?.watts, max > 0 {
-                return ("Adapter Power", String(format: "%.1f W of %d W", power, max))
-            }
-            return ("Adapter Power", String(format: "%.1f W", power))
-        case .adapterName:
-            guard adapterVisible, let info = state.adapterInfo else { return nil }
-            return ("Adapter", info.name)
-        case .adapterManufacturer:
-            guard adapterVisible, let mfr = state.adapterInfo?.manufacturer else { return nil }
-            return ("Manufacturer", mfr)
-        case .adapterModel:
-            guard adapterVisible, let model = state.adapterInfo?.model else { return nil }
-            return ("Model", model)
-        case .adapterSerial:
-            guard adapterVisible, let serial = state.adapterInfo?.serial else { return nil }
-            return ("Serial", serial)
-        case .adapterVoltage:
-            guard adapterVisible, let info = state.adapterInfo else { return nil }
-            return ("Adapter Voltage", String(format: "%.2f V", info.voltage))
-        case .adapterCurrent:
-            guard adapterVisible, let info = state.adapterInfo else { return nil }
-            return ("Adapter Current", String(format: "%.3f A", info.current))
-        case .voltage:
-            guard let voltage = state.voltage else { return nil }
-            return ("Battery Voltage", String(format: "%.2f V", voltage))
-        case .amperage:
-            guard let amperage = state.amperage else { return nil }
-            return ("Battery Current", String(format: "%.3f A", amperage))
-        case .currentCapacity:
-            guard let current = state.currentCapacity, let max = state.maxCapacity else { return nil }
-            return ("Capacity", "\(current) / \(max) mAh")
-        case .designCapacity:
-            guard let design = state.designCapacity else { return nil }
-            return ("Design Capacity", "\(design) mAh")
-        case .batteryPower:
-            guard let power = state.batteryPower else { return nil }
-            return ("Battery Power", String(format: "%.1f W", power))
-        case .notChargingReason:
-            guard let reason = state.notChargingReason, reason != 0 else { return nil }
-            return ("Not Charging", String(format: "0x%016llX", reason))
+    private func notice(title: String, text: String, button: String, action: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: "exclamationmark.triangle")
+                .font(.system(size: 12, weight: .semibold))
+            Text(text).font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button(button, action: action).controlSize(.small)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
     }
 
-    private func detailRow(_ label: String, value: String) -> some View {
+    private var footer: some View {
         HStack {
-            Text(label)
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+            Label("Réglages conservés sur ce Mac", systemImage: "internaldrive")
+                .font(.caption2).foregroundStyle(.secondary)
             Spacer()
-            Text(value)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundStyle(.primary)
+            Button("Quitter") { NSApplication.shared.terminate(nil) }
+                .buttonStyle(.borderless)
+                .font(.caption)
+                .help("Quitter et demander le rétablissement de la charge par macOS")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private var statusTitle: String {
+        if !hasReading { return "Lecture en cours…" }
+        if charging.systemChargeLimitConflict { return "Limite macOS" }
+        if !charging.isHelperInstalled || charging.chargingAPI == .unknown {
+            return state.isCharging ? "Charge en cours" : "Lecture seule"
+        }
+        if [.paused, .sailing, .heatProtection].contains(charging.mode), state.isCharging {
+            return "Arrêt de charge demandé"
+        }
+        if [.charging, .topUp].contains(charging.mode), !state.isCharging {
+            return displayPercentage >= 100 ? "Batterie chargée" : "Charge en attente"
+        }
+        return charging.mode.frenchTitle
+    }
+
+    private var statusDetail: String {
+        if !hasReading { return "Les données apparaîtront ici." }
+        if !charging.isHelperInstalled || charging.chargingAPI == .unknown { return "Les commandes d’OpenDente sont indisponibles." }
+        if charging.systemChargeLimitConflict { return "Vérifie les réglages Batterie." }
+        if charging.mode == .heatProtection {
+            return state.isCharging ? "Protection thermique : arrêt à confirmer." : "Reprise après refroidissement et délai de 5 min."
+        }
+        if [.paused, .sailing].contains(charging.mode), state.isCharging { return "La batterie reçoit encore de l’énergie." }
+        switch charging.mode {
+        case .charging: return "Objectif : \(settings.chargeLimit) %."
+        case .topUp: return "100 % jusqu’au débranchement."
+        case .paused, .sailing:
+            return settings.sailingModeEnabled ? "Reprise sous \(settings.sailingLowerBound) %." : "Reprise sous \(settings.chargeLimit) %."
+        case .discharging: return "Décharge vers \(settings.chargeLimit) %."
+        case .onBattery: return "Limite appliquée au prochain branchement."
+        case .idle: return "En attente de l’état de charge."
+        case .calibrating: return "Cycle en cours."
+        case .heatProtection: return "Refroidissement en cours."
         }
     }
 
-    // MARK: - Bottom Bar
-
-    private var bottomBar: some View {
-        HStack {
-            HStack(spacing: 6) {
-                Text("\(settings.chargeLimit)%")
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .frame(width: 35)
-
-                Slider(
-                    value: Binding(
-                        get: { Double(settings.chargeLimit) },
-                        set: { settings.chargeLimit = Int(($0 / 5).rounded() * 5) }
-                    ),
-                    in: 20...100
-                )
-                .controlSize(.small)
-            }
-
-            Spacer()
-
-            Button("Quit") {
-                NSApplication.shared.terminate(nil)
-            }
-            .buttonStyle(.plain)
-            .font(.system(size: 11))
-            .foregroundStyle(.secondary)
-        }
+    private var statusIcon: String {
+        charging.systemChargeLimitConflict ? "exclamationmark.triangle" : charging.mode.statusBarIcon
     }
 
-    // MARK: - Helper Warning
-
-    private var needsHelperApproval: Bool {
-        HelperInstaller.status == .requiresApproval
+    private var statusColor: Color {
+        if charging.systemChargeLimitConflict || charging.mode == .heatProtection { return .orange }
+        if !hasReading || !charging.isHelperInstalled || charging.chargingAPI == .unknown { return .secondary }
+        if displayPercentage <= 20 || charging.mode == .discharging { return .orange }
+        return .teal
     }
-
-    private var helperWarning: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 10))
-            Text(needsHelperApproval
-                 ? "Helper needs approval in System Settings"
-                 : "Helper not installed — charging control unavailable")
-                .font(.system(size: 10))
-            Spacer()
-            if needsHelperApproval {
-                Button("Approve") {
-                    HelperInstaller.openSystemSettings()
-                }
-                .font(.system(size: 10))
-                .buttonStyle(.bordered)
-                .controlSize(.mini)
-            } else {
-                Button("Install") {
-                    openSettings()
-                }
-                .font(.system(size: 10))
-                .buttonStyle(.bordered)
-                .controlSize(.mini)
-            }
-        }
-        .foregroundStyle(.orange)
-    }
-
-    // MARK: - System Limit Warning
-
-    private var systemLimitWarning: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 10))
-            Text("macOS Charge Limit is preventing charging")
-                .font(.system(size: 10))
-                .lineLimit(2)
-            Spacer()
-            Button("Open") {
-                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Battery-Settings.extension")!)
-            }
-            .font(.system(size: 10))
-            .buttonStyle(.bordered)
-            .controlSize(.mini)
-        }
-        .foregroundStyle(.orange)
-    }
-
-    // MARK: - Actions
 
     private func openSettings() {
         openSettingsAction()

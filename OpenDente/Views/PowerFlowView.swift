@@ -13,7 +13,7 @@ enum PowerFlowVisualState: Equatable {
     case noPowerData
     case onBattery                // Battery → System (also force discharge)
     case pluggedInCharging        // Adapter → System + Battery
-    case pluggedInTrickleCharging // Adapter → System + "Charging" (no wattage)
+    case pluggedInTrickleCharging // Adapter → System + "En charge" (no wattage)
     case pluggedInPaused          // Adapter → System only (no battery bar)
     case pluggedInStopping        // Adapter → System + "Stopping..." bar
     case pluggedInStarting        // Adapter → System + "Starting..." bar
@@ -108,7 +108,7 @@ struct PowerFlowView: View {
             case .pluggedInTrickleCharging:
                 pluggedInAdapterView {
                     flowBar(
-                        label: "Charging",
+                        label: "En charge",
                         icon: "battery.100percent.bolt",
                         color: .green,
                         proportion: 0.1
@@ -120,8 +120,8 @@ struct PowerFlowView: View {
                 pluggedInAdapterView {
                     let bp = battery.batteryPower ?? 0
                     let label = bp > 0.1
-                        ? String(format: "Stopping\u{2026} %.1f W", bp)
-                        : "Stopping\u{2026}"
+                        ? String(format: "Arrêt demandé\u{2026} %.1f W", bp)
+                        : "Arrêt demandé\u{2026}"
                     flowBar(
                         label: label,
                         icon: "stop.circle",
@@ -132,7 +132,7 @@ struct PowerFlowView: View {
             case .pluggedInStarting:
                 pluggedInAdapterView {
                     flowBar(
-                        label: "Starting\u{2026}",
+                        label: "Démarrage\u{2026}",
                         icon: "battery.100percent.bolt",
                         color: .green,
                         proportion: 0.1
@@ -154,9 +154,9 @@ struct PowerFlowView: View {
             Image(systemName: battery.isPluggedIn ? "bolt.fill" : "battery.75percent")
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 2) {
-                Text(battery.isPluggedIn ? "Plugged In" : "On Battery")
+                Text(battery.isPluggedIn ? "Sur secteur" : "Sur batterie")
                     .font(.system(size: 11, weight: .medium))
-                Text("Power data requires SMC access")
+                Text("Mesures de puissance indisponibles")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }
@@ -249,7 +249,7 @@ struct PowerFlowView: View {
                     )
                 } else {
                     flowBar(
-                        label: "Discharging",
+                        label: "Sur batterie",
                         icon: "laptopcomputer",
                         color: .orange,
                         proportion: 1.0
@@ -311,7 +311,7 @@ struct PowerFlowView: View {
         if let adapter = battery.adapterPower, adapter > 0.1 {
             return String(format: "%.0fW", adapter)
         }
-        return "AC"
+        return "Secteur"
     }
 
     private var batterySourceIcon: String {

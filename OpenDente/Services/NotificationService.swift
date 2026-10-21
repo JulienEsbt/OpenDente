@@ -76,23 +76,23 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         let content = UNMutableNotificationContent()
         switch event {
         case .chargeLimitReached:
-            content.title = "Charge Limit Reached"
-            content.body = "Battery has reached your charge limit. Charging paused."
+            content.title = "Plafond atteint"
+            content.body = "Le plafond est atteint. L’arrêt de la charge a été demandé."
         case .topUpComplete:
-            content.title = "Top Up Complete"
-            content.body = "Battery is fully charged at 100%."
+            content.title = "Charge à 100 % terminée"
+            content.body = "La batterie indique 100 %. Le plafond habituel reviendra au débranchement."
         case .heatProtection:
-            content.title = "Heat Protection Active"
-            content.body = "Charging paused due to high battery temperature."
+            content.title = "Protection thermique active"
+            content.body = "L’arrêt de la charge a été demandé : la température de la batterie est élevée."
         case .dischargeComplete:
-            content.title = "Discharge Complete"
-            content.body = "Battery has discharged to your charge limit."
+            content.title = "Décharge terminée"
+            content.body = "La batterie a atteint le plafond demandé."
         case .systemChargeLimitConflict:
-            content.title = "System Charge Limit Active"
-            content.body = "macOS Charge Limit is preventing charging. Lower it in System Settings > Battery."
+            content.title = "Limite de macOS active"
+            content.body = "La limite de macOS bloque la charge demandée. Vérifie Réglages Système > Batterie."
         case .inhibitFailed:
-            content.title = "Charging Control Failed"
-            content.body = "Unable to stop charging. Try unplugging and re-plugging the charger."
+            content.title = "Arrêt de charge non confirmé"
+            content.body = "La batterie indique toujours une charge malgré les tentatives. Vérifie le chargeur et les réglages de batterie."
         }
         content.sound = .default
 
