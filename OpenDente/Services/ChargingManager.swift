@@ -61,6 +61,15 @@ final class ChargingManager: ObservableObject {
     @Published private(set) var nativeLimitIssue: String?
     @Published private(set) var helperServiceStatus: SMAppService.Status = .notRegistered
     @Published private(set) var nativePauseWarning: String?
+    @Published var nativeLEDHardwareAvailable = false
+    @Published private(set) var nativeLEDIssue: String?
+    @Published private(set) var magSafeLEDPreviewActive = false
+    private var nativeLEDPreviewColor: UInt8?
+    private var nativeLEDPreviewUntil: Date?
+    private var nativeLEDSleeping = false
+    private var nativeLEDOwned = false
+    private var nativeLEDCommandPending = false
+    private var nativeLEDLastAttempt = Date.distantPast
     private var nativePolicy = NativeChargingPolicy()
     private var nativePauseStarted: Date?
     var nativeNow: () -> Date = { Date() }
@@ -247,6 +256,7 @@ final class ChargingManager: ObservableObject {
                         case "tahoe": self.chargingAPI = .tahoe
                         default: self.chargingAPI = .unknown
                         }
+                        self.nativeLEDHardwareAvailable = self.smc.keyExists("ACLC")
                         self.nativeLimitAvailable = api == "native" && version.isVersionAtLeast(HelperConstants.minVersionNativeLimit)
                         self.helperHandshakeInProgress = false
                         client.markHandshakeCompleted()
@@ -590,6 +600,11 @@ final class ChargingManager: ObservableObject {
     /// charge to 100% during sleep. Also stops discharge (pointless during sleep).
     func handleWillSleep() {
         if nativeLimitAvailable {
+            nativeLEDSleeping = true
+            magSafeLEDPreviewActive = false
+            nativeLEDPreviewUntil = nil
+            nativeLEDLastAttempt = .distantPast
+            updateMagSafeLED()
             modeBeforeSleep = mode
             // Firmware keeps the last ceiling while the app sleeps. No new
             // temperature samples or threshold transitions are promised asleep.
@@ -636,6 +651,9 @@ final class ChargingManager: ObservableObject {
     /// Clears stale state and re-evaluates — the state machine handles all transitions.
     func handleDidWake(_ currentState: BatteryState) {
         if nativeLimitAvailable {
+            nativeLEDSleeping = false
+            lastLEDColor = nil
+            nativeLEDLastAttempt = .distantPast
             modeBeforeSleep = nil
             nativeLastAttempt = .distantPast
             evaluateNativeLimit(currentState)
@@ -762,7 +780,7 @@ final class ChargingManager: ObservableObject {
     private func evaluateNativeLimit(_ state: BatteryState) {
         let now = nativeNow()
         lastIsCharging = state.isCharging
-        defer { updateSleepAssertion(state) }
+        defer { updateSleepAssertion(state); updateMagSafeLED() }
         guard isHelperInstalled, settings.nativeChargeLimitEnabled else {
             mode = state.isPluggedIn ? (state.isCharging ? .charging : .idle) : .onBattery
             topUpRequested = false
@@ -1043,6 +1061,7 @@ final class ChargingManager: ObservableObject {
     /// Gated behind helper version check — calling setMagSafeLED on an old helper
     /// that doesn't implement it would disrupt the XPC connection.
     private func updateMagSafeLED() {
+        if nativeLimitAvailable { updateNativeMagSafeLED(); return }
         guard isHelperInstalled, !nativeLimitAvailable, chargingAPI != .unknown else { return }
         guard settings.controlMagSafeLED else {
             // If disabled, reset to auto (only if we previously set something)
@@ -1092,6 +1111,74 @@ final class ChargingManager: ObservableObject {
         helper.setMagSafeLED(color: color) { success, error in
             if !success, let error {
                 log.debug("MagSafe LED not available: \(error, privacy: .public)")
+            }
+        }
+    }
+
+    func previewMagSafeLED(_ color: MagSafeLEDChoice) {
+        guard isHelperInstalled, nativeLimitAvailable, nativeLEDHardwareAvailable else { return }
+        nativeLEDPreviewColor = color.byte
+        nativeLEDPreviewUntil = nativeNow().addingTimeInterval(10)
+        magSafeLEDPreviewActive = true
+        nativeLEDLastAttempt = .distantPast
+        lastLEDColor = nil
+        updateNativeMagSafeLED()
+    }
+
+    func useSystemMagSafeLED() {
+        settings.nativeMagSafeLEDEnabled = false
+        // Explicit recovery must send auto even when the preceding write failed.
+        nativeLEDOwned = true
+        magSafeLEDPreviewActive = false
+        nativeLEDPreviewUntil = nil
+        nativeLEDLastAttempt = .distantPast
+        lastLEDColor = nil
+        updateNativeMagSafeLED()
+    }
+
+    private func updateNativeMagSafeLED() {
+        guard isHelperInstalled, nativeLEDHardwareAvailable,
+              let version = helperVersion, version.isVersionAtLeast("1.6.0") else { return }
+        let now = nativeNow()
+        if let end = nativeLEDPreviewUntil, now >= end {
+            nativeLEDPreviewUntil = nil
+            magSafeLEDPreviewActive = false
+        }
+        let color: UInt8
+        if nativeLEDSleeping || !battery.batteryState.isPluggedIn {
+            color = HelperConstants.ledAuto
+        } else if magSafeLEDPreviewActive, let preview = nativeLEDPreviewColor {
+            color = preview
+        } else if !settings.nativeMagSafeLEDEnabled {
+            color = HelperConstants.ledAuto
+        } else if lastIsCharging {
+            color = settings.nativeLEDChargingColor.byte
+        } else if mode == .discharging {
+            color = settings.nativeLEDStorageColor.byte
+        } else if mode == .heatProtection {
+            color = settings.nativeLEDThermalColor.byte
+        } else if [.paused, .sailing].contains(mode) {
+            color = settings.nativeLEDPausedColor.byte
+        } else {
+            color = HelperConstants.ledAuto
+        }
+        guard color != HelperConstants.ledAuto || nativeLEDOwned else { return }
+        guard !nativeLEDCommandPending, color != lastLEDColor,
+              nativeLEDIssue == nil || now.timeIntervalSince(nativeLEDLastAttempt) >= 10 else { return }
+        nativeLEDCommandPending = true
+        nativeLEDLastAttempt = now
+        helper.setMagSafeLED(color: color) { [weak self] success, error in
+            Task { @MainActor in
+                guard let self else { return }
+                self.nativeLEDCommandPending = false
+                if success {
+                    self.lastLEDColor = color
+                    self.nativeLEDOwned = color != HelperConstants.ledAuto
+                    self.nativeLEDIssue = nil
+                } else {
+                    self.lastLEDColor = nil
+                    self.nativeLEDIssue = error ?? "Le voyant MagSafe n’a pas confirmé le changement."
+                }
             }
         }
     }

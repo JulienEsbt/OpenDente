@@ -122,6 +122,27 @@ final class AppSettings: ObservableObject {
 
     // MARK: - MagSafe LED
 
+    var nativeMagSafeLEDEnabled: Bool {
+        get { defaults.bool(forKey: "nativeMagSafeLEDEnabled") }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "nativeMagSafeLEDEnabled") }
+    }
+    var nativeLEDChargingColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDChargingColor") as? Int ?? 4) ?? .orange }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDChargingColor") }
+    }
+    var nativeLEDPausedColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDPausedColor") as? Int ?? 3) ?? .green }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDPausedColor") }
+    }
+    var nativeLEDStorageColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDStorageColor") as? Int ?? 4) ?? .orange }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDStorageColor") }
+    }
+    var nativeLEDThermalColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDThermalColor") as? Int ?? 1) ?? .off }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDThermalColor") }
+    }
+
     var controlMagSafeLED: Bool {
         get { defaults.object(forKey: "controlMagSafeLED") as? Bool ?? true }
         set { objectWillChange.send(); defaults.set(newValue, forKey: "controlMagSafeLED") }

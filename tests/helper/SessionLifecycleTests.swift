@@ -27,6 +27,9 @@ enum HelperState {
     nonisolated(unsafe) static var state: ChargingState = .normal
     static func write(_ state: ChargingState) throws { self.state = state }
     static func wasChargingInhibited() -> Bool { state == .inhibited }
+    nonisolated(unsafe) static var ledOwned = false
+    static func wasLEDOverridden() -> Bool { ledOwned }
+    static func writeLEDRecovery(_ value: Bool) throws { ledOwned = value }
 }
 struct SMCValue { let bytes: [UInt8] }
 final class NativeChargeLimit {
@@ -35,6 +38,7 @@ final class NativeChargeLimit {
     var restorationPending = false
     func restore() throws {}
     func setLimit(_ percent: Int) throws {}
+    func prepareStorage() throws {}
 }
 
 final class SMCService {
@@ -77,9 +81,11 @@ private func setSleep(_ helper: HelperDelegate, _ connection: NSXPCConnection) {
 struct SessionLifecycleTests {
     static func main() throws {
         var count = 0
-        func test(_ name: String, _ body: (HelperDelegate, SMCService) throws -> Void) throws {
+        func test(_ name: String, nativeOnly: Bool = false, _ body: (HelperDelegate, SMCService) throws -> Void) throws {
             SMCService.shared = SMCService()
             HelperState.state = .normal
+            HelperState.ledOwned = false
+            if nativeOnly { SMCService.shared.keys = ["ACLC": [0]] }
             let helper = HelperDelegate(watchdog: Watchdog())
             try body(helper, SMCService.shared)
             count += 1
@@ -147,6 +153,31 @@ struct SessionLifecycleTests {
             var accepted = true
             withRequest(c) { helper.setMagSafeLED(color: 255) { value, _ in accepted = value } }
             try require(!accepted && smc.writes.isEmpty, "invalid LED byte written")
+        }
+        try test("native-only backend restores owned LED on reset", nativeOnly: true) { helper, smc in
+            let c = connected(helper)
+            withRequest(c) { helper.setMagSafeLED(color: 3) { ok, _ in precondition(ok) } }
+            try require(helper.needsRecovery && HelperState.ledOwned, "LED ownership was not journaled")
+            helper.resetChargingDirect()
+            try require(smc.keys["ACLC"] == [0] && !HelperState.ledOwned, "native reset left LED overridden")
+            try require(smc.writes == ["ACLC", "ACLC"], "LED recovery touched unsupported charge keys")
+        }
+        try test("native-only LED is restored when client disconnects", nativeOnly: true) { helper, smc in
+            let c = connected(helper)
+            withRequest(c) { helper.setMagSafeLED(color: 4) { ok, _ in precondition(ok) } }
+            c.invalidationHandler?()
+            try require(smc.keys["ACLC"] == [0] && !helper.needsRecovery, "disconnect did not release LED")
+        }
+        try test("native-only sleep releases LED without a charge sleep policy", nativeOnly: true) { helper, smc in
+            let c = connected(helper)
+            withRequest(c) { helper.setMagSafeLED(color: 1) { ok, _ in precondition(ok) } }
+            helper.inhibitChargingOnSleep()
+            try require(smc.keys["ACLC"] == [0], "sleep retained custom LED")
+        }
+        try test("unregistered LED request cannot acquire ownership", nativeOnly: true) { helper, smc in
+            var ok = true
+            withRequest(NSXPCConnection()) { helper.setMagSafeLED(color: 3) { value, _ in ok = value } }
+            try require(!ok && !HelperState.ledOwned && smc.writes.isEmpty, "unregistered LED request succeeded")
         }
         print("\(count) lifecycle tests passed; no real XPC, signature or hardware tested.")
     }

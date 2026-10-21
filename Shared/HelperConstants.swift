@@ -34,6 +34,8 @@ enum HelperConstants {
     /// State file path (written atomically by helper)
     static let stateFilePath = "/Library/Application Support/OpenDente/helper-state"
 
+    static let ledStateFilePath = stateDirectory + "/led-state"
+
     /// Helper version (bump when protocol changes)
     static let helperVersion = "1.6.0"
 

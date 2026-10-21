@@ -298,7 +298,7 @@ struct ChargingTab: View {
                     Text("Pendant la veille, macOS conserve le dernier plafond transmis. OpenDente réévalue les seuils et la température au réveil. Désactiver le contrôle ou quitter l’app restaure le réglage Apple sauvegardé.")
                         .font(.caption).foregroundStyle(.secondary)
                     DisclosureGroup("Autres commandes du moteur SMC") {
-                        Text("La décharge forcée, le voyant MagSafe, le pourcentage matériel pour la régulation et la pause dédiée à la veille ne sont pas proposés par ce moteur natif. Les anciens réglages SMC sont conservés pour les Mac compatibles.")
+                        Text("La décharge libre vers un plafond quelconque, le pourcentage matériel pour la régulation et la pause dédiée à la veille ne sont pas proposés par ce moteur natif. Les anciens réglages SMC sont conservés pour les Mac compatibles.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 } else {
@@ -348,11 +348,19 @@ struct ChargingTab: View {
                 }
                 .font(.callout)
             }
+            Section("Voyant MagSafe") {
+                if charging.nativeLimitAvailable {
+                    MagSafeLEDControls(charging: charging, settings: settings)
+                } else {
+                    Text("Les réglages de voyant du moteur SMC restent dans Fonctionnement en arrière-plan.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
             Section("MagSafe et USB-C") {
                 DisclosureGroup("Comprendre le chargeur et son voyant") {
                     Text("Le contrôle vise la batterie interne : il est conçu pour fonctionner avec MagSafe comme avec une alimentation USB-C Power Delivery adaptée. Un chargeur trop faible peut laisser la batterie se décharger malgré le branchement.")
                     Text(charging.nativeLimitAvailable
-                         ? "Sur ce moteur expérimental, le voyant MagSafe reste géré par macOS. Orange peut signifier charge en cours ou charge en attente ; consulte le panneau pour connaître l’état réel. La personnalisation du voyant n’est pas activée sur ce Mac."
+                         ? "Par défaut, macOS gère le voyant MagSafe : orange peut signifier charge en cours ou en attente. La section Voyant MagSafe permet de choisir une règle par mode et de tester les couleurs. Consulte le panneau pour connaître l’état réel de charge."
                          : "Sur les Mac compatibles, le réglage de voyant propose vert, orange ou éteint. Le voyant ne remplace pas les mesures de charge du panneau.")
                     Text("Un clignotement orange répété peut signaler un problème de charge selon Apple. OpenDente n’ajoute pas de clignotement qui pourrait masquer cet avertissement.")
                         .foregroundStyle(.secondary)

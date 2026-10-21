@@ -27,6 +27,7 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
     private var activeClientGeneration: UInt64?
     private var latestActivatedGeneration: UInt64 = 0
     private var hardware: ChargingHardwareController!
+    private var led: MagSafeLEDSession!
     private let callerRequirement = HelperDelegate.makeCallerRequirement()
 
     /// Synced from app — if true, helper inhibits charging independently on sleep.
@@ -48,6 +49,15 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
             read: { [smc] key in try smc.readKey(key).bytes },
             persistRecovery: { required in try HelperState.write(required ? .inhibited : .normal) }
         )
+        led = MagSafeLEDSession(needsRecovery: HelperState.wasLEDOverridden(),
+            write: { [smc] color in try smc.writeKey("ACLC", bytes: [color]) },
+            read: { [smc] in
+                let bytes = try smc.readKey("ACLC").bytes
+                guard bytes.count == 1, let value = bytes.first else {
+                    throw MagSafeLEDSession.Failure(message: "Unsupported MagSafe LED register")
+                }
+                return value
+            }, persist: { try HelperState.writeLEDRecovery($0) })
     }
 
     // MARK: - SMC Setup
@@ -291,14 +301,15 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         reply(true)
     }
 
-    private static let allowedLEDColors: Set<UInt8> = [0x00, 0x01, 0x03, 0x04]
+    private static let allowedLEDColors = MagSafeLEDSession.allowed
 
     func setMagSafeLED(color: UInt8, reply: @escaping (Bool, String?) -> Void) {
         perform(reply) {
             guard hasMagSafeLED, Self.allowedLEDColors.contains(color) else {
                 throw ChargingHardwareController.Failure(message: "Unavailable MagSafe LED or unsupported color")
             }
-            try smc.writeKey("ACLC", bytes: [color])
+            try led.set(color)
+            log.info("MagSafe LED confirmed: \(color, privacy: .public)")
         }
     }
 
@@ -307,11 +318,16 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
     func inhibitChargingOnSleep() {
         lock.lock()
         defer { lock.unlock() }
+        // Native and legacy LED ownership is independent of charge-key support.
+        do { try led.restore() }
+        catch {
+            log.error("LED sleep restoration pending: \(error.localizedDescription, privacy: .public)")
+        }
         guard activeClientGeneration != nil, stopChargingWhenSleeping else { return }
         do {
             try hardware.inhibitCharging()
             if hasMagSafeLED && sleepLEDColor != 0xFF {
-                try smc.writeKey("ACLC", bytes: [sleepLEDColor])
+                try led.set(sleepLEDColor)
             }
         } catch {
             log.error("Sleep inhibition failed: \(error.localizedDescription, privacy: .public)")
@@ -321,13 +337,13 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
     var needsRecovery: Bool {
         lock.lock()
         defer { lock.unlock() }
-        return native.needsRecovery || hardware.recoveryRequired || HelperState.wasChargingInhibited()
+        return native.needsRecovery || led.needsRecovery || hardware.recoveryRequired || HelperState.wasChargingInhibited()
     }
 
     var hasPendingRestoration: Bool {
         lock.lock()
         defer { lock.unlock() }
-        return native.restorationPending || hardware.restorationPending
+        return native.restorationPending || led.restorationPending || hardware.restorationPending
     }
 
     /// Watchdog, signal and restart paths also discard the departed app's policy.
@@ -342,8 +358,9 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         var failures: [String] = []
         do { try native.restore() } catch { failures.append(error.localizedDescription) }
         if chargingAPI != .unknown {
-            do { try hardware.restoreDefaults() } catch { failures.append(error.localizedDescription) }
+            do { try hardware.restoreDefaults(resetLED: false) } catch { failures.append(error.localizedDescription) }
         }
+        do { try led.restore() } catch { failures.append(error.localizedDescription) }
         guard failures.isEmpty else { throw NativeLimitSession.Failure(message: failures.joined(separator: "; ")) }
     }
 

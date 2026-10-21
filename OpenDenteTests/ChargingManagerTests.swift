@@ -22,6 +22,7 @@ final class MockChargingControl: ChargingControl, @unchecked Sendable {
     func clearCalls() { calls.removeAll() }
 
     /// If true, completion reports failure (simulates helper crash/disconnect)
+    var shouldFailLED = false
     var shouldFail = false
 
     func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?) {
@@ -68,7 +69,7 @@ final class MockChargingControl: ChargingControl, @unchecked Sendable {
 
     func setMagSafeLED(color: UInt8, completion: (@Sendable (Bool, String?) -> Void)?) {
         calls.append(.setMagSafeLED(color: color))
-        completion?(true, nil)
+        completion?(!shouldFailLED, shouldFailLED ? "LED mock failure" : nil)
     }
 
     nonisolated func resetToDefaultsSync(timeout: TimeInterval) {}

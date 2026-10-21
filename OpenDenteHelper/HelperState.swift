@@ -37,7 +37,7 @@ enum HelperState {
     }
 
     /// Write the current charging state atomically
-    static func write(_ state: ChargingState) throws {
+    static func write(_ state: ChargingState, to path: String = HelperConstants.stateFilePath) throws {
         try ensureDirectory()
         if let attributes = try? FileManager.default.attributesOfItem(atPath: path) {
             guard attributes[.type] as? FileAttributeType == .typeRegular,
@@ -51,7 +51,7 @@ enum HelperState {
     }
 
     /// Read the last known charging state (returns nil if file doesn't exist)
-    static func read() -> ChargingState? {
+    static func read(from path: String = HelperConstants.stateFilePath) -> ChargingState? {
         guard let contents = try? String(contentsOfFile: path, encoding: .utf8) else {
             return nil
         }
@@ -62,6 +62,15 @@ enum HelperState {
     static func wasChargingInhibited() -> Bool {
         // An existing unreadable/corrupt marker must not silently skip recovery.
         FileManager.default.fileExists(atPath: path) && read() != .normal
+    }
+
+    static func writeLEDRecovery(_ required: Bool) throws {
+        try write(required ? .inhibited : .normal, to: HelperConstants.ledStateFilePath)
+    }
+
+    static func wasLEDOverridden() -> Bool {
+        FileManager.default.fileExists(atPath: HelperConstants.ledStateFilePath)
+            && read(from: HelperConstants.ledStateFilePath) != .normal
     }
 
     /// Clear the state file (set to normal)
