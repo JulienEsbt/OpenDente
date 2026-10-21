@@ -1,16 +1,16 @@
-# Guide des commandes OpenDente — édition personnelle 0.5.0
+# Guide d’utilisation — OpenDente personnel
 
-Ce guide décrit le fonctionnement visé de cette édition et ses limites. La validation matérielle réellement effectuée figure dans VALIDATION.md.
+Aide embarquée hors ligne dans Réglages > Guide. Édition 0.6.0.
 
 ## Panneau principal et modes
 
 ### Bureau · Quotidien · Mobilité
 
-Appliquent respectivement 70/60, 80/70 et 90/80 : plafond / reprise sous le seuil bas. Ils activent la pause thermique, quittent le mode stockage et évitent une décharge automatique. Ce sont des points de départ modifiables.
+Appliquent respectivement 70/60, 80/70 et 90/80 : plafond / reprise sous le seuil bas. Ils activent la pause thermique et quittent le mode stockage. Le retour sur secteur respecte son option dédiée ; aucun cycle continu n’est forcé.
 
 ### Limite habituelle de charge
 
-Choisit le plafond quotidien entre 20 et 100 %. Une limite inférieure au niveau actuel suspend la recharge sans forcer la batterie à descendre. Modifier ce curseur quitte le mode stockage.
+Choisit le plafond quotidien entre 20 et 100 %. Si Redescendre au plafond sur secteur est activé, un niveau déjà supérieur descend vers ce plafond ; sinon il reste maintenu et baisse naturellement. Modifier le curseur quitte le mode stockage.
 
 ### Charger à 100 % cette fois
 
@@ -18,7 +18,7 @@ Demande une charge complète temporaire et conserve tes seuils quotidiens. Quitt
 
 ### Revenir à ma limite
 
-Annule la charge ponctuelle. Au-dessus de ton plafond, l’app demande de tenir le niveau courant, puis laisse la baisse naturelle à l’usage.
+Annule la charge ponctuelle. Si le retour au plafond sur secteur est activé, demande une descente vers ce plafond. Sinon, maintien au niveau courant puis baisse naturelle.
 
 ### Préparer le stockage à 50 %
 
@@ -26,7 +26,7 @@ Active une cible temporaire à 50 % sans écraser ton plafond habituel. Au-dessu
 
 ### Arrêter le mode stockage
 
-Annule la cible temporaire et revient à tes réglages quotidiens sauvegardés. Ce bouton permet d’arrêter un essai de préparation. La cible 50 % reste active tant que le mode est choisi, y compris après relancement de l’app.
+Annule la cible 50 % et retrouve les seuils quotidiens. Si le retour au plafond sur secteur est activé, la descente peut alors continuer vers le plafond habituel ; désactive cette option pour maintenir le niveau courant. La cible de stockage choisie persiste après relancement.
 
 ### Réglages… · icône de curseurs
 
@@ -34,7 +34,7 @@ Ouvre les réglages. Fermer cette fenêtre ou le panneau ne quitte pas OpenDente
 
 ### Quitter
 
-Ferme réellement l’app et demande au service de restaurer le réglage Apple sauvegardé, ainsi que le voyant système. Le plafond 80 % d’OpenDente n’est plus maintenu par l’app après sa fermeture. Pendant nos essais, la valeur Apple sauvegardée est 100 %.
+Ferme réellement l’app et demande la restauration du réglage Apple sauvegardé et du voyant système. La politique personnalisée n’est plus évaluée. Pour ce Mac, la configuration de repli conseillée est une limite Apple à 80 % avec recharge optimisée, configurée pendant que l’app est quittée.
 
 ## Charge : ce que contrôlent les réglages
 
@@ -46,6 +46,10 @@ Active le moteur expérimental de macOS 27. Désactivé, OpenDente reste un lect
 
 Même plafond quotidien que le curseur du panneau. La cible temporaire de stockage reste distincte. Les boutons de profils quittent ce mode.
 
+### Redescendre au plafond sur secteur
+
+Au lancement, au branchement ou après une modification, un niveau supérieur au plafond utilise la batterie pour y redescendre. À la cible, la décharge volontaire s’arrête. Pas de cycles 70→80→70 imposés. Une pause thermique et la charge ponctuelle restent prioritaires. Arrêter la décharge désactive cette option.
+
 ### Choisir quand la charge reprend · Reprendre sous
 
 À 80/70, la recharge attend que le niveau passe sous 70 %, puis continue vers 80 %. Cela espace les reprises, sans imposer de descente de 80 à 70 sur secteur. Désactiver ce choix permet de reprendre dès que le niveau passe sous le plafond. Attendre 20 % n’est pas nécessaire à l’entretien de la batterie.
@@ -56,19 +60,31 @@ Compare le capteur interne au seuil choisi, entre 30 et 45 °C. La valeur 40 °C
 
 ### Empêcher la veille automatique jusqu’à la limite
 
-Retarde la veille pour inactivité pendant une charge vers la cible, ou pendant une préparation active si l’option s’applique. L’écran peut s’éteindre. Le Mac peut toujours être mis en veille manuellement et la fermeture du capot reste une demande de veille. L’option est libérée au plafond, au débranchement ou à l’arrêt de la charge. Elle consomme davantage que laisser le Mac dormir ; laisse-la désactivée si tu n’en as pas besoin.
+Option facultative qui retarde la veille pour inactivité pendant une charge ou décharge vers la cible ; l’écran peut s’éteindre. Elle n’est pas nécessaire pour conserver la consigne native déjà confiée à macOS. La veille manuelle et la fermeture du capot restent possibles. Elle est libérée à la cible, au débranchement ou à l’arrêt de l’action. Laisse-la désactivée pour autoriser le sommeil normal du Mac.
 
 ### Pendant la veille
 
-macOS conserve le dernier plafond transmis. OpenDente ne continue pas à mesurer la température pendant le sommeil du Mac ; il réévalue au réveil. La pause supplémentaire n’est pas une coupure de sécurité immédiate.
+Panneau fermé : le suivi continue en arrière-plan. Mac réellement en veille : l’app ne mesure plus la température, mais macOS garde la dernière consigne transmise. La veille ne retire pas le plafond et ne demande pas 100 %. Au réveil, les mesures et décisions reprennent. Le firmware conserve ses exceptions de calibration ; un arrêt à 80 % strict n’est pas garanti.
 
 ### Appliquer 80 % / reprise sous 75 %
 
-Applique ce couple conseillé pour un Mac souvent branché, active la plage de reprise et désactive la décharge automatique. Quitte le mode stockage. C’est un choix pratique proche du comportement natif, pas une obligation Apple.
+Applique ce couple pratique proche du comportement Apple, active la plage de reprise et quitte le mode stockage. Le retour au plafond sur secteur conserve son choix ; aucun cycle continu n’est imposé.
 
 ### Autres commandes du moteur SMC
 
-Rubrique d’information sur les anciens Mac compatibles. Sur ce Mac sous macOS 27, la décharge libre vers n’importe quel plafond, la régulation par pourcentage matériel et la pause dédiée à la veille ne passent pas par les anciennes commandes SMC. Le stockage explicite à 50 % utilise un autre mécanisme.
+Sur ce Mac, la régulation par pourcentage matériel et la pause SMC dédiée à la veille ne sont pas proposées. Le stockage à 50 % et le retour au plafond quotidien utilisent maintenant des commandes natives dédiées.
+
+### Mac éteint et limite Apple de repli
+
+Une app ne tourne pas quand le Mac est éteint. Pour conserver une politique système, quitte OpenDente puis règle la limite Apple à 80 % et laisse la recharge optimisée activée. Relance ensuite l’app : cette valeur devient son état Apple à restaurer. Les deux réglages utilisent le même mécanisme natif ; ce ne sont pas deux plafonds indépendants. Le comportement après extinction complète n’est pas assimilé à notre essai de veille.
+
+[Consulter la source](https://support.apple.com/fr-fr/102338)
+
+### Maintien, cycles et vieillissement
+
+Le secteur peut alimenter le Mac avec un courant de batterie nul. La reprise espacée évite de multiplier les recharges ; le maintien ne signifie pas des coupures rapides permanentes. Les recherches décrivent l’effet du niveau de charge et de la température, sans définir un seuil universel optimal pour les cellules non publiées de ce Mac. Le choix 80 % et reprise sous 75 % suit de près la politique Apple.
+
+[Consulter la source](https://portal.fis.tum.de/de/publications/calendar-aging-of-lithium-ion-batteries-i-impact-of-the-graphite-/)
 
 ## Voyant MagSafe
 
@@ -76,13 +92,17 @@ Rubrique d’information sur les anciens Mac compatibles. Sur ce Mac sous macOS 
 
 Active les règles de couleur de l’app. Ce réglage change uniquement le voyant, pas le plafond ou la vitesse de charge. Il est indépendant de l’ancienne préférence du moteur SMC et reste désactivé au départ.
 
+### Appliquer les signaux distincts
+
+Active : charge normale orange clignotant, maintien vert clignotant, décharge sur secteur en alternance vert/orange, pause thermique éteinte, charge ponctuelle orange fixe puis vert fixe à 100 %. Cela ne change pas les seuils ni la puissance de charge.
+
 ### Charge confirmée · Pause confirmée
 
 Choisissent la couleur quand la batterie reçoit encore du courant ou lorsque la pause est mesurée. Une simple demande de pause n’affiche pas prématurément la couleur de pause.
 
-### Descente en mode stockage · Pause thermique
+### Décharge sur secteur · Pause thermique
 
-Choisissent la couleur de ces modes quand la batterie ne charge plus. Le panneau indique séparément si un courant de décharge est réellement observé.
+Choisissent le signal pendant une décharge de stockage ou de retour au plafond, et pendant une pause thermique. Une charge encore mesurée conserve d’abord son signal de charge : une couleur ne prouve jamais un arrêt.
 
 ### Vert (10 s) · Orange (10 s) · Éteint (10 s)
 
@@ -94,7 +114,17 @@ Interrompt l’aperçu, désactive la personnalisation et demande le retour au c
 
 ### Couleurs et clignotement
 
-Les commandes utilisées proposent vert, orange, éteint et automatique. Le voyant n’est pas RGB. Cette version ne crée pas de clignotement personnalisé. Apple utilise notamment un clignotement orange répété pour signaler certains défauts de charge. [Source](https://support.apple.com/fr-fr/102372).
+Les motifs alternent uniquement vert, orange et éteint, environ deux secondes par phase sur le rythme de mesure déjà existant. Aucun timer supplémentaire ni code de défaut du chargeur. Pendant la veille, au débranchement, à l’arrêt de l’app ou sur perte de client, restitution au système. Le voyant n’est pas RGB.
+
+[Consulter la source](https://support.apple.com/fr-fr/102372)
+
+### Charge ponctuelle vers 100 % · 100 % ponctuel atteint
+
+Deux signaux distincts pour le remplissage ponctuel et sa fin, par défaut orange fixe puis vert fixe. Le mode de maintien quotidien peut ainsi clignoter vert sans être confondu avec 100 %. Les clignotements ne sont animés que lorsque le Mac est éveillé.
+
+### Vert clignotant · Orange clignotant · Alternance (10 s)
+
+Aperçus temporaires des motifs. Attends plusieurs secondes pour voir une période complète ; au terme des dix secondes, retour au signal choisi. Le retour au voyant macOS désactive tous les motifs.
 
 ## Général : lancement et service
 
@@ -156,11 +186,15 @@ Le mode 50 % prépare la charge avant une longue inutilisation. Une fois autour 
 
 ### Conservation
 
-Apple conseille environ 50 %, appareil éteint, dans un lieu frais et sec à moins de 32 °C. Pour un stockage dépassant six mois, recharge autour de 50 % tous les six mois. La zone 45–55 % du guide est un repère pratique, pas une plage officielle Apple. [Source](https://www.apple.com/fr/batteries/maximizing-performance/).
+Apple conseille environ 50 %, appareil éteint, dans un lieu frais et sec à moins de 32 °C. Pour un stockage dépassant six mois, recharge autour de 50 % tous les six mois. La zone 45–55 % du guide est un repère pratique, pas une plage officielle Apple.
+
+[Consulter la source](https://www.apple.com/fr/batteries/maximizing-performance/)
 
 ### MagSafe et USB-C
 
-La politique vise la batterie interne et est conçue pour les deux ports, avec une alimentation USB-C Power Delivery adaptée. Les essais matériels de cette séance utilisent MagSafe ; l’USB-C n’est pas présenté comme testé. Un chargeur trop faible peut ne pas couvrir la consommation du Mac. [Source](https://support.apple.com/fr-fr/102397).
+La politique vise la batterie interne et est conçue pour les deux ports, avec une alimentation USB-C Power Delivery adaptée. Les essais matériels de cette séance utilisent MagSafe ; l’USB-C n’est pas présenté comme testé. Un chargeur trop faible peut ne pas couvrir la consommation du Mac.
+
+[Consulter la source](https://support.apple.com/fr-fr/102397)
 
 ## Par rapport à OpenDente d’origine
 
@@ -178,7 +212,9 @@ Aucune calibration forcée, programmation horaire, intégration Raccourcis, mise
 
 ### Source de comparaison
 
-Base examinée : killerk3emstar/OpenDente, commit 06c5a8199f5c0657374e667073b3aa6a75f50df8. Licence GPL et crédits conservés. [Source](https://github.com/killerk3emstar/OpenDente/tree/06c5a8199f5c0657374e667073b3aa6a75f50df8).
+Base examinée : killerk3emstar/OpenDente, commit 06c5a8199f5c0657374e667073b3aa6a75f50df8. Licence GPL et crédits conservés.
+
+[Consulter la source](https://github.com/killerk3emstar/OpenDente/tree/06c5a8199f5c0657374e667073b3aa6a75f50df8)
 
 ## Par rapport à AlDente
 
@@ -188,12 +224,16 @@ La documentation distingue une édition gratuite avec limite et décharge, et de
 
 ### Différences utiles ici
 
-Notre stockage a une cible dédiée à 50 %. AlDente propose aussi une décharge sur secteur et une décharge automatique. Son contrôle MagSafe 3 peut clignoter orange ; notre version conserve des couleurs fixes.
+Notre version ajoute un mode stockage à 50 %, un retour au plafond facultatif et des motifs de voyant animés par l’app éveillée. AlDente possède aussi décharge et retour automatique. Les mécanismes et leur portée pendant la veille diffèrent ; les essais sur notre Mac restent consignés.
 
 ### Compatibilité et portée
 
-AlDente 1.39 annonce le support macOS 27. Cela ne constitue pas un essai comparatif sur ce Mac. Notre moteur reste expérimental ; aucune supériorité de fiabilité ou d’autonomie n’est revendiquée. [Source](https://github.com/AppHouseKitchen/AlDente-Battery_Care_and_Monitoring/releases/tag/1.39).
+AlDente 1.39 annonce le support macOS 27. Cela ne constitue pas un essai comparatif sur ce Mac. Notre moteur reste expérimental ; aucune supériorité de fiabilité ou d’autonomie n’est revendiquée.
+
+[Consulter la source](https://github.com/AppHouseKitchen/AlDente-Battery_Care_and_Monitoring/releases/tag/1.39)
 
 ### Documentation consultée le 21 octobre 2026
 
-Comparaison fonctionnelle des produits ; les disponibilités dépendent du modèle et de la version. [Source](https://apphousekitchen.com/aldente-overview/features/).
+Comparaison fonctionnelle des produits ; les disponibilités dépendent du modèle et de la version.
+
+[Consulter la source](https://apphousekitchen.com/aldente-overview/features/)

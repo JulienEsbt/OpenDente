@@ -305,7 +305,7 @@ struct ChargingTab: View {
                     Text("Panneau fermé : OpenDente continue en arrière-plan. Mac en veille : ses mesures s’arrêtent, mais macOS conserve la dernière consigne. La veille ne retire pas la limite et ne demande pas 100 %. Au réveil, les contrôles reprennent. Quitter l’app ou éteindre le Mac demande la restauration de la limite Apple précédente.")
                         .font(.caption).foregroundStyle(.secondary)
                     DisclosureGroup("Autres commandes du moteur SMC") {
-                        Text("La décharge libre vers un plafond quelconque, le pourcentage matériel pour la régulation et la pause dédiée à la veille ne sont pas proposés par ce moteur natif. Les anciens réglages SMC sont conservés pour les Mac compatibles.")
+                        Text("Le pourcentage matériel pour la régulation et la pause SMC dédiée à la veille ne sont pas proposés par ce moteur natif. Les anciens réglages SMC sont conservés pour les Mac compatibles.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 } else {

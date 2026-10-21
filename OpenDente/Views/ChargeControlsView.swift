@@ -121,6 +121,6 @@ struct ChargeControlsView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Profil \(profile.title), limite \(profile.chargeLimit) pour cent, reprise sous \(profile.resumeAt) pour cent")
         .accessibilityValue(selected ? "Sélectionné" : "Non sélectionné")
-        .help("Limite \(profile.chargeLimit) %, reprise sous \(profile.resumeAt) %, protection thermique active, décharge automatique désactivée")
+        .help("Limite \(profile.chargeLimit) %, reprise sous \(profile.resumeAt) %, protection thermique active ; le retour sur secteur suit son option")
     }
 }
