@@ -10,17 +10,36 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
 parser.add_argument("--output", type=Path)
-parser.add_argument("--suite", choices=["all", "hardware", "lifecycle", "watchdog"], default="all")
+parser.add_argument("--suite", choices=["all", "hardware", "lifecycle", "watchdog", "native"], default="all")
 args = parser.parse_args()
 out = args.output or Path(tempfile.mkdtemp(prefix="opendente-helper-tests-"))
 out.mkdir(parents=True, exist_ok=True)
 compiler = os.environ.get("SWIFTC", "swiftc")
 flags = [compiler, "-swift-version", "6", "-strict-concurrency=minimal", "-module-cache-path", str(out / "module-cache")]
+# Compile the complete, unmodified helper on macOS, including Security and XPC.
+# This never executes the helper or opens the SMC.
+if args.suite == "native" and sys.platform != "darwin":
+    parser.error("The native helper check requires macOS")
+if sys.platform == "darwin" and args.suite in ("all", "native"):
+    native_sources = sorted((ROOT / "OpenDenteHelper").glob("*.swift"))
+    native_sources += sorted((ROOT / "Shared").glob("*.swift"))
+    native_sources += [ROOT / "OpenDente/Services/SMCService.swift", ROOT / "OpenDente/Models/BatteryState.swift"]
+    result = subprocess.run(flags + ["-typecheck", "-module-name", "OpenDenteHelper"]
+                            + [str(path) for path in native_sources], capture_output=True, text=True)
+    (out / "native-typecheck.log").write_text(result.stdout + result.stderr)
+    if result.returncode:
+        print(result.stdout + result.stderr, file=sys.stderr)
+        sys.exit(result.returncode)
+    print("PASS complete native helper typecheck; Security/XPC included, no helper executed.")
+    if args.suite == "native":
+        sys.exit(0)
+
 controller = ROOT / "OpenDenteHelper/ChargingHardwareController.swift"
 model = ROOT / "OpenDente/Models/BatteryState.swift"
 source = ROOT / "OpenDenteHelper/HelperDelegate.swift"

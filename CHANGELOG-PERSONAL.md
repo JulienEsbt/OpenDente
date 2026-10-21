@@ -1,5 +1,15 @@
 # Changements de l’édition personnelle
 
+## Après reprise sur Mac — 21 octobre 2026
+
+### Corrections
+
+- Compilation du service : conversion explicite du code courant en `SecStaticCode`
+  avant lecture du certificat, avec validation du code en mémoire et sur disque.
+- Ajout d'un contrôle macOS des sources intégrales du helper, incluant les API
+  Security et XPC exclues des tests portables. Le contrôle échoue avant la
+  correction et réussit après, sans exécuter le service.
+
 ## 0.2.0 — développement, 21 octobre 2026
 
 ### Ajouts

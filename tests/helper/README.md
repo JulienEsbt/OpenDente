@@ -30,6 +30,22 @@ Swift 6 et `-strict-concurrency=minimal` sont utilisés. Deux avertissements de
 variables inutilisées dans l'extrait du délégué proviennent du retrait d'`os.log`.
 Ils ne concernent pas le fichier de production.
 
+## Contrôle natif du helper sur macOS
+
+Sur macOS, la suite complète vérifie aussi les types des sources intégrales du
+helper avec le SDK installé, y compris Security.framework et NSXPCConnection.
+Aucun code du helper n'est exécuté ; le SMC reste inaccessible à ce contrôle.
+Pour ne lancer que cette vérification :
+
+```sh
+python3 tests/helper/run_tests.py --suite native --output .build/helper-native
+```
+
+Le journal `native-typecheck.log` conserve le diagnostic. Ce contrôle a reproduit
+l'erreur `SecCode` / `SecStaticCode` masquée par l'extraction portable, puis validé
+sa correction. Il ne prouve ni la signature, ni le rejet d'un client tiers, ni
+l'enregistrement du service, ni la réussite de la suite XCTest.
+
 ## Changements de sécurité
 
 Le helper exige l'identifiant de l'application **et le même certificat de

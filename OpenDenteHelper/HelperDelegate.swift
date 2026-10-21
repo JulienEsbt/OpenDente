@@ -136,8 +136,11 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         var ownCode: SecCode?
         guard SecCodeCopySelf([], &ownCode) == errSecSuccess, let ownCode,
               SecCodeCheckValidity(ownCode, [], nil) == errSecSuccess else { return nil }
+        var staticCode: SecStaticCode?
+        guard SecCodeCopyStaticCode(ownCode, [], &staticCode) == errSecSuccess, let staticCode,
+              SecStaticCodeCheckValidity(staticCode, [], nil) == errSecSuccess else { return nil }
         var information: CFDictionary?
-        guard SecCodeCopySigningInformation(ownCode, SecCSFlags(rawValue: kSecCSSigningInformation), &information) == errSecSuccess,
+        guard SecCodeCopySigningInformation(staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &information) == errSecSuccess,
               let info = information as? [String: Any],
               let certificates = info[kSecCodeInfoCertificates as String] as? [SecCertificate],
               let leaf = certificates.first else { return nil }
