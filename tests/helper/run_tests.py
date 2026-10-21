@@ -56,7 +56,7 @@ extracted.write_text(text + "\n")
 watchdog_source = ROOT / "OpenDenteHelper/Watchdog.swift"
 watchdog_text = "\n".join(line for line in watchdog_source.read_text().splitlines()
                           if not line.startswith(("import os.log", "private let log =")) and "log." not in line)
-watchdog_text = watchdog_text[:watchdog_text.rindex("}")] + "    func runCheckForTesting() { queue.sync { check() } }\n}\n"
+watchdog_text = watchdog_text[:watchdog_text.rindex("}")] + "    func runCheckForTesting(stale: Bool = false) { queue.sync { if stale { lastHeartbeat = .distantPast }; check() } }\n}\n"
 watchdog_extracted = out / "Watchdog.extracted.swift"
 watchdog_extracted.write_text(watchdog_text)
 (out / "manifest.json").write_text(json.dumps({

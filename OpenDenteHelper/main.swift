@@ -18,7 +18,8 @@ nonisolated(unsafe) var watchdog: Watchdog!
 nonisolated(unsafe) var sleepRootPort: io_connect_t = 0
 
 watchdog = Watchdog(needsRecovery: { delegate.needsRecovery },
-                    hasPendingRestoration: { delegate.hasPendingRestoration }) {
+                    hasPendingRestoration: { delegate.hasPendingRestoration },
+                    retryPendingRestoration: { delegate.retryPendingRestoration() }) {
     delegate.resetChargingDirect()
 }
 delegate = HelperDelegate(watchdog: watchdog)

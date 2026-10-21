@@ -17,7 +17,7 @@ Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6
 
 Le Mac cible est un MacBook Air M3, 16 Go, macOS 27.2 (26B118). Les anciennes clés SMC d’inhibition CHTE/CH0B/CH0C y sont absentes, y compris depuis le service root. Le moteur d’origine reste disponible sur les Mac qui les exposent.
 
-Le propriétaire a autorisé un moteur natif expérimental. Le service 1.6.0 utilise les interfaces privées PowerUI détectées à l’exécution ; le setter Apple 80–100 % initialise correctement l’état natif. Sous 80 %, seule la préférence de cible est ensuite modifiée. Aucun appel du setter hors de sa plage, aucune archive powerd modifiée, aucune coupure CHIE de l’adaptateur, aucun changement d’autorisations Apple ou de sudoers.
+Le propriétaire a autorisé un moteur natif expérimental. Le service 1.6.1 utilise les interfaces privées PowerUI détectées à l’exécution ; le setter Apple 80–100 % initialise correctement l’état natif. Sous 80 %, seule la préférence de cible est ensuite modifiée. Aucun appel du setter hors de sa plage, aucune archive powerd modifiée, aucune coupure CHIE de l’adaptateur, aucun changement d’autorisations Apple ou de sudoers.
 
 Avant toute modification, un journal root conserve les préférences MCL, y compris les valeurs temporaires. Un plafond ordinaire inférieur au niveau fraîchement lu est refusé. Seule la commande dédiée et authentifiée prepareStorage autorise explicitement la cible fixe 50 %, avec un niveau courant frais de 50–100 %. Désactivation, déconnexion, watchdog et redémarrage du service demandent la restauration ; un échec conserve le journal et l’erreur. La désactivation fonctionne aussi sans lecture courante de batterie.
 
@@ -34,7 +34,7 @@ Le service authentifie l’identifiant de l’app et son certificat identique au
 
 ## Validation
 
-361 XCTest natifs réussis ; 30 scénarios portables ; 32 scénarios de récupération/cycle de vie/watchdog ; contrôle des types du helper complet et Release universelle signée. Les bancs n’exécutent pas les accès matériels de production.
+363 XCTest natifs réussis ; 30 scénarios portables ; 35 scénarios de récupération/cycle de vie/watchdog ; contrôle des types du helper complet et Release universelle signée. Les bancs n’exécutent pas les accès matériels de production.
 
 Des arrêts et reprises physiques ont été observés à 99 % avec le service 1.5.2, ainsi que le retrait du plafond lors de la restauration. Une veille réelle de 27 secondes avec maintien après réveil et une reprise après baisse naturelle de 99 à 97 % sont observées avec une plage temporaire 100/98, ainsi que la poursuite du cycle à 98 % et le retour au maintien après restauration 80 % / 70 %. Le passage complet 80 vers 75 ou 20, l’arrêt à chaud et un essai USB-C ne sont pas revendiqués. Voir VALIDATION.md pour les preuves et la configuration réellement laissée sur le Mac.
 

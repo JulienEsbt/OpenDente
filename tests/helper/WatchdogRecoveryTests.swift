@@ -5,6 +5,7 @@ private final class RecoveryFixture: @unchecked Sendable {
     var marker = false
     var injectFailure = false
     var restores = 0
+    var pendingRetries = 0
     lazy var controller = ChargingHardwareController(api: .tahoe, hasLED: false,
         write: { key, value in
             if self.injectFailure && ((key == "CHIE" && value == [0]) || (key == "CHTE" && value.first == 1)) {
@@ -53,6 +54,18 @@ struct WatchdogRecoveryTests {
         watchdog.runCheckForTesting()
         try require(f.restores == 2, "watchdog continued restoration after success")
         print("PASS watchdog clears pending recovery only after successful retry")
-        print("3 watchdog tests passed; real check logic, no hardware or wall-clock waiting.")
+        let separate = RecoveryFixture()
+        let isolated = Watchdog(needsRecovery: { true }, hasPendingRestoration: { true },
+            retryPendingRestoration: { separate.pendingRetries += 1 }) { separate.restores += 1 }
+        isolated.receivedHeartbeat()
+        isolated.runCheckForTesting()
+        try require(separate.pendingRetries == 1 && separate.restores == 0,
+                    "pending LED recovery released an active charge session")
+        print("PASS pending recovery has a separate action while client remains alive")
+        isolated.runCheckForTesting(stale: true)
+        try require(separate.restores == 1 && separate.pendingRetries == 1,
+                    "pending LED recovery prevented full restoration after heartbeat timeout")
+        print("PASS heartbeat timeout restores all controls even with pending LED recovery")
+        print("5 watchdog tests passed; real check logic, no hardware or wall-clock waiting.")
     }
 }

@@ -346,6 +346,31 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         return native.restorationPending || led.restorationPending || hardware.restorationPending
     }
 
+    /// A live client's pending LED recovery must not release its native ceiling.
+    /// Disconnect and heartbeat timeout still restore every owned subsystem.
+    func retryPendingRestoration() {
+        lock.lock()
+        defer { lock.unlock() }
+        if native.restorationPending {
+            do { try native.restore() }
+            catch {
+                log.error("Native recovery pending: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        if hardware.restorationPending {
+            do { try hardware.restoreDefaults(resetLED: false) }
+            catch {
+                log.error("Charge recovery pending: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        if led.restorationPending {
+            do { try led.restore() }
+            catch {
+                log.error("LED recovery pending: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    }
+
     /// Watchdog, signal and restart paths also discard the departed app's policy.
     func resetChargingDirect() {
         lock.lock()

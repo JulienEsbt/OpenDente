@@ -5,6 +5,8 @@ final class MagSafeLEDSessionTests: XCTestCase {
     final class Hardware {
         var value: UInt8 = 0
         var marker = false
+        var automaticReadback: UInt8 = 0
+        var delayedReads: [UInt8] = []
         var events: [String] = []
         var failSave = false
         var failRestore = false
@@ -13,8 +15,11 @@ final class MagSafeLEDSessionTests: XCTestCase {
             MagSafeLEDSession(needsRecovery: marker, write: { c in
                 self.events.append("write:\(c)")
                 if c == 0 && self.failRestore { throw NSError(domain: "LED", code: 1) }
-                self.value = c
-            }, read: { self.mismatch ? 2 : self.value }, persist: { required in
+                self.value = c == 0 ? self.automaticReadback : c
+            }, read: {
+                if !self.delayedReads.isEmpty { return self.delayedReads.removeFirst() }
+                return self.mismatch ? 2 : self.value
+            }, persist: { required in
                 self.events.append("persist:\(required)")
                 if self.failSave { throw NSError(domain: "disk", code: 1) }
                 self.marker = required
@@ -63,4 +68,21 @@ final class MagSafeLEDSessionTests: XCTestCase {
     func testNoOwnershipDoesNotTouchHardwareOnRecovery() throws {
         let h = Hardware(); try h.session().restore(); XCTAssertTrue(h.events.isEmpty)
     }
+    func testAutomaticCommandCanReadBackTheSystemCurrentColor() throws {
+        let h = Hardware(), session = h.session()
+        try session.set(3)
+        h.automaticReadback = 4
+        XCTAssertNoThrow(try session.restore())
+        XCTAssertFalse(h.marker)
+        XCTAssertFalse(session.restorationPending)
+        XCTAssertEqual(h.value, 4)
+    }
+    func testColorReadbackWaitsForFirmwareInsteadOfImmediatelyRestoring() throws {
+        let h = Hardware(), session = h.session()
+        h.delayedReads = [4, 4, 3]
+        XCTAssertNoThrow(try session.set(3))
+        XCTAssertEqual(h.events, ["persist:true", "write:3"])
+        XCTAssertTrue(h.marker)
+    }
+
 }

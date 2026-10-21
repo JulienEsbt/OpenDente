@@ -2,7 +2,7 @@
 
 Version de développement **0.4.1 expérimentale**, préparée le 21 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
 
-Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 361 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
+Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 363 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
 
 ## macOS 27 : mode natif expérimental
 
@@ -72,7 +72,7 @@ Le compteur de cycles, la capacité, la température, la puissance et le schéma
 - **Veille :** la politique de veille est effacée au reset et à la déconnexion ; elle ne s’applique plus sans client actif. Une simple demande de veille annulable ne suspend plus le watchdog.
 - **Température :** la vérification de l’arrêt réel de charge s’exécute aussi pendant les branches de chaleur et de refroidissement. Un échec de commande conserve la pause thermique.
 - **Seuil bas :** il reste au minimum à 10 %, y compris avec un plafond de 20 % et une plage de 25 points.
-- **Compatibilité du service :** les commandes de politique de charge attendent un handshake avec le service 1.6.0 ou ultérieur. Une ancienne version affiche une erreur explicite. Les commandes de restauration restent disponibles pour revenir aux réglages macOS.
+- **Compatibilité du service :** les commandes de politique de charge attendent un handshake avec le service 1.6.1 ou ultérieur. Une ancienne version affiche une erreur explicite. Les commandes de restauration restent disponibles pour revenir aux réglages macOS.
 
 Ces changements corrigent des chemins précis du code. Ils ne garantissent pas l’absence d’autres défauts ni la compatibilité avec un matériel non testé.
 

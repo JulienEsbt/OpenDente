@@ -17,12 +17,12 @@ de hachages. `--suite hardware|lifecycle|watchdog` exécute seulement un groupe.
   remplacés par des dépendances en mémoire. Les deux familles de clés sont
   exercées, notamment les écritures partielles, le retour matériel incohérent,
   l'échec d'écriture du marqueur, les restaurations partielles et leur reprise.
-- **12 tests de cycle de vie** : méthodes du vrai `HelperDelegate.swift`, extraites
+- **13 tests de cycle de vie** : méthodes du vrai `HelperDelegate.swift`, extraites
   automatiquement ; les frontières macOS sont simulées. Connexion inactive,
   déconnexion, ancienne connexion, arrêt explicite, politique de veille et valeurs
   de LED sont vérifiés. L'authentification cryptographique est explicitement
   exclue de cette extraction et n'est donc pas validée par ces tests.
-- **3 tests de watchdog** : logique réelle de `Watchdog.swift` et contrôleur réel.
+- **5 tests de watchdog** : logique réelle de `Watchdog.swift` et contrôleur réel.
   Une restauration échouée est reprise même si l'app continue ses heartbeats ;
   une inhibition volontaire reste en place ; la reprise cesse après succès.
 

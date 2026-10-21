@@ -37,7 +37,7 @@ enum HelperConstants {
     static let ledStateFilePath = stateDirectory + "/led-state"
 
     /// Helper version (bump when protocol changes)
-    static let helperVersion = "1.6.0"
+    static let helperVersion = "1.6.1"
 
     static let minVersionNativeLimit = "1.5.0"
 
