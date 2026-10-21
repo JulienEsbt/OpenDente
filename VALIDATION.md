@@ -9,13 +9,13 @@ MacBook Air M3 (`Mac15,12`), arm64, 16 Go, macOS 27.2 (`26B118`). Xcode 27.1 (`2
 | Suite XCTest native arm64 finale | **339/339**, aucun échec ni test ignoré | `build/NativeTests-20261021-daily.xcresult` ; services matériels inertes |
 | Banc portable final | **30/30** | Méthodes de production extraites, nouveau type de politique inclus |
 | Récupération / cycle de vie / watchdog | **28/28** | Matériel et XPC simulés ; typecheck du helper complet sur le SDK Apple |
-| Release 0.4.0 universelle | Réussite | arm64 et x86_64 compilés ; exécution réelle arm64 uniquement |
+| Release 0.4.1 universelle | Réussite | arm64 et x86_64 compilés ; exécution réelle arm64 uniquement |
 | Signature app et service | Réussite | Apple Development, vérification stricte et certificat identique ; aucune notarification |
 | Client ad hoc reprenant l’identifiant de l’app | Rejeté | Probe getVersion uniquement, après connexion positive de l’app signée ; aucun contournement Debug |
 
 La suite finale ajoute les transitions 80/20, le maintien pendant l’attente, la poursuite d’un cycle jusqu’au plafond, la priorité thermique sur le Top Up, la baisse de 2 °C et le délai de 5 min, les températures absentes/non finies, le redémarrage du délai lors d’un pic, les erreurs de commande, la prévention de veille, et la restauration même sans lecture de batterie. Quatre tests supplémentaires vérifient qu’un onduleur listé en premier ne remplace pas la batterie interne, et que des données absentes, ambiguës ou incohérentes bloquent la commande. La valeur interne réelle a été lue : Type=InternalBattery, Current Capacity=99, Max Capacity=100. Le helper 1.5.2 renforce uniquement cette sélection, sans changer les commandes PowerUI. Les deux scénarios demandés (reprise à 20 % et maintien thermique natif) échouaient avant implémentation dans `native-policy-red.log`, puis réussissent. Les scénarios thermiques historiques conservent leurs assertions avec un seuil explicitement fixé à 35 °C ; le nouveau défaut de 40 °C est testé séparément.
 
-Les journaux finaux sont `build/validation/final-xctest.log`, `final-release.log`, `final-portable/` et `final-helper/`. Aucun avertissement Swift de concurrence dans les sources de production. Les avertissements AppIntents sans dépendance et les diagnostics système com.apple.linkd.autoShortcut ne sont pas des échecs de charge.
+Les derniers journaux sont `build/validation/daily-xctest.log` et `daily-release.log`. Les bancs complémentaires inchangés restent dans `final-portable/` et `final-helper/`. Aucun avertissement Swift de concurrence dans les sources de production. Les avertissements AppIntents sans dépendance et les diagnostics système com.apple.linkd.autoShortcut ne sont pas des échecs de charge.
 
 ## Essais de reprise et de veille du 21 octobre, après-midi
 
@@ -30,10 +30,21 @@ Le propriétaire est présent et effectue les débranchements et le réveil. App
 | 15:20:39 | Demande de plafond 100 % sous le seuil 98 % ; retrait de la limite bloquante |
 | 15:21:32 | Rebranchement MagSafe détecté ; reprise demandée par l’app |
 | 15:22:32–15:22:54 | IsCharging=true, NotChargingReason=0 ; courant +1684 mA à 12,914 V, soit environ 21,7 W à 97 % |
+| 15:32:10 | Retour à 98 % avec IsCharging=true, +754 mA, NotChargingReason=0 ; consigne 100 % conservée : le cycle continue à la remontée dans la plage |
+| 15:33:36 | Après retour aux réglages 80 % / reprise sous 70 % : maintien natif 98 %, IsCharging=false, 0 mA, NotChargingReason=16777216 |
+| 15:36:33 | App 0.4.1 installée et relancée : service toujours connecté, maintien 98 %, IsCharging=false, 0 mA |
 
 Le délai entre détection du branchement et courant positif approche une minute. Une consigne acceptée n’a donc pas été assimilée à un arrêt ou une reprise instantanée. Les mesures de la séance et l’extrait veille/réveil sont conservés dans le lot de preuves livré. Cette petite plage valide une reprise réelle après passage sous le seuil, sans revendiquer un cycle complet 80→70→80 ou 80→20→80.
 
 La nouvelle suite 0.4.1 réussit **339/339** (`build/validation/daily-xctest.log`). Le guide de stockage suit le niveau disponible, ne change aucun réglage, ne décharge pas et n’éteint pas le Mac. La zone pratique 45–55 % est distinguée de la recommandation Apple « environ 50 % ». Le voyant natif reste géré par macOS. Seul MagSafe est disponible : aucun essai matériel USB-C n’est déclaré.
+
+## Configuration laissée à la fin de la séance
+
+OpenDente **0.4.1 (7)** est installé et lancé dans `/Users/julienesbt/Applications/OpenDente.app`. Contrôle natif activé, plafond habituel **80 %**, reprise sous **70 %**, pause thermique activée à **40 °C**, prévention de veille automatique désactivée, ouverture à la connexion activée. Les choix personnels d’affichage de la barre des menus sont conservés. Le niveau réel reste 98 % après l’essai : maintien au niveau courant, puis baisse naturelle à l’usage ; aucun ordre de décharge vers 80 %.
+
+Le build livré porte `OpenDenteSourceRevision=0955eec21591de2d4bbfe86cda702b1319af76f8`. L’app installée et le build livré sont identiques fichier par fichier. Le service embarqué est identique au binaire déjà installé : aucune nouvelle installation privilégiée nécessaire. Les deux signatures sont valides avec le même certificat public ; l’app reste non notarifiée.
+
+Le guide et les explications de chargeur sont vérifiés dans l’app installée : le propriétaire a ouvert les deux rubriques, puis leur contenu a été relu par accessibilité et leur rendu contrôlé visuellement. Le guide affiche correctement le niveau courant 98 % et les étapes de stockage. Général confirme 0.4.1 (7), « Connecté — mode natif disponible » et ouverture à la connexion activée. Le lot de preuves joint contient les mesures horodatées, les événements de charge, l’extrait de veille et les journaux de build/tests.
 
 ## Observations matérielles
 
@@ -46,7 +57,7 @@ La nouvelle suite 0.4.1 réussit **339/339** (`build/validation/daily-xctest.log
 
 Ces observations de charge concernent le service 1.5.1 dans l’app 0.3.1. Le même service, le même certificat et le chemin de consigne restent utilisés par 0.4.0. La politique de reprise/thermique ajoutée dans 0.4.0 est vérifiée par les tests et les contrôles d’interface, avec les limites matérielles ci-dessous.
 
-## Interface et configuration retenue
+## Interface et configuration avant la séance de l’après-midi
 
 La version 0.4.0 est installée dans `/Users/julienesbt/Applications/OpenDente.app` avec sauvegarde de la précédente. Dans la section Charge, le curseur de reprise a été placé à 20 % et la température à 41 °C, puis les valeurs finales ont été appliquées : plafond 80 %, reprise sous 75 %, pause supplémentaire activée à 40 °C. Les champs sont actifs ; le texte suit les valeurs. L’ouverture à la connexion est enregistrée : l’interface confirme le statut enabled de SMAppService.mainApp, pas seulement une préférence locale.
 
