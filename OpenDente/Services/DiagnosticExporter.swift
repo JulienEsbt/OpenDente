@@ -98,13 +98,7 @@ enum DiagnosticExporter {
         r += ", \(state.isCharging ? "charging" : "not charging")"
         r += "\n"
 
-        let apiName: String
-        switch charging.chargingAPI {
-        case .tahoe: apiName = "Tahoe (CHTE/CHIE)"
-        case .legacy: apiName = "Legacy (CH0B/CH0C)"
-        case .unknown: apiName = "Not detected"
-        }
-        r += "Charging API: \(apiName)\n"
+        r += chargingControlReport(charging: charging, settings: settings)
         r += "Helper: \(HelperInstaller.statusDescription)\n"
         r += "SMC Available: \(battery.smcAvailable ? "Yes" : "No")\n"
 
@@ -121,13 +115,13 @@ enum DiagnosticExporter {
 
         // Settings
         r += "=== Settings ===\n"
-        r += "Automatic Discharge: \(settings.automaticDischarge ? "on" : "off")\n"
-        r += "Control MagSafe LED: \(settings.controlMagSafeLED ? "on" : "off")"
+        r += "SMC Automatic Discharge: \(settings.automaticDischarge ? "on" : "off")\n"
+        r += "SMC Control MagSafe LED: \(settings.controlMagSafeLED ? "on" : "off")"
         if settings.controlMagSafeLED {
             r += " (off when inactive: \(settings.magSafeLEDOffWhenInactive ? "on" : "off"))"
         }
         r += "\n"
-        r += "Stop Charging When Sleeping: \(settings.stopChargingWhenSleeping ? "on" : "off")\n"
+        r += "SMC Stop Charging When Sleeping: \(settings.stopChargingWhenSleeping ? "on" : "off")\n"
         r += "Disable Sleep Until Charge Limit: \(settings.disableSleepUntilChargeLimit ? "on" : "off")\n"
         r += "Use Hardware Battery Percentage: \(settings.useHardwareBatteryPercentage ? "on" : "off")\n"
         r += "\n"
@@ -137,6 +131,30 @@ enum DiagnosticExporter {
         appendLogs(&r)
 
         return r
+    }
+
+    /// Distinguishes an available native backend from opt-in and measured effects.
+    /// Kept separate from log collection so native diagnostics can be tested without I/O.
+    static func chargingControlReport(charging: ChargingManager, settings: AppSettings) -> String {
+        let apiName: String
+        if charging.nativeLimitAvailable {
+            apiName = "PowerUI native (experimental)"
+        } else {
+            switch charging.chargingAPI {
+            case .tahoe: apiName = "Tahoe SMC (CHTE/CHIE)"
+            case .legacy: apiName = "Legacy SMC (CH0B/CH0C)"
+            case .unknown: apiName = "Not detected"
+            }
+        }
+        var report = "Charging API: \(apiName)\n"
+        report += "Native Available: \(charging.nativeLimitAvailable ? "yes" : "no")\n"
+        report += "Native Control: \(settings.nativeChargeLimitEnabled ? "on" : "off")\n"
+        report += "Native Target: \(charging.nativeLimitTarget.map { "\($0)% (acknowledged, not a physical measurement)" } ?? "not acknowledged")\n"
+        report += "Return to Charge Limit: \(settings.nativeReturnToLimitEnabled ? "on" : "off")\n"
+        report += "Storage Preparation (50%): \(settings.storagePreparationEnabled ? "on" : "off")\n"
+        report += "Native MagSafe LED: \(settings.nativeMagSafeLEDEnabled ? "on" : "off")\n"
+        if let issue = charging.nativeLimitIssue { report += "Native Limit Issue: \(issue)\n" }
+        return report
     }
 
     // MARK: - Private
