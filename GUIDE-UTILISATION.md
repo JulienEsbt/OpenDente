@@ -197,4 +197,3 @@ AlDente 1.39 annonce le support macOS 27. Cela ne constitue pas un essai compara
 ### Documentation consultée le 21 octobre 2026
 
 Comparaison fonctionnelle des produits ; les disponibilités dépendent du modèle et de la version. [Source](https://apphousekitchen.com/aldente-overview/features/).
-

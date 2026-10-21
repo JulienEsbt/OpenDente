@@ -17,7 +17,7 @@ de hachages. `--suite hardware|lifecycle|watchdog` exécute seulement un groupe.
   remplacés par des dépendances en mémoire. Les deux familles de clés sont
   exercées, notamment les écritures partielles, le retour matériel incohérent,
   l'échec d'écriture du marqueur, les restaurations partielles et leur reprise.
-- **8 tests de cycle de vie** : méthodes du vrai `HelperDelegate.swift`, extraites
+- **12 tests de cycle de vie** : méthodes du vrai `HelperDelegate.swift`, extraites
   automatiquement ; les frontières macOS sont simulées. Connexion inactive,
   déconnexion, ancienne connexion, arrêt explicite, politique de veille et valeurs
   de LED sont vérifiés. L'authentification cryptographique est explicitement

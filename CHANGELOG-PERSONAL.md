@@ -8,7 +8,7 @@
 
 - Voyant natif : réglages par état réel, vert/orange/éteint/automatique et aperçus de 10 secondes. Propriété du voyant journalisée avant écriture, restitution indépendante de la disponibilité des anciennes commandes de charge. Aucun clignotement ajouté.
 - Onglet Guide hors ligne avec recherche : chaque famille de commandes expliquée, limites et comparaison de l’original avec l’édition personnelle et AlDente. Guide Markdown et tableau comparatif conservés dans le dépôt.
-- 360 tests XCTest natifs réussis ; 32 scénarios complémentaires du service. App 0.5.0 (8), service 1.6.0.
+- 361 tests XCTest natifs réussis ; 32 scénarios complémentaires du service. App 0.5.0 (8), service 1.6.0.
 
 ## 0.4.1 — préparation au stockage et essais réels, 21 octobre 2026
 
