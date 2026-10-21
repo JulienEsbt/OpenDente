@@ -17,7 +17,7 @@ de hachages. `--suite hardware|lifecycle|watchdog` exécute seulement un groupe.
   remplacés par des dépendances en mémoire. Les deux familles de clés sont
   exercées, notamment les écritures partielles, le retour matériel incohérent,
   l'échec d'écriture du marqueur, les restaurations partielles et leur reprise.
-- **13 tests de cycle de vie** : méthodes du vrai `HelperDelegate.swift`, extraites
+- **14 tests de cycle de vie** : méthodes du vrai `HelperDelegate.swift`, extraites
   automatiquement ; les frontières macOS sont simulées. Connexion inactive,
   déconnexion, ancienne connexion, arrêt explicite, politique de veille et valeurs
   de LED sont vérifiés. L'authentification cryptographique est explicitement
@@ -73,7 +73,9 @@ supposent que les écritures et leurs relectures ont réussi. Le marqueur reste
 actif jusqu'à restauration complète. Les règles de veille sont effacées à la
 déconnexion/à l'arrêt et ne s'appliquent pas sans client actif.
 
-## Validation macOS encore nécessaire
+## Portée historique de la préparation et essais sur Mac
+
+Cette liste décrit les limites du banc de préparation initial. Les essais macOS effectués depuis sont consignés dans [VALIDATION.md](../../VALIDATION.md), avec les limites du moteur natif. Les points non couverts ne sont pas réputés validés par le banc simulé.
 
 La compilation complète, l'enregistrement du service, le comportement de
 `NSXPCConnection`, Security.framework, le stockage root et les clés SMC n'ont pas

@@ -1,10 +1,12 @@
 # Changements de l’édition personnelle
 
-## 0.6.2 — diagnostic natif, 21 octobre 2026
+## 0.6.2 — diagnostic natif et présentation publique, 21 octobre 2026
 
 - L’export identifie maintenant PowerUI lorsqu’il est disponible, au lieu d’annoncer un moteur SMC non détecté. Il distingue disponibilité, activation choisie, cible acquittée et mesure physique.
 - Le rapport inclut le retour au plafond, le stockage 50 %, les règles MagSafe natives et les éventuels problèmes de consigne. Les anciennes préférences sont explicitement marquées SMC.
 - Trois régressions de diagnostic ajoutées ; 380 tests XCTest natifs réussis. Aucun changement de commande de charge, de seuil ni du service 1.7.0. App 0.6.2 (12).
+
+- README anglais et français réécrits, cinq captures réelles, comparaison fonctionnelle et priorités documentées. README d’origine archivé avec ses crédits ; licence et historique conservés.
 
 ## 0.6.1 — lancement discret et installation unique, 21 octobre 2026
 

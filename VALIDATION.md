@@ -1,6 +1,19 @@
 # Validation de l’édition personnelle
 
-## État actuel — 0.6.1 (11), lancement discret et nettoyage
+## État actuel — 0.6.2 (12), diagnostic et documentation publique
+
+App unique mise à jour **sur place dans `/Applications/OpenDente.app`**, révision binaire `195d535a6f26c8b49d64a18e1c76efbfbd216a14`. Le correctif touche le rapport de diagnostic, pas la politique de charge. Service **1.7.0 inchangé**, même binaire signé et même fichier de service conservés. Vérification stricte des signatures et identité des fichiers entre Release préparée et app installée réussies (`062-install.json`). Aucun nouvel accès ni certificat créé.
+
+- **380/380 XCTest arm64 réussis**, aucun échec : `NativeTests-20261021-062.xcresult`, `062-xctest.log`. Trois tests ajoutés pour identifier PowerUI et ses modes, distinguer disponibilité et activation, et conserver l’identification SMC. Le test de compilation avant l’ajout de la méthode échoue ; la suite finale passe après implémentation.
+- **Release universelle arm64/x86_64 compilée et signée**, `062-release.log`. Seule l’exécution arm64 est vérifiée. Les 36 scénarios complémentaires du service inchangé sont ceux déjà exécutés en 0.6.0, sans nouvelle exécution revendiquée.
+- Relance sans fenêtre automatique, puis réouverture manuelle du panneau. Réglages Général : **0.6.2 (12)**, **Connecté — mode natif disponible**, **Ouvrir à la connexion activé**. Plafond 80 %, reprise sous 75 %, pause thermique 40 °C conservés. Le Mac est sur batterie pendant ce contrôle ; aucun nouvel essai physique de charge, veille ou extinction n’est revendiqué dans ce lot.
+- README anglais et français, cinq captures réelles de 0.6.1 (interface inchangée en 0.6.2), comparatif actualisé avec la documentation AlDente et références Apple. Les captures n’incluent ni compte ni numéro de série. Provenance dans `docs/images/README.md` ; README upstream archivé avec les liens relatifs adaptés.
+
+Les preuves de cette livraison sont regroupées avec les précédentes dans l’archive locale de validation. Les compilations intermédiaires restent récupérables via la Corbeille ; elles ne constituent pas des installations supplémentaires. Les limites expérimentales et les essais matériels précédents restent ceux détaillés ci-dessous.
+
+---
+
+## Historique — 0.6.1 (11), lancement discret et nettoyage
 
 App unique installée dans **`/Applications/OpenDente.app`**, révision du binaire `fcfd798e17d68b94bed61bcf5a908dcd3dd6c101`. Le dépôt et tout l’historique restent dans `/Users/julienesbt/Dev/OpenDente`. La politique de charge n’a pas changé. Le service **1.7.0** déjà signé est réutilisé à l’identique : aucune modification des sources du service ou partagées dans ce correctif. La signature stricte de l’app et du service est valide après déplacement, paquet installé identique à la Release préparée.
 
