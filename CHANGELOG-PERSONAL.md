@@ -1,12 +1,13 @@
 # Changements de l’édition personnelle
 
-## 0.6.0 — retour au plafond et veille (en validation)
+## 0.6.0 — retour au plafond, veille et signaux distincts, 21 octobre 2026
 
 - Retour automatique au plafond sur secteur, sur activation explicite : une batterie au-dessus du plafond y redescend au lancement ou au branchement, puis maintien sans cycles forcés. Commande distincte du maintien ordinaire et du stockage 50 %, journalisée et authentifiée.
 - Priorité de la pause thermique, du stockage et de la charge ponctuelle conservée. Arrêter la décharge désactive le retour automatique sans écraser le plafond.
 - Explication de la veille : l’app suspend ses mesures, macOS conserve la consigne ; aucune restauration vers 100 % n’est demandée à l’endormissement. Reprise des contrôles au réveil couverte par régression.
 - Signalisation distincte : orange clignotant en charge normale, vert clignotant en maintien, alternance en décharge, orange fixe puis vert fixe pour 100 %, extinction en pause thermique. Motifs sur le rythme de mesure existant, sans timer supplémentaire ni codes matériels de défaut. Journal de récupération réutilisé entre les phases.
-- App 0.6.0 (10), service 1.7.0 ; essais finaux décrits dans VALIDATION.md.
+- 376 tests XCTest et 36 scénarios complémentaires réussis. Descente réelle 96→93 % sur secteur, fermeture avec restauration Apple 80 %, relance et veille/réveil validées. Trois motifs confirmés visuellement par le propriétaire.
+- Configuration quotidienne laissée à 80 % / reprise sous 75 %, retour au plafond activé ; limite Apple de repli à 80 % avec recharge optimisée. App 0.6.0 (10), service 1.7.0 ; portée exacte des essais dans VALIDATION.md.
 
 ## 0.5.0 — stockage, voyant et guide, 21 octobre 2026
 

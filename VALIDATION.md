@@ -1,6 +1,65 @@
 # Validation de l’édition personnelle
 
-## État actuel — 0.5.0 (9), 21 octobre 2026
+## État actuel — 0.6.0 (10), 21 octobre 2026
+
+Cette section remplace l’état courant de 0.5.0 ci-dessous ; les essais précédents restent conservés comme historique. App installée dans `/Users/julienesbt/Applications/OpenDente.app`, service **1.7.0**, révision du build **27136a4864d8d0bb7e3489a56cec33141e26afac**. Les commits de compte rendu ultérieurs ne changent pas les binaires. MacBook Air M3, macOS 27.2 ; Xcode 27.1, SDK 27.0 et XcodeGen 2.46.0.
+
+### Contrôles logiciels
+
+| Contrôle | Résultat | Preuve |
+|---|---|---|
+| XCTest natif arm64 | **376/376**, aucun échec | `build/NativeTests-20261021-06.xcresult`, `build/validation/06-xctest.log` |
+| Service complet, types Security/XPC | Réussite | `build/validation/06-helper/native-typecheck.log` |
+| Bancs complémentaires | **36** : 17 récupération matérielle, 14 cycle de vie, 5 watchdog | `build/validation/06-helper.log`, sous-dossier `06-helper` |
+| Release universelle | arm64 et x86_64 compilés ; arm64 exécuté | `build/validation/06-final-release.log` |
+| Signatures app et service | Valides en vérification stricte ; certificat feuille identique | Apple Development, SHA-1 public `DDAA721FBC3F2B656F612F4E5988519B593F6DA9` |
+| Paquet installé | Identique octet pour octet à la Release ; guide, licence et crédits inclus | `final-delivery.json`, archive app vérifiée |
+
+Les nouvelles régressions couvrent le retour explicite au plafond, sa persistance et son annulation, les priorités thermique/100 %/stockage, la veille sans retrait de consigne, les phases des motifs MagSafe et la réutilisation du journal de récupération. Les journaux rouges attendus précèdent les corrections ; la suite complète finale passe. Les bancs matériels restent simulés. Le code de signature natif est vérifié par compilation complète et l’app réelle utilise le même certificat autorisé ; les bancs ne sont pas présentés comme une preuve de contrôle IOKit réel.
+
+### Descente sur secteur et restitution à Apple
+
+MagSafe reste branché, aucun calcul artificiel lancé pour consommer davantage. Les horodatages ci-dessous sont ceux de Paris.
+
+| Heure | Observation |
+|---|---|
+| 17:32–17:34 | Ancienne app arrêtée ; limite Apple réglée à **80 %**, recharge optimisée laissée **activée** dans Réglages Système. Lecture PowerUI confirmant la cible 80 %. Cette valeur devient la référence de restauration de la nouvelle session. |
+| 17:38:59 | Service **1.7.0** activé et connecté à l’app **0.6.0 (10)** ; les commandes sont refusées tant que l’ancien service 1.6.1 est encore présent. |
+| 17:39 | Réglages quotidiens appliqués : **80 % / reprise sous 75 %**, pause thermique **40 °C**, prévention de veille désactivée. Retour au plafond activé explicitement. |
+| 17:39:58 | Cible 80 % relue, batterie 96 %, MagSafe connecté ; courant encore nul pendant le délai du système. Une consigne acceptée ne vaut pas effet physique immédiat. |
+| 17:40:35 | **Décharge sur secteur mesurée** : ExternalConnected=true, IsCharging=false, courant **−819 mA**, tension **12,368 V**, soit environ **10,1 W** fournis par la batterie. Cible native toujours 80 %. |
+| 17:43:20–17:43:29 | Fermeture normale d’OpenDente, restauration confirmée par le service ; voyant rendu à macOS. App arrêtée, cible Apple **toujours 80 %**, MagSafe connecté, courant −757 mA. |
+| 17:43 | Réglages Système relus hors d’OpenDente : curseur **80 %**, recharge optimisée **activée**. |
+| 17:46:27 | App relancée : retour au plafond activé, seuils 80/75 et motifs conservés. Batterie descendue de 96 à **94 %** sur secteur ; cible 80 %, −1526 mA. |
+| 17:46:57 → 17:51:47 | Veille réelle demandée par le propriétaire : 31 s de Software Sleep, DarkWake de maintenance pendant 10 s, puis 249 s de Maintenance Sleep avant réveil utilisateur. Watchdog suspendu puis repris ; aucune restauration à 100 % à l’endormissement. |
+| 17:53:26 | Après réveil : cible **80 %**, batterie **93 %**, MagSafe connecté, IsCharging=false, courant **−842 mA** à 12,276 V. Le service reste connecté et les phases de voyant reprennent. |
+
+La descente est réelle. L’essai court ne prétend pas avoir attendu l’arrivée à 80 % depuis 96 % ni une nouvelle recharge complète 75→80. Les essais de reprise réelle de 0.4.1 restent documentés plus bas ; la nouvelle priorité de retour au plafond est couverte séparément par les régressions et cette mesure sur secteur. La préparation au stockage 50 % conserve son essai matériel de 0.5.0.
+
+### Motifs MagSafe
+
+Le préréglage distinct est appliqué : charge normale orange clignotant, maintien vert clignotant, descente sur secteur alternance vert/orange, charge ponctuelle orange fixe puis vert fixe à 100 %, pause thermique éteinte. L’animation réutilise la mesure toutes les deux secondes ; aucun timer supplémentaire ni maintien en éveil n’est ajouté pour le voyant.
+
+Les journaux du contrôleur confirment les séquences **3/1** (vert/éteint), **4/1** (orange/éteint) et **3/4** (alternance), avec retour à la règle après les aperçus de dix secondes. Des lectures ACLC indépendantes confirment les couleurs présentes. Aucune erreur de couleur ou restauration de charge parasite dans ce lot. Seules les commandes connues **0, 1, 3 et 4** sont envoyées ; aucun code matériel de défaut/clignotement d’erreur n’est utilisé. Le propriétaire confirme ensuite : **« Oui, les trois motifs sont visibles »**. Les traces d’avant veille montrent la restitution automatique du voyant ; celles d’après réveil montrent la reprise de l’alternance. La confirmation du contrôleur et la confirmation visuelle du câble sont donc toutes deux acquises.
+
+### Configuration laissée après les essais
+
+App 0.6.0 (10) lancée, service 1.7.0 connecté ; ouverture à la connexion activée, contrôle natif actif, plafond **80 %**, reprise sous **75 %**, **retour au plafond sur secteur activé**, pause supplémentaire **40 °C**, stockage arrêté, prévention de veille automatique désactivée. Signaux MagSafe distincts activés. Limite Apple de référence **80 %**, recharge optimisée activée, restauration lors de la fermeture vérifiée. AlDente reste arrêté et son fonctionnement en arrière-plan désactivé.
+
+### Portée et repères
+
+La limite Apple et le moteur natif d’OpenDente partagent le même mécanisme : ce ne sont pas deux plafonds indépendants. Le réglage Apple de référence à 80 % est restauré quand l’app rend la main. L’endormissement conserve la dernière consigne ; les mesures et la pause thermique personnalisée ne sont pas exécutées en continu pendant la vraie veille. Le voyant revient alors au système. Une extinction complète n’est pas simulée par une simple fermeture de l’app et n’est pas revendiquée comme un essai matériel nouveau.
+
+La valeur 80 % / reprise sous 75 % est un choix pratique proche du comportement décrit par [Apple](https://support.apple.com/en-us/102338), qui reprend après une baisse de plus de cinq points et peut charger occasionnellement à 100 % pour l’estimation de charge. Ce n’est pas un optimum universel démontré pour la cellule de ce Mac. [Apple explique](https://www.apple.com/batteries/why-lithium-ion/) qu’un cycle correspond à l’utilisation cumulée de 100 % de capacité, sans nécessité de décharge complète. Le [résumé de l’étude de Keil et al., 2016](https://portal.fis.tum.de/de/publications/calendar-aging-of-lithium-ion-batteries-i-impact-of-the-graphite-/) relie le vieillissement calendaire au niveau et à la température ; il porte sur trois types de cellules 18650 et ne détermine pas un seuil précis pour ce Mac. Aucun gain chiffré de durée de vie n’est promis.
+
+Le maintien sur secteur n’impose pas de cycles répétés : un courant de batterie nul a déjà été observé lors des essais précédents. La descente volontaire au plafond répond au choix du propriétaire lorsqu’il reprend un Mac déjà trop chargé ; elle n’est pas présentée comme une décharge périodique nécessaire à l’entretien. USB-C n’est pas testé physiquement pendant cette séance. La chauffe volontaire et la coupure thermique immédiate ne sont pas revendiquées. L’interface PowerUI privée reste expérimentale et l’app n’est pas notarifiée.
+
+---
+
+## Historique — 0.5.0
+
+
+### Livraison 0.5.0 (9), 21 octobre 2026
 
 Cette section remplace l’état courant de 0.4.1 ci-dessous ; les observations anciennes sont conservées comme historique. App installée dans `/Users/julienesbt/Applications/OpenDente.app`, service **1.6.1**, sources de l’app `9d5d5cf266e7b639c9634ded151e920fe8b0a81f`. Le code du service et l’app gardent le même certificat Apple Development, empreinte publique `DDAA721FBC3F2B656F612F4E5988519B593F6DA9`. Aucun export de clé privée, changement d’authentification ou contournement de signature.
 
