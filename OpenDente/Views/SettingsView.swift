@@ -24,8 +24,10 @@ struct SettingsView: View {
 
             BatteryInfoTab()
                 .tabItem { Label("Batterie", systemImage: "battery.100percent") }
+            GuideTab()
+                .tabItem { Label("Guide", systemImage: "book.closed") }
         }
-        .frame(width: 560, height: 620)
+        .frame(width: 620, height: 640)
     }
 }
 
@@ -315,6 +317,7 @@ struct ChargingTab: View {
                 Text("Au bureau, une limite à 80 % avec reprise sous 75 % se rapproche du comportement natif Apple. Attendre 20 % n’est pas nécessaire pour entretenir une batterie lithium-ion. Utilise 100 % quand tu as besoin d’autonomie, sans forcer des cycles de décharge.")
                     .font(.caption).foregroundStyle(.secondary)
                 Button("Appliquer 80 % / reprise sous 75 %") {
+                    settings.storagePreparationEnabled = false
                     settings.chargeLimit = 80
                     settings.sailingRange = 5
                     settings.sailingModeEnabled = true

@@ -2,7 +2,7 @@
 
 Version de développement **0.4.1 expérimentale**, préparée le 21 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
 
-Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 339 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
+Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 360 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
 
 ## macOS 27 : mode natif expérimental
 
@@ -16,7 +16,7 @@ Différences avec le moteur SMC décrit plus bas :
 - Le seuil de reprise personnalisé est réglable, y compris à 20 % pour une limite de 80 %. Pendant l’attente, OpenDente ajuste le plafond au niveau courant ; une fois sous le seuil bas, il demande le plafond habituel jusqu’à la fin du cycle. Cette régulation dépend de macOS et reste approximative, notamment pendant la veille ou une calibration. Elle ne coupe pas le chargeur et ne force pas une décharge.
 - La pause thermique supplémentaire est réglable de 30 à 45 °C. Le défaut de 40 °C est un choix de précaution de l’app, pas une recommandation Apple pour ce capteur interne. La pause reste demandée jusqu’à au moins 5 minutes sans dépassement et 2 °C de refroidissement. Une mesure perdue ne lève pas une pause. Les protections Apple restent actives ; aucun arrêt immédiat ou surveillance pendant le sommeil du Mac n’est garanti. Le maintien natif ne descend pas sous 20 %.
 - macOS peut temporairement dépasser le plafond pour calibrer sa mesure de batterie, jusqu’à 100 %. OpenDente ne supprime pas cette politique système.
-- Le service refuse une consigne inférieure au niveau qu’il vient de lire : le firmware peut décharger activement vers un plafond inférieur. Si le niveau dépasse la limite habituelle, l’app demande de tenir le niveau actuel ; après débranchement la consigne descend avec le niveau vers la limite habituelle. Les profils ne coupent jamais le chargeur.
+- Hors mode stockage explicite à 50 %, le service refuse une consigne inférieure au niveau qu’il vient de lire : le firmware peut décharger activement vers un plafond inférieur. Si le niveau dépasse la limite habituelle, l’app demande de tenir le niveau actuel ; après débranchement la consigne descend avec le niveau vers la limite habituelle. Les profils ne coupent jamais le chargeur.
 - La charge ponctuelle demande 100 %. L’annulation ou le débranchement efface cette demande sans écraser la limite habituelle ; une consigne adaptée au niveau courant évite de demander une décharge après la charge complète.
 - Le réglage Apple précédent est sauvegardé dans un journal root avant la première modification. Désactivation, arrêt de l’app, perte du client, watchdog et redémarrage du service passent par sa restauration. Un échec conserve le journal pour réessayer.
 
@@ -30,13 +30,19 @@ Apple recommande une pièce entre 10 et 35 °C, une surface ventilée et l’abs
 
 Sources consultées le 21 octobre 2026 : [limite et reprise Apple](https://support.apple.com/en-us/102338), [cycles lithium-ion Apple](https://www.apple.com/batteries/why-lithium-ion/), [température du Mac](https://support.apple.com/en-us/102336), [conservation Apple](https://www.apple.com/batteries/maximizing-performance/), [Battery University / Cadex](https://www.batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries). Les tendances générales de vieillissement ne donnent pas de gain chiffré garanti sur la batterie de ce Mac.
 
-La section Charge propose des contrôles modifiables pour la limite, la reprise, la température et la veille automatique. Les options non portées au moteur natif sont expliquées dans un groupe replié : décharge forcée, voyant MagSafe, pourcentage matériel pour la régulation et pause dédiée à la veille. Les réglages SMC d’origine restent conservés pour le matériel compatible.
+La section Charge propose des contrôles modifiables pour la limite, la reprise, la température et la veille automatique. Les options non portées au moteur natif sont expliquées dans un groupe replié : décharge libre vers un plafond quelconque, pourcentage matériel pour la régulation et pause dédiée à la veille. Les réglages SMC d’origine restent conservés pour le matériel compatible.
 
 ## Préparer un stockage prolongé et choisir le chargeur
 
-Dans **Réglages > Charge > Stockage prolongé**, un guide suit le niveau mesuré et explique la préparation autour de 50 %, le débranchement et l’extinction manuelle. La zone 45–55 % est un repère pratique de l’interface, pas une plage prescrite par Apple. Le guide ne modifie aucun seuil et ne déclenche aucune décharge ni extinction. Le plafond reste réglable à 50 % si nécessaire ; il faut ensuite remettre le plafond quotidien. Mac éteint, aucune app ne peut surveiller ou maintenir la charge : prévoir un contrôle et une recharge autour de 50 % tous les six mois en cas de stockage très long, dans un lieu frais et sec à moins de 32 °C.
+Dans **Réglages > Charge > Stockage prolongé**, un guide suit le niveau mesuré et explique la préparation autour de 50 %, le débranchement et l’extinction manuelle. La zone 45–55 % est un repère pratique de l’interface, pas une plage prescrite par Apple. Les indications restent consultables ; le nouveau bouton de mode demande réellement une cible temporaire à 50 % sans écraser le plafond quotidien, comme détaillé ci-dessous. Aucune extinction automatique. Mac éteint, aucune app ne peut surveiller ou maintenir la charge : prévoir un contrôle et une recharge autour de 50 % tous les six mois en cas de stockage très long, dans un lieu frais et sec à moins de 32 °C.
 
-Le même écran explique MagSafe et USB-C. Le moteur régule la batterie interne et est conçu pour les deux alimentations, avec un chargeur USB-C Power Delivery de puissance adaptée. Cette séance ne dispose que du câble MagSafe : le comportement USB-C n’est pas validé physiquement. En mode natif, le voyant reste piloté par macOS ; orange peut aussi signifier charge en attente. Les commandes connues vert/orange/éteint ne constituent pas un voyant RGB. Aucun clignotement personnalisé n’est ajouté ; Apple utilise notamment un clignotement orange répété pour signaler certains problèmes de charge.
+Le même écran explique MagSafe et USB-C. Le moteur régule la batterie interne et est conçu pour les deux alimentations, avec un chargeur USB-C Power Delivery de puissance adaptée. Cette séance ne dispose que du câble MagSafe : le comportement USB-C n’est pas validé physiquement. Le voyant reste piloté par macOS par défaut. La section Voyant MagSafe propose une personnalisation explicite : vert, orange, éteint ou automatique, avec règles séparées pour charge mesurée, pause, préparation au stockage et pause thermique. Les aperçus durent 10 secondes. Chaque écriture est journalisée puis relue ; la restitution à macOS est tentée à la veille, au débranchement, à la fermeture et en récupération. Aucun clignotement personnalisé n’est ajouté.
+
+## Modes et guide des commandes
+
+**Préparer le stockage à 50 %** active une cible temporaire sans écraser les seuils quotidiens. Au-dessus de 50 %, cette action autorise explicitement une descente sur secteur ; au-dessous, elle demande une recharge vers 50 %. L’app ne lance aucun calcul pour consommer davantage et n’éteint jamais le Mac. Le panneau distingue la demande de la décharge mesurée. Le bouton d’arrêt, un profil ou une charge ponctuelle quittent ce mode. La politique thermique garde sa priorité et son délai. La commande privilégiée est dédiée à 50 %, sans cible arbitraire.
+
+L’onglet **Guide** contient une aide hors ligne avec recherche pour les boutons, réglages et limites. Le même contenu est disponible dans [GUIDE-UTILISATION.md](GUIDE-UTILISATION.md). [COMPARATIF.md](COMPARATIF.md) distingue les fonctions héritées d’OpenDente, les ajouts personnels et les fonctions annoncées par AlDente Free/Pro. La validation physique de chaque nouveauté est consignée dans VALIDATION.md ; des tests simulés ne remplacent pas une mesure sur la batterie.
 
 Sources : [stockage Apple](https://www.apple.com/fr/batteries/maximizing-performance/), [MagSafe et USB-C](https://support.apple.com/fr-fr/102397), [voyant MagSafe](https://support.apple.com/fr-fr/102372). Les essais de reprise et de veille sont détaillés dans `VALIDATION.md`.
 
@@ -54,7 +60,7 @@ Ces profils sont des points de départ modifiables. Ils activent la protection t
 
 **« Charger à 100 % cette fois »** conserve le plafond habituel. La demande dure jusqu’au débranchement, à l’annulation, à l’arrêt de l’application ou au démarrage explicite d’une décharge. En mode natif, les demandes de pause ont les limites décrites plus haut. Elle attend pendant une pause thermique, puis reprend après refroidissement et expiration du délai. Annuler la charge ponctuelle n’annule pas la protection thermique. Une mesure de température perdue pendant cette pause ne suffit pas à autoriser la reprise.
 
-La plage de reprise laisse le niveau baisser naturellement. Les profils ne provoquent pas de décharge forcée pour atteindre un plafond plus bas. La décharge manuelle reste accessible dans les actions secondaires.
+La plage de reprise laisse le niveau baisser naturellement. Les profils ne provoquent pas de décharge forcée pour atteindre un plafond plus bas. La décharge libre reste réservée aux Mac compatibles avec le moteur SMC. Le mode stockage natif fournit uniquement une cible explicite à 50 %.
 
 Le compteur de cycles, la capacité, la température, la puissance et le schéma d’alimentation utilisent les données déjà disponibles dans OpenDente. Les valeurs absentes restent absentes. Aucun appel réseau, outil d’analytics ou système de mise à jour automatique n’a été ajouté.
 
@@ -66,7 +72,7 @@ Le compteur de cycles, la capacité, la température, la puissance et le schéma
 - **Veille :** la politique de veille est effacée au reset et à la déconnexion ; elle ne s’applique plus sans client actif. Une simple demande de veille annulable ne suspend plus le watchdog.
 - **Température :** la vérification de l’arrêt réel de charge s’exécute aussi pendant les branches de chaleur et de refroidissement. Un échec de commande conserve la pause thermique.
 - **Seuil bas :** il reste au minimum à 10 %, y compris avec un plafond de 20 % et une plage de 25 points.
-- **Compatibilité du service :** les commandes de politique de charge attendent un handshake avec le service 1.5.2 ou ultérieur. Une ancienne version affiche une erreur explicite. Les commandes de restauration restent disponibles pour revenir aux réglages macOS.
+- **Compatibilité du service :** les commandes de politique de charge attendent un handshake avec le service 1.6.0 ou ultérieur. Une ancienne version affiche une erreur explicite. Les commandes de restauration restent disponibles pour revenir aux réglages macOS.
 
 Ces changements corrigent des chemins précis du code. Ils ne garantissent pas l’absence d’autres défauts ni la compatibilité avec un matériel non testé.
 

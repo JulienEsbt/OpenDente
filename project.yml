@@ -24,10 +24,12 @@ targets:
       - path: OpenDente
         excludes:
           - Resources/Assets.xcassets/AppIcon.appiconset
+          - Resources/OpenDenteGuide.json
       - path: Shared
     resources:
       - path: LICENSE
       - path: THIRD-PARTY-NOTICES.md
+      - path: OpenDente/Resources/OpenDenteGuide.json
       - path: OpenDente/Resources/Assets.xcassets
     settings:
       base:

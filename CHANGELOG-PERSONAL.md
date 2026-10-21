@@ -1,10 +1,14 @@
 # Changements de l’édition personnelle
 
-## 0.5.0 — modes explicites (en préparation)
+## 0.5.0 — stockage, voyant et guide, 21 octobre 2026
 
 - Mode stockage temporaire à 50 %, indépendant des seuils quotidiens. Au-dessus de 50 %, commande dédiée autorisant explicitement la descente sur secteur ; au-dessous, recharge vers 50 %. Aucun calcul lancé pour consommer davantage. Arrêt manuel, profil quotidien ou charge ponctuelle quittent ce mode.
 - Commandes ordinaires toujours protégées contre une cible inférieure au niveau courant. Nouvelle commande du service 1.6.0 limitée à la préparation à 50 %, authentifiée et journalisée avant écriture.
-- Les changements de mode conservent la pause thermique et son délai de refroidissement. Nouveaux tests de transitions et de récupération ; validation matérielle à effectuer avant livraison.
+- Les changements de mode conservent la pause thermique et son délai de refroidissement. Nouveaux tests de transitions et de récupération ; les mesures matérielles sont détaillées séparément dans VALIDATION.md.
+
+- Voyant natif : réglages par état réel, vert/orange/éteint/automatique et aperçus de 10 secondes. Propriété du voyant journalisée avant écriture, restitution indépendante de la disponibilité des anciennes commandes de charge. Aucun clignotement ajouté.
+- Onglet Guide hors ligne avec recherche : chaque famille de commandes expliquée, limites et comparaison de l’original avec l’édition personnelle et AlDente. Guide Markdown et tableau comparatif conservés dans le dépôt.
+- 360 tests XCTest natifs réussis ; 32 scénarios complémentaires du service. App 0.5.0 (8), service 1.6.0.
 
 ## 0.4.1 — préparation au stockage et essais réels, 21 octobre 2026
 

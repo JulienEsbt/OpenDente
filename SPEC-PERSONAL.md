@@ -1,4 +1,4 @@
-# OpenDente — édition personnelle 0.4.1
+# OpenDente — édition personnelle 0.5.0
 
 Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6a75f50df8` ; reprise personnelle initiale `0f53a5e`. Développement local dans `/Users/julienesbt/Dev/OpenDente`, branche `feature/personal-battery-care`, fork JulienEsbt/OpenDente. Historique, licence et crédits conservés.
 
@@ -9,17 +9,17 @@ Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6
 - Charge ponctuelle à 100 %, plafond habituel conservé ; fin au débranchement ou à l’annulation. Une pause thermique conserve la demande.
 - Pause thermique supplémentaire configurable ; défaut de précaution à 40 °C, distinct des recommandations de température ambiante Apple. Ce seuil n’est pas certifié par Apple.
 - Fonctionnement panneau fermé, prévention facultative de la veille automatique et ouverture à la connexion enregistrée auprès de macOS. La fermeture du capot reste une demande de veille.
-- Guide de stockage prolongé dans Charge : niveau courant, préparation vers 50 %, débranchement, extinction manuelle et contrôle après six mois ; aucun changement automatique de seuil, décharge ou extinction.
-- Explications MagSafe/USB-C et voyant système dans Charge ; personnalisation du voyant non portée au moteur natif.
+- Mode stockage explicite à 50 % : demande de décharge sur secteur au-dessus, recharge en dessous, conservation des seuils quotidiens et arrêt manuel. Aucun calcul pour accroître la consommation, aucune extinction automatique. Guide Apple pour la conservation après extinction.
+- Règles MagSafe natives vert/orange/éteint/automatique, aperçus de 10 s et restitution journalisée indépendante des commandes de charge SMC. Pas de clignotement. Guide hors ligne consultable et recherchable pour tous les réglages.
 - Aucun réseau, analytics, mise à jour automatique ou nouvelle dépendance externe à l’exécution.
 
 ## Compatibilité et mécanismes
 
 Le Mac cible est un MacBook Air M3, 16 Go, macOS 27.2 (26B118). Les anciennes clés SMC d’inhibition CHTE/CH0B/CH0C y sont absentes, y compris depuis le service root. Le moteur d’origine reste disponible sur les Mac qui les exposent.
 
-Le propriétaire a autorisé un moteur natif expérimental. Le service 1.5.2 utilise les interfaces privées PowerUI détectées à l’exécution ; le setter Apple 80–100 % initialise correctement l’état natif. Sous 80 %, seule la préférence de cible est ensuite modifiée. Aucun appel du setter hors de sa plage, aucune archive powerd modifiée, aucune coupure CHIE de l’adaptateur, aucun changement d’autorisations Apple ou de sudoers.
+Le propriétaire a autorisé un moteur natif expérimental. Le service 1.6.0 utilise les interfaces privées PowerUI détectées à l’exécution ; le setter Apple 80–100 % initialise correctement l’état natif. Sous 80 %, seule la préférence de cible est ensuite modifiée. Aucun appel du setter hors de sa plage, aucune archive powerd modifiée, aucune coupure CHIE de l’adaptateur, aucun changement d’autorisations Apple ou de sudoers.
 
-Avant toute modification, un journal root conserve les préférences MCL, y compris les valeurs temporaires. Un plafond inférieur au niveau fraîchement lu est refusé. Désactivation, déconnexion, watchdog et redémarrage du service demandent la restauration ; un échec conserve le journal et l’erreur. La désactivation fonctionne aussi sans lecture courante de batterie.
+Avant toute modification, un journal root conserve les préférences MCL, y compris les valeurs temporaires. Un plafond ordinaire inférieur au niveau fraîchement lu est refusé. Seule la commande dédiée et authentifiée prepareStorage autorise explicitement la cible fixe 50 %, avec un niveau courant frais de 50–100 %. Désactivation, déconnexion, watchdog et redémarrage du service demandent la restauration ; un échec conserve le journal et l’erreur. La désactivation fonctionne aussi sans lecture courante de batterie.
 
 Le service authentifie l’identifiant de l’app et son certificat identique au sien par NSXPCConnection, sans exception Debug. Les deux cibles sont signées Apple Development. La clé privée reste dans le Trousseau.
 
@@ -30,11 +30,11 @@ Le service authentifie l’identifiant de l’app et son certificat identique au
 - Pendant l’attente, la consigne suit les baisses naturelles du niveau. Après passage sous le seuil bas, la charge peut continuer jusqu’au plafond. Aucun exercice de batterie n’est imposé.
 - Pause thermique : reprise après au moins 5 minutes sans dépassement et 2 °C de refroidissement. Une mesure manquante ne suffit pas à lever la pause. Sous 20 %, le moteur ne peut pas maintenir exactement le niveau courant.
 - Pendant la veille, le dernier plafond reste confié à macOS. Les décisions de seuil et de température reprennent au réveil ; il n’existe pas de surveillance applicative thermique continue pendant le sommeil du Mac.
-- Décharge forcée, personnalisation du voyant, régulation par pourcentage matériel et pause dédiée à la veille restent réservées au moteur SMC. L’app ne présente pas ces commandes comme actives sur ce Mac.
+- Décharge libre vers toute cible, régulation par pourcentage matériel et pause dédiée à la veille restent réservées au moteur SMC. Le stockage natif autorise uniquement la descente explicite vers 50 %. Le voyant ACLC est contrôlé séparément des anciennes clés de charge.
 
 ## Validation
 
-339 XCTest natifs réussis ; 30 scénarios portables ; 28 scénarios de récupération/cycle de vie/watchdog ; contrôle des types du helper complet et Release universelle signée. Les bancs n’exécutent pas les accès matériels de production.
+360 XCTest natifs réussis ; 30 scénarios portables ; 32 scénarios de récupération/cycle de vie/watchdog ; contrôle des types du helper complet et Release universelle signée. Les bancs n’exécutent pas les accès matériels de production.
 
 Des arrêts et reprises physiques ont été observés à 99 % avec le service 1.5.2, ainsi que le retrait du plafond lors de la restauration. Une veille réelle de 27 secondes avec maintien après réveil et une reprise après baisse naturelle de 99 à 97 % sont observées avec une plage temporaire 100/98, ainsi que la poursuite du cycle à 98 % et le retour au maintien après restauration 80 % / 70 %. Le passage complet 80 vers 75 ou 20, l’arrêt à chaud et un essai USB-C ne sont pas revendiqués. Voir VALIDATION.md pour les preuves et la configuration réellement laissée sur le Mac.
 
