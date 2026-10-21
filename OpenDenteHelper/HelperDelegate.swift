@@ -1,6 +1,7 @@
 import Foundation
 import os.log
 import Security
+import CryptoKit
 
 private let log = Logger(subsystem: HelperConstants.machServiceName, category: "Delegate")
 
@@ -18,8 +19,14 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
     /// Whether this Mac has a MagSafe LED controllable via ACLC
     private var hasMagSafeLED = false
 
-    /// Whether any XPC client is currently connected (accessed under lock)
-    private var hasActiveClient = false
+    // Connections become active only while handling a message authenticated by
+    // NSXPCConnection's signing requirement. Merely connecting cannot reset SMC.
+    private var connectionGenerations: [ObjectIdentifier: UInt64] = [:]
+    private var nextConnectionGeneration: UInt64 = 0
+    private var activeClientGeneration: UInt64?
+    private var latestActivatedGeneration: UInt64 = 0
+    private var hardware: ChargingHardwareController!
+    private let callerRequirement = HelperDelegate.makeCallerRequirement()
 
     /// Synced from app — if true, helper inhibits charging independently on sleep.
     /// Accessed under lock (written by XPC, read by IOKit sleep callback).
@@ -34,6 +41,12 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         super.init()
         openSMC()
         detectChargingAPI()
+        hardware = ChargingHardwareController(
+            api: chargingAPI, hasLED: hasMagSafeLED,
+            write: { [smc] key, bytes in try smc.writeKey(key, bytes: bytes) },
+            read: { [smc] key in try smc.readKey(key).bytes },
+            persistRecovery: { required in try HelperState.write(required ? .inhibited : .normal) }
+        )
     }
 
     // MARK: - SMC Setup
@@ -86,394 +99,231 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
     }
 
-    /// Read back the charging key after a write to confirm it took effect.
-    /// `expected` = true means we expect charging to be inhibited.
-    private func verifyChargingKey(expected inhibited: Bool) {
-        switch chargingAPI {
-        case .legacy:
-            if let val = smc.readKeyOptional("CH0B") {
-                let allHex = hexString(val.bytes)
-                let byte = val.uint8Value ?? 0
-                let ok = inhibited ? (byte == 0x02) : (byte == 0x00)
-                if ok {
-                    log.info("CH0B readback OK: [\(allHex, privacy: .public)]")
-                } else {
-                    let expected = inhibited ? "02" : "00"
-                    log.error("CH0B readback MISMATCH: [\(allHex, privacy: .public)], expected [\(expected, privacy: .public)]")
-                }
-            } else {
-                log.warning("CH0B readback failed: key not readable")
-            }
-        case .tahoe:
-            if let val = smc.readKeyOptional("CHTE") {
-                let allHex = hexString(val.bytes)
-                let byte0 = val.uint8Value ?? 0xFF
-                let ok = inhibited ? (byte0 == 0x01) : (byte0 == 0x00)
-                if ok {
-                    log.info("CHTE readback OK: [\(allHex, privacy: .public)]")
-                } else {
-                    let expected = inhibited ? "01 00 00 00" : "00 00 00 00"
-                    log.error("CHTE readback MISMATCH: [\(allHex, privacy: .public)], expected [\(expected, privacy: .public)]")
-                }
-            } else {
-                log.warning("CHTE readback failed: key not readable")
-            }
-        case .unknown:
-            break
-        }
-    }
-
     // MARK: - NSXPCListenerDelegate
 
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection connection: NSXPCConnection) -> Bool {
-        log.info("shouldAcceptNewConnection from pid \(connection.processIdentifier, privacy: .public)")
-
-        // Verify the caller is our app
-        guard verifyCaller(connection) else {
-            log.warning("REJECTED connection from pid \(connection.processIdentifier, privacy: .public)")
+        guard let callerRequirement else {
+            log.error("Rejecting XPC: helper must be signed with the same certificate as the app")
             return false
         }
-
+        // Public since macOS 13. Foundation checks the peer on incoming messages;
+        // no PID lookup, private auditToken API, or DEBUG authentication bypass.
+        connection.setCodeSigningRequirement(callerRequirement)
         connection.exportedInterface = NSXPCInterface(with: HelperProtocol.self)
         connection.exportedObject = self
 
-        connection.invalidationHandler = { [weak self] in
-            log.info("XPC connection invalidated (app quit or crashed)")
-            self?.handleClientDisconnect()
-        }
-
-        connection.interruptionHandler = {
-            log.info("XPC connection interrupted (transient)")
-        }
-
-        connection.resume()
+        let identifier = ObjectIdentifier(connection)
         lock.lock()
-        hasActiveClient = true
+        nextConnectionGeneration += 1
+        let generation = nextConnectionGeneration
+        connectionGenerations[identifier] = generation
         lock.unlock()
-        watchdog.receivedHeartbeat()
-        log.info("ACCEPTED connection from pid \(connection.processIdentifier, privacy: .public)")
+
+        connection.invalidationHandler = { [weak self] in
+            self?.handleClientDisconnect(identifier: identifier, generation: generation)
+        }
+        connection.interruptionHandler = { log.info("XPC connection interrupted") }
+        connection.resume()
         return true
     }
 
     // MARK: - Caller Verification
 
-    private func verifyCaller(_ connection: NSXPCConnection) -> Bool {
-        let pid = connection.processIdentifier
-
-        #if DEBUG
-        // In debug builds, skip SecCode verification — Xcode debug signing
-        // doesn't always pass identifier checks reliably.
-        log.debug("DEBUG: accepting connection from pid \(pid, privacy: .public) without SecCode check")
-        return true
-        #else
-        // Production: code signature verification
-        var code: SecCode?
-        let attrs = [kSecGuestAttributePid: pid] as CFDictionary
-        guard SecCodeCopyGuestWithAttributes(nil, attrs, [], &code) == errSecSuccess,
-              let secCode = code else {
-            log.error("Failed to get SecCode for pid \(pid, privacy: .public)")
-            return false
-        }
-
-        // For distribution, add team ID: and anchor apple generic and certificate leaf[subject.CN] = "Developer ID Application: ..."
-        let requirementStr = "identifier \"\(HelperConstants.appBundleID)\""
-        var requirement: SecRequirement?
-        guard SecRequirementCreateWithString(requirementStr as CFString, [], &requirement) == errSecSuccess,
-              let req = requirement else {
-            log.error("Failed to create security requirement")
-            return false
-        }
-
-        let result = SecCodeCheckValidity(secCode, [], req)
-        if result != errSecSuccess {
-            log.warning("Caller verification failed for pid \(pid, privacy: .public): \(result, privacy: .public)")
-            return false
-        }
-        return true
-        #endif
+    /// Pin the installed helper's signing certificate, not a publisher-controlled
+    /// identifier alone. This also supports a local signing certificate; ad-hoc
+    /// signatures have no certificate and are deliberately rejected.
+    private static func makeCallerRequirement() -> String? {
+        var ownCode: SecCode?
+        guard SecCodeCopySelf([], &ownCode) == errSecSuccess, let ownCode,
+              SecCodeCheckValidity(ownCode, [], nil) == errSecSuccess else { return nil }
+        var information: CFDictionary?
+        guard SecCodeCopySigningInformation(ownCode, SecCSFlags(rawValue: kSecCSSigningInformation), &information) == errSecSuccess,
+              let info = information as? [String: Any],
+              let certificates = info[kSecCodeInfoCertificates as String] as? [SecCertificate],
+              let leaf = certificates.first else { return nil }
+        // Apple's requirement language uses a SHA-1 certificate fingerprint.
+        // This selects an existing certificate; it is not a password hash.
+        let data = SecCertificateCopyData(leaf) as Data
+        let fingerprint = Insecure.SHA1.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        let text = "identifier \"\(HelperConstants.appBundleID)\" and certificate leaf = H\"\(fingerprint)\""
+        var compiled: SecRequirement?
+        guard SecRequirementCreateWithString(text as CFString, [], &compiled) == errSecSuccess else { return nil }
+        return text
     }
 
-    // MARK: - Client Disconnect
-
-    private func handleClientDisconnect() {
-        lock.lock()
-        let state = HelperState.read()
-        hasActiveClient = false
-        lock.unlock()
-
-        log.info("Client disconnected (last state: \(state?.rawValue ?? "none", privacy: .public))")
-
-        // If charging was inhibited when the app disconnected, reset immediately
-        if state == .inhibited {
-            log.warning("Client disconnected while charging inhibited — resetting to safe defaults")
-            resetChargingDirect()
+    /// Called under lock, directly from an exported XPC method. Foundation has
+    /// already enforced the requirement before invoking that method.
+    private func activateCurrentClientLocked() -> Bool {
+        guard let connection = NSXPCConnection.current(),
+              let generation = connectionGenerations[ObjectIdentifier(connection)],
+              generation >= latestActivatedGeneration else { return false }
+        if activeClientGeneration != generation {
+            stopChargingWhenSleeping = false
+            sleepLEDColor = 0xFF
+            activeClientGeneration = generation
+            latestActivatedGeneration = generation
         }
+        watchdog.receivedHeartbeat()
+        return true
+    }
+
+    private func clearSleepPolicyLocked() {
+        stopChargingWhenSleeping = false
+        sleepLEDColor = 0xFF
+    }
+
+    private func handleClientDisconnect(identifier: ObjectIdentifier, generation: UInt64) {
+        lock.lock()
+        defer { lock.unlock() }
+        if connectionGenerations[identifier] == generation {
+            connectionGenerations.removeValue(forKey: identifier)
+        }
+        // A refused connection or an obsolete client's callback must not affect
+        // the current authenticated client or its battery state.
+        guard activeClientGeneration == generation else { return }
+        activeClientGeneration = nil
+        clearSleepPolicyLocked()
+        watchdog.resume()
+        _ = resetChargingDirectLocked()
     }
 
     // MARK: - HelperProtocol
 
-    func enableCharging(reply: @escaping (Bool, String?) -> Void) {
+    private func perform(_ reply: (Bool, String?) -> Void, action: () throws -> Void) {
         lock.lock()
         defer { lock.unlock() }
-
-        guard chargingAPI != .unknown else {
-            reply(false, "No charging API detected")
+        guard activateCurrentClientLocked() else {
+            reply(false, "No active authenticated client")
             return
         }
-
         do {
-            switch chargingAPI {
-            case .legacy:
-                log.info("Writing CH0B: [00], CH0C: [00]")
-                try smc.writeKey("CH0B", bytes: [0x00])
-                try smc.writeKey("CH0C", bytes: [0x00])
-            case .tahoe:
-                log.info("Writing CHTE: [00 00 00 00]")
-                try smc.writeKey("CHTE", bytes: [0x00, 0x00, 0x00, 0x00])
-            case .unknown:
-                break
-            }
-            verifyChargingKey(expected: false)
-            HelperState.write(.normal)
-            log.info("Charging enabled")
+            try action()
             reply(true, nil)
         } catch {
-            log.error("Failed to enable charging: \(error.localizedDescription, privacy: .public)")
+            log.error("Charging operation failed: \(error.localizedDescription, privacy: .public)")
             reply(false, error.localizedDescription)
         }
+    }
+
+    func enableCharging(reply: @escaping (Bool, String?) -> Void) {
+        perform(reply) { try hardware.restoreDefaults(resetLED: false) }
     }
 
     func inhibitCharging(reply: @escaping (Bool, String?) -> Void) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        guard chargingAPI != .unknown else {
-            reply(false, "No charging API detected")
-            return
-        }
-
-        do {
-            switch chargingAPI {
-            case .legacy:
-                log.info("Writing CH0B: [02], CH0C: [02]")
-                try smc.writeKey("CH0B", bytes: [0x02])
-                try smc.writeKey("CH0C", bytes: [0x02])
-            case .tahoe:
-                log.info("Writing CHTE: [01 00 00 00]")
-                try smc.writeKey("CHTE", bytes: [0x01, 0x00, 0x00, 0x00])
-            case .unknown:
-                break
-            }
-            // Read-back verification: confirm the write took effect
-            verifyChargingKey(expected: true)
-            HelperState.write(.inhibited)
-            log.info("Charging inhibited")
-            reply(true, nil)
-        } catch {
-            log.error("Failed to inhibit charging: \(error.localizedDescription, privacy: .public)")
-            reply(false, error.localizedDescription)
-        }
+        perform(reply) { try hardware.inhibitCharging() }
     }
 
     func forceDischarge(enable: Bool, reply: @escaping (Bool, String?) -> Void) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        guard chargingAPI != .unknown else {
-            reply(false, "No charging API detected")
-            return
-        }
-
-        do {
-            switch chargingAPI {
-            case .legacy:
-                let byte: UInt8 = enable ? 0x01 : 0x00
-                log.info("Writing CH0I: [\(self.hexString([byte]), privacy: .public)]")
-                try smc.writeKey("CH0I", bytes: [byte])
-            case .tahoe:
-                let byte: UInt8 = enable ? 0x08 : 0x00
-                log.info("Writing CHIE: [\(self.hexString([byte]), privacy: .public)]")
-                try smc.writeKey("CHIE", bytes: [byte])
-            case .unknown:
-                break
-            }
-            if enable {
-                // Enabling discharge — also inhibit charging
-                switch chargingAPI {
-                case .legacy:
-                    log.info("Writing CH0B: [02], CH0C: [02] (discharge + inhibit)")
-                    try smc.writeKey("CH0B", bytes: [0x02])
-                    try smc.writeKey("CH0C", bytes: [0x02])
-                case .tahoe:
-                    log.info("Writing CHTE: [01 00 00 00] (discharge + inhibit)")
-                    try smc.writeKey("CHTE", bytes: [0x01, 0x00, 0x00, 0x00])
-                case .unknown:
-                    break
-                }
-                HelperState.write(.inhibited)
-            }
-            // Disabling discharge: only the discharge key is toggled (above).
-            // Charging keys are left as-is — ChargingManager's evaluateState
-            // sends enableCharging() or inhibitCharging() immediately after,
-            // avoiding a wasted enable→inhibit round-trip at the charge limit.
-            log.info("Force discharge: \(enable, privacy: .public)")
-            reply(true, nil)
-        } catch {
-            log.error("Failed to set discharge: \(error.localizedDescription, privacy: .public)")
-            reply(false, error.localizedDescription)
-        }
+        perform(reply) { try hardware.forceDischarge(enable: enable) }
     }
 
     func resetToDefaults(reply: @escaping (Bool, String?) -> Void) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        resetChargingDirectLocked()
-        reply(true, nil)
+        perform(reply) {
+            clearSleepPolicyLocked()
+            try hardware.restoreDefaults()
+        }
     }
 
     func heartbeat(reply: @escaping (Bool) -> Void) {
-        watchdog.receivedHeartbeat()
-        reply(true)
+        lock.lock()
+        let accepted = activateCurrentClientLocked()
+        lock.unlock()
+        reply(accepted)
     }
 
     func suspendWatchdog(reply: @escaping (Bool) -> Void) {
-        watchdog.suspend()
-        reply(true)
+        lock.lock()
+        let accepted = activateCurrentClientLocked()
+        if accepted { watchdog.suspend() }
+        lock.unlock()
+        reply(accepted)
     }
 
     func getVersion(reply: @escaping (String) -> Void) {
-        reply(HelperConstants.helperVersion)
+        lock.lock()
+        let accepted = activateCurrentClientLocked()
+        lock.unlock()
+        reply(accepted ? HelperConstants.helperVersion : "")
     }
 
     func getChargingAPI(reply: @escaping (String) -> Void) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard activateCurrentClientLocked() else { reply("unknown"); return }
         switch chargingAPI {
-        case .legacy:  reply("legacy")
-        case .tahoe:   reply("tahoe")
+        case .legacy: reply("legacy")
+        case .tahoe: reply("tahoe")
         case .unknown: reply("unknown")
         }
     }
 
     func syncSleepSettings(stopChargingWhenSleeping: Bool, sleepLEDColor: UInt8, reply: @escaping (Bool) -> Void) {
         lock.lock()
+        defer { lock.unlock() }
+        guard activateCurrentClientLocked(), Self.allowedLEDColors.contains(sleepLEDColor) || sleepLEDColor == 0xFF else {
+            reply(false)
+            return
+        }
         self.stopChargingWhenSleeping = stopChargingWhenSleeping
         self.sleepLEDColor = sleepLEDColor
-        lock.unlock()
-        let hex = String(sleepLEDColor, radix: 16, uppercase: true)
-        log.info("Sleep settings synced: stopChargingWhenSleeping=\(stopChargingWhenSleeping, privacy: .public), sleepLED=0x\(hex, privacy: .public)")
         reply(true)
     }
 
+    private static let allowedLEDColors: Set<UInt8> = [0x00, 0x01, 0x03, 0x04]
+
     func setMagSafeLED(color: UInt8, reply: @escaping (Bool, String?) -> Void) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        guard hasMagSafeLED else {
-            reply(false, "No MagSafe LED (ACLC key not found)")
-            return
-        }
-
-        do {
+        perform(reply) {
+            guard hasMagSafeLED, Self.allowedLEDColors.contains(color) else {
+                throw ChargingHardwareController.Failure(message: "Unavailable MagSafe LED or unsupported color")
+            }
             try smc.writeKey("ACLC", bytes: [color])
-            let hex = String(color, radix: 16, uppercase: true)
-            log.info("MagSafe LED set to 0x\(hex, privacy: .public)")
-            reply(true, nil)
-        } catch {
-            log.error("Failed to set MagSafe LED: \(error.localizedDescription, privacy: .public)")
-            reply(false, error.localizedDescription)
         }
     }
 
-    // MARK: - Sleep Defense-in-Depth
+    // MARK: - Sleep and Recovery
 
-    /// Called from IOKit sleep callback. If the app synced stopChargingWhenSleeping=true,
-    /// inhibit charging independently — backup in case app's XPC call didn't complete
-    /// before macOS suspended the app process.
     func inhibitChargingOnSleep() {
         lock.lock()
-        let sleepSetting = stopChargingWhenSleeping
-        let api = chargingAPI
-        let ledColor = sleepLEDColor
-        let hasLED = hasMagSafeLED
-        lock.unlock()
-
-        guard sleepSetting && api != .unknown else {
-            log.info("Sleep callback: skipped (stopChargingWhenSleeping=\(sleepSetting, privacy: .public), api=\(String(describing: api), privacy: .public))")
-            return
-        }
-
-        lock.lock()
         defer { lock.unlock() }
-
+        guard activeClientGeneration != nil, stopChargingWhenSleeping else { return }
         do {
-            switch chargingAPI {
-            case .legacy:
-                try smc.writeKey("CH0B", bytes: [0x02])
-                try smc.writeKey("CH0C", bytes: [0x02])
-            case .tahoe:
-                try smc.writeKey("CHTE", bytes: [0x01, 0x00, 0x00, 0x00])
-            case .unknown:
-                break
+            try hardware.inhibitCharging()
+            if hasMagSafeLED && sleepLEDColor != 0xFF {
+                try smc.writeKey("ACLC", bytes: [sleepLEDColor])
             }
-            // Update LED to reflect inhibited state (visible with lid closed).
-            // 0xFF = don't touch LED (controlMagSafeLED is off).
-            if hasLED && ledColor != 0xFF {
-                try smc.writeKey("ACLC", bytes: [ledColor])
-                let hex = String(ledColor, radix: 16, uppercase: true)
-                log.info("Sleep callback: LED set to 0x\(hex, privacy: .public)")
-            }
-            HelperState.write(.inhibited)
-            log.info("Sleep callback: inhibited charging (defense-in-depth)")
         } catch {
-            log.error("Sleep callback: failed to inhibit charging: \(error.localizedDescription, privacy: .public)")
+            log.error("Sleep inhibition failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
-    // MARK: - Direct Reset (for signal handlers and crash recovery)
+    var needsRecovery: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return hardware.recoveryRequired || HelperState.wasChargingInhibited()
+    }
 
-    /// Reset charging without going through XPC. Used by signal handlers and crash recovery.
-    /// Acquires its own lock.
+    var hasPendingRestoration: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return hardware.restorationPending
+    }
+
+    /// Watchdog, signal and restart paths also discard the departed app's policy.
     func resetChargingDirect() {
         lock.lock()
         defer { lock.unlock() }
-        resetChargingDirectLocked()
+        clearSleepPolicyLocked()
+        _ = resetChargingDirectLocked()
     }
 
-    /// Reset charging — caller must already hold lock
-    private func resetChargingDirectLocked() {
-        guard chargingAPI != .unknown else { return }
-
+    private func resetChargingDirectLocked() -> Bool {
         do {
-            // Stop discharge
-            switch chargingAPI {
-            case .legacy:
-                try smc.writeKey("CH0I", bytes: [0x00])
-            case .tahoe:
-                try smc.writeKey("CHIE", bytes: [0x00])
-            case .unknown:
-                break
-            }
-
-            // Enable charging
-            switch chargingAPI {
-            case .legacy:
-                try smc.writeKey("CH0B", bytes: [0x00])
-                try smc.writeKey("CH0C", bytes: [0x00])
-            case .tahoe:
-                try smc.writeKey("CHTE", bytes: [0x00, 0x00, 0x00, 0x00])
-            case .unknown:
-                break
-            }
-
-            // Reset MagSafe LED to system default if available
-            if hasMagSafeLED {
-                try smc.writeKey("ACLC", bytes: [HelperConstants.ledAuto])
-            }
-
-            HelperState.clear()
-            log.info("Reset to defaults (charging enabled, discharge off, LED default)")
+            try hardware.restoreDefaults()
+            log.info("Safe defaults restored")
+            return true
         } catch {
-            log.error("Failed to reset to defaults: \(error.localizedDescription, privacy: .public)")
+            log.error("Safe-default recovery remains pending: \(error.localizedDescription, privacy: .public)")
+            return false
         }
     }
 }

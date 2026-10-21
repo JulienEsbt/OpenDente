@@ -15,8 +15,14 @@ final class Watchdog: @unchecked Sendable {
     private var isSuspended = false
     private let queue = DispatchQueue(label: "com.opendente.helper.watchdog")
     private let resetAction: @Sendable () -> Void
+    private let needsRecovery: @Sendable () -> Bool
+    private let hasPendingRestoration: @Sendable () -> Bool
 
-    init(resetAction: @escaping @Sendable () -> Void) {
+    init(needsRecovery: @escaping @Sendable () -> Bool,
+         hasPendingRestoration: @escaping @Sendable () -> Bool,
+         resetAction: @escaping @Sendable () -> Void) {
+        self.needsRecovery = needsRecovery
+        self.hasPendingRestoration = hasPendingRestoration
         self.resetAction = resetAction
     }
 
@@ -96,6 +102,11 @@ final class Watchdog: @unchecked Sendable {
     }
 
     private func check() {
+        if hasPendingRestoration() {
+            log.warning("Retrying an incomplete restore, independently of app heartbeats")
+            resetAction()
+            return
+        }
         let elapsed = Date().timeIntervalSince(lastHeartbeat)
 
         if elapsed > 60 {
@@ -103,7 +114,7 @@ final class Watchdog: @unchecked Sendable {
         }
 
         guard elapsed > HelperConstants.watchdogTimeout else { return }
-        guard HelperState.wasChargingInhibited() else {
+        guard needsRecovery() else {
             log.debug("Watchdog: timeout but charging not inhibited, ignoring")
             return
         }
