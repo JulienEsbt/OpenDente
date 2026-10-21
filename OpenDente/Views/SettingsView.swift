@@ -214,6 +214,7 @@ struct NotificationsTab: View {
 struct ChargingTab: View {
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var charging = ChargingManager.shared
+    @ObservedObject var battery = BatteryService.shared
 
     var body: some View {
         Form {
@@ -322,6 +323,40 @@ struct ChargingTab: View {
                 Link("Limite de charge : explications d’Apple", destination: URL(string: "https://support.apple.com/fr-fr/102338")!)
                 Link("Températures : recommandations d’Apple", destination: URL(string: "https://support.apple.com/fr-fr/102336")!)
                 Link("Vieillissement lithium-ion : Battery University", destination: URL(string: "https://batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries")!)
+            }
+            Section("Stockage prolongé") {
+                DisclosureGroup("Préparer le Mac autour de 50 %") {
+                    if battery.batteryState == .unknown {
+                        Label("En attente d’une mesure de batterie.", systemImage: "battery.50percent")
+                    } else if (45...55).contains(battery.batteryState.percentage) {
+                        Label("\(battery.batteryState.percentage) % : niveau proche de 50 %.", systemImage: "checkmark.circle")
+                            .foregroundStyle(.green)
+                    } else if battery.batteryState.percentage > 55 {
+                        Label("\(battery.batteryState.percentage) % : débranche et utilise normalement le Mac jusqu’à environ 50 %.", systemImage: "battery.50percent")
+                    } else {
+                        Label("\(battery.batteryState.percentage) % : recharge jusqu’à environ 50 %, puis débranche.", systemImage: "battery.50percent")
+                    }
+                    Text("1. Vise environ 50 % avant une longue inutilisation. Si nécessaire, tu peux choisir un plafond de 50 % plus haut dans cette page. Remets ensuite ton plafond habituel pour l’usage quotidien.")
+                    Text("2. Débranche le chargeur, puis éteins le Mac depuis le menu Pomme. OpenDente ne décharge pas la batterie pour ce guide et n’éteint pas le Mac à ta place.")
+                    Text("3. Range-le dans un endroit frais et sec, à moins de 32 °C. Pour plus de six mois, Apple conseille de revenir à environ 50 % tous les six mois.")
+                    Text("Une fois le Mac éteint, l’app ne peut ni surveiller le niveau ni recharger la batterie. La zone 45–55 % affichée ici est un repère pratique autour de 50 %, pas une plage officielle Apple.")
+                        .foregroundStyle(.secondary)
+                    Link("Stockage : recommandations d’Apple", destination: URL(string: "https://www.apple.com/fr/batteries/maximizing-performance/")!)
+                }
+                .font(.callout)
+            }
+            Section("MagSafe et USB-C") {
+                DisclosureGroup("Comprendre le chargeur et son voyant") {
+                    Text("Le contrôle vise la batterie interne : il est conçu pour fonctionner avec MagSafe comme avec une alimentation USB-C Power Delivery adaptée. Un chargeur trop faible peut laisser la batterie se décharger malgré le branchement.")
+                    Text(charging.nativeLimitAvailable
+                         ? "Sur ce moteur expérimental, le voyant MagSafe reste géré par macOS. Orange peut signifier charge en cours ou charge en attente ; consulte le panneau pour connaître l’état réel. La personnalisation du voyant n’est pas activée sur ce Mac."
+                         : "Sur les Mac compatibles, le réglage de voyant propose vert, orange ou éteint. Le voyant ne remplace pas les mesures de charge du panneau.")
+                    Text("Un clignotement orange répété peut signaler un problème de charge selon Apple. OpenDente n’ajoute pas de clignotement qui pourrait masquer cet avertissement.")
+                        .foregroundStyle(.secondary)
+                    Link("Charger avec MagSafe ou USB-C", destination: URL(string: "https://support.apple.com/fr-fr/102397")!)
+                    Link("Voyant et dépannage MagSafe", destination: URL(string: "https://support.apple.com/fr-fr/102372")!)
+                }
+                .font(.callout)
             }
         }
         .formStyle(.grouped)

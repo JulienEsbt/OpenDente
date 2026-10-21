@@ -1,6 +1,6 @@
 # OpenDente — édition personnelle
 
-Version de développement **0.4.0 expérimentale**, préparée le 21 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
+Version de développement **0.4.1 expérimentale**, préparée le 21 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
 
 Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 339 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
 
@@ -31,6 +31,14 @@ Apple recommande une pièce entre 10 et 35 °C, une surface ventilée et l’abs
 Sources consultées le 21 octobre 2026 : [limite et reprise Apple](https://support.apple.com/en-us/102338), [cycles lithium-ion Apple](https://www.apple.com/batteries/why-lithium-ion/), [température du Mac](https://support.apple.com/en-us/102336), [conservation Apple](https://www.apple.com/batteries/maximizing-performance/), [Battery University / Cadex](https://www.batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries). Les tendances générales de vieillissement ne donnent pas de gain chiffré garanti sur la batterie de ce Mac.
 
 La section Charge propose des contrôles modifiables pour la limite, la reprise, la température et la veille automatique. Les options non portées au moteur natif sont expliquées dans un groupe replié : décharge forcée, voyant MagSafe, pourcentage matériel pour la régulation et pause dédiée à la veille. Les réglages SMC d’origine restent conservés pour le matériel compatible.
+
+## Préparer un stockage prolongé et choisir le chargeur
+
+Dans **Réglages > Charge > Stockage prolongé**, un guide suit le niveau mesuré et explique la préparation autour de 50 %, le débranchement et l’extinction manuelle. La zone 45–55 % est un repère pratique de l’interface, pas une plage prescrite par Apple. Le guide ne modifie aucun seuil et ne déclenche aucune décharge ni extinction. Le plafond reste réglable à 50 % si nécessaire ; il faut ensuite remettre le plafond quotidien. Mac éteint, aucune app ne peut surveiller ou maintenir la charge : prévoir un contrôle et une recharge autour de 50 % tous les six mois en cas de stockage très long, dans un lieu frais et sec à moins de 32 °C.
+
+Le même écran explique MagSafe et USB-C. Le moteur régule la batterie interne et est conçu pour les deux alimentations, avec un chargeur USB-C Power Delivery de puissance adaptée. Cette séance ne dispose que du câble MagSafe : le comportement USB-C n’est pas validé physiquement. En mode natif, le voyant reste piloté par macOS ; orange peut aussi signifier charge en attente. Les commandes connues vert/orange/éteint ne constituent pas un voyant RGB. Aucun clignotement personnalisé n’est ajouté ; Apple utilise notamment un clignotement orange répété pour signaler certains problèmes de charge.
+
+Sources : [stockage Apple](https://www.apple.com/fr/batteries/maximizing-performance/), [MagSafe et USB-C](https://support.apple.com/fr-fr/102397), [voyant MagSafe](https://support.apple.com/fr-fr/102372). Les essais de reprise et de veille sont détaillés dans `VALIDATION.md`.
 
 ## Profils et politique du moteur SMC
 

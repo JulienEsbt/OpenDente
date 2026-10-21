@@ -1,5 +1,12 @@
 # Changements de l’édition personnelle
 
+## 0.4.1 — préparation au stockage et essais réels, 21 octobre 2026
+
+- Guide de stockage prolongé dans Charge, avec niveau de batterie courant et étapes Apple autour de 50 %. Aucun changement automatique des réglages, décharge forcée ou extinction.
+- Explications MagSafe/USB-C et voyant : contrôle de la batterie indépendant du port, puissance adaptée, voyant système conservé en mode natif et absence de clignotement personnalisé.
+- Essai réel : maintien à 99 %, veille de 27 secondes puis maintien retrouvé ; descente naturelle à 97 % sous le seuil temporaire de 98 %, puis courant de charge positif après rebranchement MagSafe. Voir VALIDATION.md pour la suite et la portée exacte.
+- App 0.4.1 (7), même service 1.5.2 et même politique de charge. Suite native : **339/339** sans échec. Aucun essai USB-C matériel, aucun gain de durée de vie chiffré promis.
+
 ## 0.4.0 — réglages natifs et pause thermique, 21 octobre 2026
 
 - Reprise personnalisée disponible dans le moteur natif, y compris 20 % avec un plafond de 80 %. Maintien au niveau courant pendant l’attente, puis charge jusqu’au plafond ; aucun profil ne force une décharge.

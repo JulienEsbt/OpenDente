@@ -1,4 +1,4 @@
-# OpenDente — édition personnelle 0.4.0
+# OpenDente — édition personnelle 0.4.1
 
 Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6a75f50df8` ; reprise personnelle initiale `0f53a5e`. Développement local dans `/Users/julienesbt/Dev/OpenDente`, branche `feature/personal-battery-care`, fork JulienEsbt/OpenDente. Historique, licence et crédits conservés.
 
@@ -9,6 +9,8 @@ Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6
 - Charge ponctuelle à 100 %, plafond habituel conservé ; fin au débranchement ou à l’annulation. Une pause thermique conserve la demande.
 - Pause thermique supplémentaire configurable ; défaut de précaution à 40 °C, distinct des recommandations de température ambiante Apple. Ce seuil n’est pas certifié par Apple.
 - Fonctionnement panneau fermé, prévention facultative de la veille automatique et ouverture à la connexion enregistrée auprès de macOS. La fermeture du capot reste une demande de veille.
+- Guide de stockage prolongé dans Charge : niveau courant, préparation vers 50 %, débranchement, extinction manuelle et contrôle après six mois ; aucun changement automatique de seuil, décharge ou extinction.
+- Explications MagSafe/USB-C et voyant système dans Charge ; personnalisation du voyant non portée au moteur natif.
 - Aucun réseau, analytics, mise à jour automatique ou nouvelle dépendance externe à l’exécution.
 
 ## Compatibilité et mécanismes
@@ -34,7 +36,7 @@ Le service authentifie l’identifiant de l’app et son certificat identique au
 
 339 XCTest natifs réussis ; 30 scénarios portables ; 28 scénarios de récupération/cycle de vie/watchdog ; contrôle des types du helper complet et Release universelle signée. Les bancs n’exécutent pas les accès matériels de production.
 
-Des arrêts et reprises physiques ont été observés à 99 % avec le service 1.5.2, ainsi que le retrait du plafond lors de la restauration. Le passage naturel d’une plage complète (80 vers 75 ou 20), l’arrêt à chaud et une veille/réveil complète ne sont pas revendiqués. Voir VALIDATION.md pour les preuves et la configuration réellement laissée sur le Mac.
+Des arrêts et reprises physiques ont été observés à 99 % avec le service 1.5.2, ainsi que le retrait du plafond lors de la restauration. Une veille réelle de 27 secondes avec maintien après réveil et une reprise après baisse naturelle de 99 à 97 % sont observées avec une plage temporaire 100/98. Le passage complet 80 vers 75 ou 20, l’arrêt à chaud et un essai USB-C ne sont pas revendiqués. Voir VALIDATION.md pour les preuves et la configuration réellement laissée sur le Mac.
 
 ## Hors périmètre
 

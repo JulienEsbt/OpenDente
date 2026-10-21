@@ -1,12 +1,12 @@
 # Bilan de validation — 21 octobre 2026
 
-## État actuel : version 0.4.0 (6), service 1.5.2
+## Livraison 0.4.1 (7), service 1.5.2
 
 MacBook Air M3 (`Mac15,12`), arm64, 16 Go, macOS 27.2 (`26B118`). Xcode 27.1 (`27A9275`), SDK macOS 27.0, Swift 6.4, XcodeGen 2.46.0. Les commandes Xcode utilisent `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
 | Contrôle exécuté | Résultat | Portée |
 |---|---:|---|
-| Suite XCTest native arm64 finale | **339/339**, aucun échec ni test ignoré | `build/NativeTests-20261021-final.xcresult` ; services matériels inertes |
+| Suite XCTest native arm64 finale | **339/339**, aucun échec ni test ignoré | `build/NativeTests-20261021-daily.xcresult` ; services matériels inertes |
 | Banc portable final | **30/30** | Méthodes de production extraites, nouveau type de politique inclus |
 | Récupération / cycle de vie / watchdog | **28/28** | Matériel et XPC simulés ; typecheck du helper complet sur le SDK Apple |
 | Release 0.4.0 universelle | Réussite | arm64 et x86_64 compilés ; exécution réelle arm64 uniquement |
@@ -16,6 +16,24 @@ MacBook Air M3 (`Mac15,12`), arm64, 16 Go, macOS 27.2 (`26B118`). Xcode 27.1 (`2
 La suite finale ajoute les transitions 80/20, le maintien pendant l’attente, la poursuite d’un cycle jusqu’au plafond, la priorité thermique sur le Top Up, la baisse de 2 °C et le délai de 5 min, les températures absentes/non finies, le redémarrage du délai lors d’un pic, les erreurs de commande, la prévention de veille, et la restauration même sans lecture de batterie. Quatre tests supplémentaires vérifient qu’un onduleur listé en premier ne remplace pas la batterie interne, et que des données absentes, ambiguës ou incohérentes bloquent la commande. La valeur interne réelle a été lue : Type=InternalBattery, Current Capacity=99, Max Capacity=100. Le helper 1.5.2 renforce uniquement cette sélection, sans changer les commandes PowerUI. Les deux scénarios demandés (reprise à 20 % et maintien thermique natif) échouaient avant implémentation dans `native-policy-red.log`, puis réussissent. Les scénarios thermiques historiques conservent leurs assertions avec un seuil explicitement fixé à 35 °C ; le nouveau défaut de 40 °C est testé séparément.
 
 Les journaux finaux sont `build/validation/final-xctest.log`, `final-release.log`, `final-portable/` et `final-helper/`. Aucun avertissement Swift de concurrence dans les sources de production. Les avertissements AppIntents sans dépendance et les diagnostics système com.apple.linkd.autoShortcut ne sont pas des échecs de charge.
+
+## Essais de reprise et de veille du 21 octobre, après-midi
+
+Le propriétaire est présent et effectue les débranchements et le réveil. App de contrôle 0.4.0 (6), service 1.5.2 ; aucun changement de la politique de charge dans 0.4.1. Configuration initialement relue : plafond 80 %, reprise sous 70 %, pause thermique 40 °C activée, ouverture à la connexion activée. Les essais utilisent temporairement un plafond de 100 % et une reprise sous 98 %, afin de limiter la baisse naturelle à deux points. Aucune décharge forcée et aucune charge CPU artificielle.
+
+| Heure locale (CEST) | Observation réelle |
+|---|---|
+| 15:12–15:15 | MagSafe détecté, maintien natif 99 %, IsCharging=false, courant 0 mA |
+| 15:14:16 → 15:14:43 | `Software Sleep` puis `Wake from Deep Idle`, durée réelle 27 secondes ; watchdog suspendu puis repris |
+| 15:15:03 | Après réveil : MagSafe détecté, maintien 99 %, IsCharging=false, 0 mA ; app et service toujours connectés |
+| 15:15–15:21 | Débranchement et baisse naturelle de 99 à 97 % ; lecture IOPS interne et IORegistry concordantes |
+| 15:20:39 | Demande de plafond 100 % sous le seuil 98 % ; retrait de la limite bloquante |
+| 15:21:32 | Rebranchement MagSafe détecté ; reprise demandée par l’app |
+| 15:22:32–15:22:54 | IsCharging=true, NotChargingReason=0 ; courant +1684 mA à 12,914 V, soit environ 21,7 W à 97 % |
+
+Le délai entre détection du branchement et courant positif approche une minute. Une consigne acceptée n’a donc pas été assimilée à un arrêt ou une reprise instantanée. Les mesures de la séance et l’extrait veille/réveil sont conservés dans le lot de preuves livré. Cette petite plage valide une reprise réelle après passage sous le seuil, sans revendiquer un cycle complet 80→70→80 ou 80→20→80.
+
+La nouvelle suite 0.4.1 réussit **339/339** (`build/validation/daily-xctest.log`). Le guide de stockage suit le niveau disponible, ne change aucun réglage, ne décharge pas et n’éteint pas le Mac. La zone pratique 45–55 % est distinguée de la recommandation Apple « environ 50 % ». Le voyant natif reste géré par macOS. Seul MagSafe est disponible : aucun essai matériel USB-C n’est déclaré.
 
 ## Observations matérielles
 
@@ -40,10 +58,10 @@ AlDente est arrêté et son autorisation de fonctionnement en arrière-plan a é
 
 - Descente naturelle depuis le plafond jusqu’au seuil bas, puis retour au plafond : ni 80/75 ni 80/20 n’ont fait l’objet d’un cycle physique complet durant cette séance.
 - Pause lors d’une température réellement élevée et reprise après refroidissement : pas de chauffe volontaire du Mac. Les transitions et erreurs sont simulées dans XCTest ; l’action native de maintien est celle observée à 99 %.
-- Veille/réveil complète et ouverture après déconnexion/reconnexion de session : pas de suspension ou fermeture de session imposée pendant l’usage du propriétaire. L’enregistrement du démarrage automatique est contrôlé dans l’interface ; ce n’est pas une exécution après reconnexion.
+- Ouverture après déconnexion/reconnexion de session : l’enregistrement du démarrage automatique est contrôlé dans l’interface ; ce n’est pas une exécution après reconnexion. La veille/réveil réelle de 27 secondes est validée dans la séance de l’après-midi.
 - Comportement pendant une calibration firmware, après redémarrage complet, sous charge prolongée et sur x86_64. Rejet d’un client signé avec un autre certificat non testé ; le test négatif ad hoc est distinct.
 
-Le propriétaire n’était pas disponible pour le précédent essai de débranchement de cinq minutes ; aucune réussite n’en est déduite. La version reste expérimentale et ne garantit pas un arrêt thermique immédiat. Une consigne privée peut changer de comportement lors d’une mise à jour de macOS.
+Le précédent essai de débranchement n’avait pas pu être réalisé ; la séance de l’après-midi ajoute les mesures de reprise et de veille décrites plus haut. La version reste expérimentale et ne garantit pas un arrêt thermique immédiat. Une consigne privée peut changer de comportement lors d’une mise à jour de macOS.
 
 ## Provenance et préparation conservées
 
