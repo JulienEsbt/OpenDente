@@ -1,6 +1,29 @@
 # Validation de l’édition personnelle
 
-## État actuel — 0.6.0 (10), 21 octobre 2026
+## État actuel — 0.6.1 (11), lancement discret et nettoyage
+
+App unique installée dans **`/Applications/OpenDente.app`**, révision du binaire `fcfd798e17d68b94bed61bcf5a908dcd3dd6c101`. Le dépôt et tout l’historique restent dans `/Users/julienesbt/Dev/OpenDente`. La politique de charge n’a pas changé. Le service **1.7.0** déjà signé est réutilisé à l’identique : aucune modification des sources du service ou partagées dans ce correctif. La signature stricte de l’app et du service est valide après déplacement, paquet installé identique à la Release préparée.
+
+### Contrôles effectués
+
+- **377/377 XCTest natifs réussis**, aucun échec, suite finale `NativeTests-20261021-061-final.xcresult`. La régression du maintien après fermeture des fenêtres échoue avant l’implémentation explicite puis passe. Release universelle signée réussie. Les 36 scénarios complémentaires du service de 0.6.0 restent applicables au service inchangé ; ils ne sont pas présentés comme une nouvelle exécution.
+- Premier lancement de 0.6.1 après déplacement : processus `/Applications/OpenDente.app/Contents/MacOS/OpenDente` actif, aucun panneau ni réglages affiché ; consignes et confirmations MagSafe visibles dans les journaux alors que l’interface est fermée.
+- Réouverture manuelle : panneau disponible, puis réglages Général affichant **0.6.1 (11)** et **Connecté — mode natif disponible**. Seuils quotidiens conservés, 80/75 %, retour au plafond et pause 40 °C conservés.
+- Après fermeture des réglages et du panneau : aucune fenêtre disponible dans le contrôle de l’app, processus toujours actif. Le suivi continue, y compris après le débranchement du chargeur effectué pendant la séance.
+- App quittée avec la fenêtre des réglages encore ouverte, puis relancée : lancement silencieux, nouveau processus actif et aucune restauration automatique des réglages. Préférence de restauration de cette app relue à zéro ; aucune préférence globale de macOS modifiée.
+- **Ouvrir à la connexion activé** depuis l’app déplacée ; statut effectivement enregistré auprès de SMAppService. Les entrées actives macOS de l’app pointent sur **`/Applications/OpenDente.app`**, service associé au même identifiant parent. Un ancien enregistrement historique de l’emplacement utilisateur reste désactivé ; aucun reset global des éléments d’ouverture.
+
+Cette séance ne comprend pas de nouveau redémarrage complet ni de fermeture de session. Elle vérifie l’enregistrement natif du lancement à la connexion, le démarrage silencieux, la réouverture manuelle et le maintien avec toutes les fenêtres fermées. L’app reste un processus de session : Quitter l’arrête volontairement ; la veille suspend ses mesures comme décrit dans la validation 0.6.0 ci-dessous.
+
+### Nettoyage réversible
+
+Inventaire avant action et confirmation que le commit initial `0f53a5e` reste ancêtre du dépôt courant. **36 éléments racines**, environ **1,17 Go**, déplacés avec la Corbeille native de macOS : anciennes copies d’apps et compilations Debug/Release, archives intermédiaires, ancien dossier source 0.2.0 et sa ZIP, scripts et copies de travail temporaires. La Corbeille n’a pas été vidée. Le dépôt courant, les licences, crédits, réglages et l’app finale sont conservés.
+
+Une recherche finale dans Applications, Applications utilisateur, Dev, Codex, Téléchargements et Bureau ne retrouve qu’un bundle OpenDente actif : `/Applications/OpenDente.app`. Les anciens paquets sont récupérables depuis la Corbeille. Les preuves récentes et celles de la validation de charge 0.6.0 sont regroupées dans une seule archive locale de validation ; aucune autre app installable n’est gardée dans les dossiers actifs.
+
+---
+
+## Historique — livraison 0.6.0 (10), 21 octobre 2026
 
 Cette section remplace l’état courant de 0.5.0 ci-dessous ; les essais précédents restent conservés comme historique. App installée dans `/Users/julienesbt/Applications/OpenDente.app`, service **1.7.0**, révision du build **27136a4864d8d0bb7e3489a56cec33141e26afac**. Les commits de compte rendu ultérieurs ne changent pas les binaires. MacBook Air M3, macOS 27.2 ; Xcode 27.1, SDK 27.0 et XcodeGen 2.46.0.
 

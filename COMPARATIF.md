@@ -2,7 +2,7 @@
 
 État examiné le 21 octobre 2026. L’original est celui du commit `06c5a8199f5c0657374e667073b3aa6a75f50df8`. La colonne personnelle décrit le MacBook Air M3 sous macOS 27.2 et le moteur natif expérimental, pas toutes les machines. Les fonctions AlDente sont celles annoncées par son éditeur ; leur présence ne constitue pas un essai comparatif sur ce Mac.
 
-| Fonction | OpenDente d’origine | Édition personnelle 0.6.0 sur ce Mac | AlDente |
+| Fonction | OpenDente d’origine | Édition personnelle 0.6.1 sur ce Mac | AlDente |
 |---|---|---|---|
 | Plafond de charge | Oui, moteur SMC | Oui, moteur natif macOS ; effet différé | Free et Pro |
 | Reprise sous un seuil inférieur | Oui, Sailing Mode | Oui, modifiable, par exemple 80/70 ou 80/75 ; pas de décharge imposée par les profils | Pro |

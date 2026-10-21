@@ -5,6 +5,7 @@
 - Démarrage silencieux dans la barre des menus, y compris après mise à jour ; suppression de l’ouverture automatique du panneau au changement de build.
 - Restauration automatique des fenêtres désactivée pour cette app. Fermer les fenêtres laisse explicitement le processus actif ; clic sur l’icône et réouverture manuelle disponibles.
 - Application regroupée dans le dossier standard Applications ; sources Git conservées. Les anciennes copies et compilations vont dans la Corbeille sans effacement définitif.
+- 377 tests natifs réussis, Release signée, démarrage silencieux et maintien sans fenêtre vérifiés. Enregistrement macOS actif rattaché à `/Applications/OpenDente.app` ; aucun nouveau redémarrage complet exécuté.
 - App 0.6.1 (11), service 1.7.0 inchangé. Validation et portée des essais dans VALIDATION.md.
 
 ## 0.6.0 — retour au plafond, veille et signaux distincts, 21 octobre 2026
