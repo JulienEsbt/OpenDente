@@ -191,8 +191,51 @@ final class AppSettings: ObservableObject {
 
     // MARK: - Computed
 
-    /// Lower bound of sailing range
+    /// Keep a usable reserve even when a wide range accompanies a low ceiling.
     var sailingLowerBound: Int {
-        max(0, chargeLimit - sailingRange)
+        max(10, chargeLimit - sailingRange)
     }
+
+    /// Profiles describe the charging policy, not a promise about battery lifespan.
+    var selectedProfile: ChargeProfile? {
+        guard sailingModeEnabled, heatProtectionEnabled, !automaticDischarge else { return nil }
+        return ChargeProfile.allCases.first {
+            $0.chargeLimit == chargeLimit && $0.resumeAt == sailingLowerBound
+        }
+    }
+
+    func apply(profile: ChargeProfile) {
+        // Subscribers evaluate on the next run loop, after the complete policy is saved.
+        chargeLimit = profile.chargeLimit
+        sailingRange = profile.chargeLimit - profile.resumeAt
+        sailingModeEnabled = true
+        heatProtectionEnabled = true
+        automaticDischarge = false
+    }
+}
+
+
+/// Convenient starting points; the ceiling remains freely adjustable afterwards.
+enum ChargeProfile: String, CaseIterable, Identifiable {
+    case desk, everyday, travel
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .desk: "Bureau"
+        case .everyday: "Quotidien"
+        case .travel: "Mobilité"
+        }
+    }
+
+    var chargeLimit: Int {
+        switch self {
+        case .desk: 70
+        case .everyday: 80
+        case .travel: 90
+        }
+    }
+
+    var resumeAt: Int { chargeLimit - 10 }
 }

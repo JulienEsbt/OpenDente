@@ -39,8 +39,13 @@ final class ChargingManager: ObservableObject {
             }
         }
     }
+    /// A temporary intent separate from mode, so a thermal pause does not lose it.
+    /// It deliberately is not persisted across application launches.
+    @Published private(set) var topUpRequested = false
     @Published var chargingAPI: SMCChargingAPI = .unknown
+    /// True only after the compatible helper has replied to the handshake.
     @Published var isHelperInstalled = false
+    @Published private(set) var helperConnectionIssue: String?
     @Published private(set) var isPreventingSleep = false
 
     private let smc = SMCService.shared
@@ -49,6 +54,7 @@ final class ChargingManager: ObservableObject {
     private let helper: ChargingControl
     private let sleepAssertion: SleepAssertionControl
     private var cancellables = Set<AnyCancellable>()
+    private var helperHandshakeID = UUID()
     var heatProtectionTimer: Date?
 
     /// Mode captured at sleep entry — used to know what was happening before sleep.
@@ -142,10 +148,12 @@ final class ChargingManager: ObservableObject {
     /// Called at startup and after helper installation.
     func connectToHelper() {
         let status = HelperInstaller.status
-        isHelperInstalled = (status == .enabled)
+        isHelperInstalled = false
+        helperVersion = nil
+        helperConnectionIssue = nil
         log.info("Helper status: \(HelperInstaller.statusDescription, privacy: .public)")
 
-        if isHelperInstalled {
+        if status == .enabled {
             let client = HelperClient.shared
             client.connect()
 
@@ -162,27 +170,49 @@ final class ChargingManager: ObservableObject {
     /// Query helper version/API and resync charging state.
     /// Called on initial connection and after helper restarts.
     private func syncWithHelper() {
-        let client = HelperClient.shared
-        client.getChargingAPI { [weak self] api in
-            Task { @MainActor in
-                switch api {
-                case "legacy": self?.chargingAPI = .legacy
-                case "tahoe":  self?.chargingAPI = .tahoe
-                default:       break
-                }
-            }
+        isHelperInstalled = false
+        helperConnectionIssue = nil
+        let handshakeID = UUID()
+        helperHandshakeID = handshakeID
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+            guard let self, self.helperHandshakeID == handshakeID,
+                  !self.isHelperInstalled, self.helperConnectionIssue == nil else { return }
+            self.helperHandshakeID = UUID() // Ignore replies from the expired attempt.
+            self.helperConnectionIssue = "Le service ne répond pas. Réessaie la connexion dans les réglages."
         }
+        let client = HelperClient.shared
         client.getVersion { [weak self] version in
             Task { @MainActor in
-                self?.helperVersion = version
-                log.info("Helper version: \(version, privacy: .public)")
-                // Reset LED cache — helper may have restarted with default LED state
-                self?.lastLEDColor = nil
-                self?.updateMagSafeLED()
-                // Sync sleep settings with helper (defense-in-depth)
-                self?.syncSleepSettingsWithHelper()
-                // Resync charging state with the (re)connected helper
-                self?.resyncChargingState()
+                guard let self, self.helperHandshakeID == handshakeID else { return }
+                self.helperVersion = version
+                guard version.isVersionAtLeast(HelperConstants.minVersionSafeControl) else {
+                    self.helperConnectionIssue = version.isEmpty
+                        ? "Connexion au service impossible. Vérifie sa signature et son autorisation."
+                        : "Le service installé est trop ancien. Réinstalle le service de cette version."
+                    log.error("Refusing charging control with incompatible helper version: \(version, privacy: .public)")
+                    return
+                }
+                client.getChargingAPI { [weak self] api in
+                    Task { @MainActor in
+                        guard let self, self.helperHandshakeID == handshakeID else { return }
+                        guard !api.isEmpty else {
+                            self.helperConnectionIssue = "Le service n’a pas répondu à la détection de charge. Réessaie la connexion."
+                            return
+                        }
+                        switch api {
+                        case "legacy": self.chargingAPI = .legacy
+                        case "tahoe": self.chargingAPI = .tahoe
+                        default: self.chargingAPI = .unknown
+                        }
+                        client.markHandshakeCompleted()
+                        self.helperConnectionIssue = nil
+                        self.isHelperInstalled = true
+                        self.lastLEDColor = nil
+                        self.updateMagSafeLED()
+                        self.syncSleepSettingsWithHelper()
+                        self.resyncChargingState()
+                    }
+                }
             }
         }
     }
@@ -190,6 +220,7 @@ final class ChargingManager: ObservableObject {
     /// Sync the stopChargingWhenSleeping setting to the helper (version-gated).
     /// Also computes the LED color the helper should use when inhibiting on sleep.
     private func syncSleepSettingsWithHelper() {
+        guard isHelperInstalled else { return }
         guard let version = helperVersion,
               version.isVersionAtLeast(HelperConstants.minVersionSleepSync) else {
             return
@@ -298,11 +329,22 @@ final class ChargingManager: ObservableObject {
             if mode == .topUp {
                 log.info("Top Up ended: unplugged at \(state.percentage, privacy: .public)%")
             }
+            topUpRequested = false
             // Clean slate — no pending inhibit verification on battery
             firstInhibitTime = nil
             lastInhibitTime = nil
             inhibitRetryCount = 0
             mode = .onBattery
+            return
+        }
+
+        // Verify even when heat/cooldown returns early. A requested pause is not
+        // proof that the hardware has stopped charging.
+        defer { verifyChargingInhibition(state) }
+
+        // A missing temperature reading is not evidence of cooling down.
+        if settings.heatProtectionEnabled, mode == .heatProtection,
+           state.temperature?.isFinite != true {
             return
         }
 
@@ -335,8 +377,13 @@ final class ChargingManager: ObservableObject {
             }
         }
 
-        // Top Up mode — stay until unplugged (guard above) or user cancels
-        if mode == .topUp {
+        // The user's temporary request survives a thermal pause, while heat
+        // protection above always keeps priority. The saved ceiling is untouched.
+        if topUpRequested || mode == .topUp {
+            if mode != .topUp {
+                enableCharging()
+                mode = .topUp
+            }
             updateSystemChargeLimitConflict(state)
             return
         }
@@ -427,6 +474,29 @@ final class ChargingManager: ObservableObject {
             startDischarge()
         }
 
+        // System charge limit conflict detection.
+        updateSystemChargeLimitConflict(state)
+
+        // Diagnostic: if we enabled charging but IOKit says not charging and it's
+        // NOT the system charge limit, log SMC readback once per cycle for diagnostics.
+        if mode == .charging && !state.isCharging && state.isPluggedIn
+            && !state.systemChargeLimitActive && !didLogEnableMismatch {
+            if let val = smc.readKeyOptional("CHTE") {
+                let hex = val.bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
+                log.warning("Enable mismatch: mode=charging but isCharging=false — CHTE readback: [\(hex, privacy: .public)]")
+            } else if let val = smc.readKeyOptional("CH0B") {
+                let hex = val.bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
+                log.warning("Enable mismatch: mode=charging but isCharging=false — CH0B readback: [\(hex, privacy: .public)]")
+            }
+            didLogEnableMismatch = true
+        } else if mode != .charging || state.isCharging {
+            didLogEnableMismatch = false
+        }
+    }
+
+    /// Check observable charging, including during thermal cooldown.
+    private func verifyChargingInhibition(_ state: BatteryState) {
+        let pct = state.effectivePercentage(useHardware: settings.useHardwareBatteryPercentage)
         // Verification: system is the source of truth.
         // If we think charging is inhibited but IOKit still reports isCharging,
         // the SMC write may not have taken effect — re-send.
@@ -461,24 +531,6 @@ final class ChargingManager: ObservableObject {
             didNotifyInhibitExhausted = false
         }
 
-        // System charge limit conflict detection.
-        updateSystemChargeLimitConflict(state)
-
-        // Diagnostic: if we enabled charging but IOKit says not charging and it's
-        // NOT the system charge limit, log SMC readback once per cycle for diagnostics.
-        if mode == .charging && !state.isCharging && state.isPluggedIn
-            && !state.systemChargeLimitActive && !didLogEnableMismatch {
-            if let val = smc.readKeyOptional("CHTE") {
-                let hex = val.bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
-                log.warning("Enable mismatch: mode=charging but isCharging=false — CHTE readback: [\(hex, privacy: .public)]")
-            } else if let val = smc.readKeyOptional("CH0B") {
-                let hex = val.bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
-                log.warning("Enable mismatch: mode=charging but isCharging=false — CH0B readback: [\(hex, privacy: .public)]")
-            }
-            didLogEnableMismatch = true
-        } else if mode != .charging || state.isCharging {
-            didLogEnableMismatch = false
-        }
     }
 
     // MARK: - Sleep/Wake
@@ -651,6 +703,17 @@ final class ChargingManager: ObservableObject {
         }
         log.notice("Top Up started at \(self.battery.batteryState.percentage, privacy: .public)% (limit was \(self.settings.chargeLimit, privacy: .public)%)")
 
+        topUpRequested = true
+        // Starting from a hot state must not briefly re-enable charging. If a
+        // cooldown is already running, leave it intact and retain the request.
+        if mode == .heatProtection { return }
+        if settings.heatProtectionEnabled,
+           let temperature = battery.batteryState.temperature,
+           temperature >= settings.heatProtectionTemp {
+            evaluateState(battery.batteryState)
+            return
+        }
+        if mode == .discharging { forceDischarge(false) }
         enableCharging()
         mode = .topUp
     }
@@ -658,7 +721,10 @@ final class ChargingManager: ObservableObject {
     /// Cancel Top Up manually — inhibit charging as a safe default,
     /// next poll will re-evaluate the correct mode.
     func cancelTopUp() {
-        guard mode == .topUp else { return }
+        guard topUpRequested || mode == .topUp else { return }
+        topUpRequested = false
+        // Cancelling the request must not cancel an active thermal cooldown.
+        guard mode != .heatProtection else { return }
         log.notice("Top Up cancelled by user at \(self.battery.batteryState.percentage, privacy: .public)%")
 
         inhibitCharging()
@@ -671,6 +737,7 @@ final class ChargingManager: ObservableObject {
             log.warning("Cannot start discharge: \(self.controlUnavailableReason, privacy: .public)")
             return
         }
+        topUpRequested = false
         log.notice("Discharge started at \(self.battery.batteryState.percentage, privacy: .public)%")
         forceDischarge(true)
         mode = .discharging
@@ -689,6 +756,7 @@ final class ChargingManager: ObservableObject {
             log.warning("Cannot pause charging: \(self.controlUnavailableReason, privacy: .public)")
             return
         }
+        topUpRequested = false
         log.notice("Charging paused manually at \(self.battery.batteryState.percentage, privacy: .public)%")
         inhibitCharging()
         mode = .paused
@@ -717,7 +785,10 @@ final class ChargingManager: ObservableObject {
                 log.info("SMC: inhibit written — waiting for IOKit confirmation")
             } else {
                 log.error("Failed to inhibit charging: \(error ?? "unknown error", privacy: .public)")
-                Task { @MainActor in self?.mode = .idle }
+                Task { @MainActor in
+                    // A failed command must not discard a thermal cooldown.
+                    if let self, self.mode != .heatProtection { self.mode = .idle }
+                }
             }
         }
     }
@@ -741,7 +812,10 @@ final class ChargingManager: ObservableObject {
                 log.info("SMC: enable written")
             } else {
                 log.error("Failed to enable charging: \(error ?? "unknown error", privacy: .public)")
-                Task { @MainActor in self?.mode = .idle }
+                Task { @MainActor in
+                    // A failed command must not discard a thermal cooldown.
+                    if let self, self.mode != .heatProtection { self.mode = .idle }
+                }
             }
         }
     }
@@ -759,7 +833,10 @@ final class ChargingManager: ObservableObject {
                 log.info("Force discharge: \(enable, privacy: .public)")
             } else {
                 log.error("Failed to set discharge: \(error ?? "unknown error", privacy: .public)")
-                Task { @MainActor in self?.mode = .idle }
+                Task { @MainActor in
+                    // A failed command must not discard a thermal cooldown.
+                    if let self, self.mode != .heatProtection { self.mode = .idle }
+                }
             }
         }
     }
@@ -790,6 +867,7 @@ final class ChargingManager: ObservableObject {
     /// Gated behind helper version check — calling setMagSafeLED on an old helper
     /// that doesn't implement it would disrupt the XPC connection.
     private func updateMagSafeLED() {
+        guard isHelperInstalled else { return }
         guard settings.controlMagSafeLED else {
             // If disabled, reset to auto (only if we previously set something)
             if lastLEDColor != nil && lastLEDColor != HelperConstants.ledAuto {
@@ -832,6 +910,7 @@ final class ChargingManager: ObservableObject {
     }
 
     private func sendLEDColor(_ color: UInt8) {
+        guard isHelperInstalled else { return }
         guard color != lastLEDColor else { return }
         lastLEDColor = color
         helper.setMagSafeLED(color: color) { success, error in
@@ -845,6 +924,7 @@ final class ChargingManager: ObservableObject {
 
     /// Reset all SMC charging keys to defaults (enable charging, stop discharge)
     func resetToDefaults() {
+        topUpRequested = false
         helper.resetToDefaults { success, _ in
             if success {
                 log.info("Reset to defaults via helper")
@@ -865,6 +945,7 @@ final class ChargingManager: ObservableObject {
 
     /// Synchronous reset for app termination
     func resetToDefaultsSync() {
+        topUpRequested = false
         log.notice("App terminating — resetting SMC to defaults")
         helper.resetToDefaultsSync(timeout: 2.0)
         sleepAssertion.allowSleep()

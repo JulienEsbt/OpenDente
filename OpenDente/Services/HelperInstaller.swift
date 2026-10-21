@@ -48,12 +48,15 @@ enum HelperInstaller {
     }
 
     /// Unregister the helper daemon
-    static func unregister() {
+    @discardableResult
+    static func unregister() -> Bool {
         do {
             try service.unregister()
             log.info("Helper daemon unregistered")
+            return true
         } catch {
             log.error("Failed to unregister helper daemon: \(error.localizedDescription, privacy: .public)")
+            return false
         }
     }
 

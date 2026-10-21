@@ -776,10 +776,9 @@ final class ChargingManagerTests: XCTestCase {
         XCTAssertEqual(manager.mode, .onBattery)
     }
 
-    func testTopUp_lostAfterHeatProtection() {
-        // This documents CURRENT behavior: Top Up is lost after heat protection.
-        // Heat protection overrides topUp → after cooldown, normal logic resumes,
-        // mode is no longer .topUp so charging goes to paused/sailing/charging.
+    func testTopUp_resumesAfterHeatProtection() {
+        // The temporary target survives a thermal pause; heat protection keeps
+        // priority until the complete cooldown has elapsed.
         settings.heatProtectionEnabled = true
         settings.heatProtectionTemp = 35.0
 
@@ -794,11 +793,10 @@ final class ChargingManagerTests: XCTestCase {
         manager.heatProtectionTimer = Date().addingTimeInterval(-301)
         manager.evaluateState(makeBatteryState(percentage: 85, temperature: 33.0))
 
-        // Top Up is lost — mode goes to paused (85% > 80% limit)
-        XCTAssertEqual(manager.mode, .paused,
-            "Known behavior: Top Up is lost after heat protection. " +
-            "User must restart Top Up manually.")
-        XCTAssertNotEqual(manager.mode, .topUp)
+        XCTAssertEqual(manager.mode, .topUp,
+            "Top Up should resume after the thermal cooldown without another user action")
+        XCTAssertTrue(manager.topUpRequested)
+        XCTAssertEqual(settings.chargeLimit, 80, "The saved charge limit stays unchanged")
     }
 
     func testTopUp_doubleStart_noExtraEnableCall() {

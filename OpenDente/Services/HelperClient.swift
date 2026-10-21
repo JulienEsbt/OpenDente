@@ -27,13 +27,13 @@ final class HelperClient: @unchecked Sendable {
     /// Establish XPC connection to the helper daemon.
     /// Safe to call multiple times — disconnects existing connection first.
     @MainActor
-    func connect() {
+    func connect(resetRetryCount: Bool = true) {
         // Disconnect existing connection to avoid leaking XPC connections
         lock.lock()
         let existing = connection
         connection = nil
         isIntentionalDisconnect = false
-        reconnectAttempts = 0
+        if resetRetryCount { reconnectAttempts = 0 }
         lock.unlock()
         if existing != nil {
             stopHeartbeat()
@@ -46,10 +46,14 @@ final class HelperClient: @unchecked Sendable {
         )
         conn.remoteObjectInterface = NSXPCInterface(with: HelperProtocol.self)
 
-        conn.invalidationHandler = { [weak self] in
-            guard let self else { return }
+        conn.invalidationHandler = { [weak self, weak conn] in
+            guard let self, let conn else { return }
             log.notice("XPC connection invalidated")
             self.lock.lock()
+            guard self.connection === conn else {
+                self.lock.unlock()
+                return
+            }
             self.connection = nil
             let intentional = self.isIntentionalDisconnect
             self.lock.unlock()
@@ -64,8 +68,12 @@ final class HelperClient: @unchecked Sendable {
             }
         }
 
-        conn.interruptionHandler = { [weak self] in
-            guard let self else { return }
+        conn.interruptionHandler = { [weak self, weak conn] in
+            guard let self, let conn else { return }
+            self.lock.lock()
+            let isCurrent = self.connection === conn
+            self.lock.unlock()
+            guard isCurrent else { return }
             // Helper process crashed but launchd will restart it.
             // The NSXPCConnection remains valid — new messages are queued
             // and delivered when the helper comes back.
@@ -76,10 +84,10 @@ final class HelperClient: @unchecked Sendable {
             }
         }
 
-        conn.resume()
         lock.lock()
         connection = conn
         lock.unlock()
+        conn.resume()
         startHeartbeat()
         log.notice("Connected to helper")
     }
@@ -120,9 +128,15 @@ final class HelperClient: @unchecked Sendable {
             guard needsReconnect else { return }
 
             log.info("XPC reconnect: attempting...")
-            self.connect()
+            self.connect(resetRetryCount: false)
             self.onHelperRestarted?()
         }
+    }
+
+    /// Reset the retry budget only after the manager's version/API handshake.
+    @MainActor
+    func markHandshakeCompleted() {
+        reconnectAttempts = 0
     }
 
     // MARK: - Heartbeat
@@ -219,7 +233,7 @@ final class HelperClient: @unchecked Sendable {
     }
 
     func getVersion(completion: @escaping @Sendable (String) -> Void) {
-        withProxy { helper in
+        withProxy(onError: { _ in completion("") }) { helper in
             helper.getVersion { version in
                 DispatchQueue.main.async { completion(version) }
             }
@@ -227,7 +241,7 @@ final class HelperClient: @unchecked Sendable {
     }
 
     func getChargingAPI(completion: @escaping @Sendable (String) -> Void) {
-        withProxy { helper in
+        withProxy(onError: { _ in completion("") }) { helper in
             helper.getChargingAPI { api in
                 DispatchQueue.main.async { completion(api) }
             }
@@ -273,20 +287,26 @@ final class HelperClient: @unchecked Sendable {
 
     // MARK: - Private
 
-    private func withProxy(block: @escaping (HelperProtocol) -> Void) {
+    private func withProxy(onError: (@Sendable (String) -> Void)? = nil,
+                           block: @escaping (HelperProtocol) -> Void) {
         lock.lock()
         let conn = connection
         lock.unlock()
 
         // No connection — caller must call connect() first via connectToHelper()
-        guard let conn else { return }
+        guard let conn else {
+            onError?("Helper is not connected")
+            return
+        }
 
         let helper = conn.remoteObjectProxyWithErrorHandler { error in
             log.error("XPC proxy error: \(error.localizedDescription, privacy: .public)")
+            onError?(error.localizedDescription)
         }
 
         guard let proxy = helper as? HelperProtocol else {
             log.error("Failed to get HelperProtocol proxy")
+            onError?("Helper interface unavailable")
             return
         }
 

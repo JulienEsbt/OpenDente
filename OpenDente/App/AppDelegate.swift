@@ -149,7 +149,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupPopover() {
         popover = NSPopover()
-        popover.contentSize = NSSize(width: 320, height: 420)
+        popover.contentSize = NSSize(width: 360, height: 640)
         popover.behavior = .transient
         popover.animates = false
         popover.contentViewController = NSHostingController(rootView: PopoverView())
@@ -200,8 +200,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             break
         }
 
-        charging.isHelperInstalled = HelperInstaller.isRegistered
-        NSLog("[OpenDente] Helper registered: \(charging.isHelperInstalled)")
+        // The manager enables control only after a compatible helper handshake.
+        NSLog("[OpenDente] Helper registered: \(HelperInstaller.isRegistered)")
     }
 
     // MARK: - Sleep/Wake
