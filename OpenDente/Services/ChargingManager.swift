@@ -7,6 +7,7 @@ private let log = Logger(subsystem: "com.opendente.app", category: "Charging")
 
 /// Protocol for SMC charging control operations. Enables testing without real hardware.
 protocol ChargingControl: Sendable {
+    func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?)
     func setNativeChargeLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?)
     func enableCharging(completion: (@Sendable (Bool, String?) -> Void)?)
     func inhibitCharging(completion: (@Sendable (Bool, String?) -> Void)?)
@@ -17,6 +18,9 @@ protocol ChargingControl: Sendable {
 }
 
 extension ChargingControl {
+    func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?) {
+        completion?(false, "Storage preparation unavailable")
+    }
     func setNativeChargeLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
         completion?(false, "Native charge limit unavailable")
     }
@@ -63,6 +67,9 @@ final class ChargingManager: ObservableObject {
     private var nativeLastAttempt = Date.distantPast
     private var nativeCommandPending = false
     private var nativeSessionActive = false
+    private var nativeLastWasStorageDrain = false
+    var isPreparingStorage: Bool { nativeLimitAvailable && settings.storagePreparationEnabled }
+    var activeChargeLimit: Int { isPreparingStorage ? 50 : settings.chargeLimit }
     private var helperHandshakeInProgress = false
 
     var usesNativeLimit: Bool { nativeLimitAvailable && settings.nativeChargeLimitEnabled }
@@ -745,6 +752,7 @@ final class ChargingManager: ObservableObject {
 
     func releaseNativeLimitIfDisabled() {
         guard nativeLimitAvailable, !settings.nativeChargeLimitEnabled else { return }
+        settings.storagePreparationEnabled = false
         nativeLastAttempt = .distantPast
         evaluateNativeLimit(battery.batteryState)
     }
@@ -784,7 +792,7 @@ final class ChargingManager: ObservableObject {
         let decision = nativePolicy.evaluate(state, limit: settings.chargeLimit,
             resumeAt: settings.sailingModeEnabled ? settings.sailingLowerBound : nil,
             heatLimit: settings.heatProtectionEnabled ? settings.heatProtectionTemp : nil,
-            topUp: topUpRequested, now: now)
+            topUp: topUpRequested, now: now, storage: settings.storagePreparationEnabled)
         mode = decision.mode
         let asksForPause = [.paused, .sailing, .heatProtection].contains(mode)
         if asksForPause && state.isCharging {
@@ -801,12 +809,13 @@ final class ChargingManager: ObservableObject {
         }
         let target = decision.target
         guard !nativeCommandPending,
-              nativeLimitTarget != target || now.timeIntervalSince(nativeLastAttempt) >= 60,
+              nativeLimitTarget != target || nativeLastWasStorageDrain != decision.allowsStorageDrain || now.timeIntervalSince(nativeLastAttempt) >= 60,
               now.timeIntervalSince(nativeLastAttempt) >= 5 else { return }
         nativeLastAttempt = now
         nativeCommandPending = true
         nativeSessionActive = true
-        helper.setNativeChargeLimit(percent: target) { [weak self] success, error in
+        nativeLastWasStorageDrain = decision.allowsStorageDrain
+        let completion: @Sendable (Bool, String?) -> Void = { [weak self] success, error in
             Task { @MainActor in
                 guard let self else { return }
                 self.nativeCommandPending = false
@@ -819,6 +828,25 @@ final class ChargingManager: ObservableObject {
                 }
             }
         }
+        if decision.allowsStorageDrain { helper.prepareStorage(completion: completion) }
+        else { helper.setNativeChargeLimit(percent: target, completion: completion) }
+    }
+
+    func startStoragePreparation() {
+        guard nativeLimitAvailable, isHelperInstalled else { return }
+        topUpRequested = false
+        settings.nativeChargeLimitEnabled = true
+        settings.storagePreparationEnabled = true
+        nativePolicy.resetChargingCycle()
+        nativeLastAttempt = .distantPast
+        evaluateNativeLimit(battery.batteryState)
+    }
+
+    func cancelStoragePreparation() {
+        settings.storagePreparationEnabled = false
+        nativePolicy.resetChargingCycle()
+        nativeLastAttempt = .distantPast
+        if nativeLimitAvailable { evaluateNativeLimit(battery.batteryState) }
     }
 
     // MARK: - Actions
@@ -831,6 +859,7 @@ final class ChargingManager: ObservableObject {
     /// Start Top Up - temporarily charge to 100%
     func startTopUp() {
         if usesNativeLimit && isHelperInstalled {
+            settings.storagePreparationEnabled = false
             topUpRequested = true
             nativeLastAttempt = .distantPast
             evaluateNativeLimit(battery.batteryState)
@@ -890,6 +919,7 @@ final class ChargingManager: ObservableObject {
 
     /// Stop discharge
     func stopDischarge() {
+        if isPreparingStorage { cancelStoragePreparation(); return }
         log.notice("Discharge stopped at \(self.battery.batteryState.percentage, privacy: .public)%")
         forceDischarge(false)
         mode = .idle

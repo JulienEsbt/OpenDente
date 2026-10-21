@@ -148,3 +148,70 @@ final class NativeModeTests: XCTestCase {
     }
 
 }
+
+
+extension NativeModeTests {
+    func testStorageKeepsUsualSettingsAndUsesDedicatedCommand() async {
+        battery.batteryState = makeBatteryState(percentage: 98, isCharging: false)
+        manager.startStoragePreparation()
+        XCTAssertTrue(manager.isPreparingStorage)
+        XCTAssertEqual(settings.chargeLimit, 80); XCTAssertEqual(settings.sailingLowerBound, 70)
+        XCTAssertEqual(manager.activeChargeLimit, 50)
+        XCTAssertEqual(helper.calls, [.prepareStorage])
+        for _ in 0..<10 { await Task.yield() }
+        manager.cancelStoragePreparation()
+        XCTAssertFalse(manager.isPreparingStorage)
+        XCTAssertEqual(helper.calls.last, .nativeLimit(98))
+        XCTAssertEqual(settings.chargeLimit, 80)
+    }
+    func testTopUpAndDailyProfileLeaveStorageMode() async {
+        battery.batteryState = makeBatteryState(percentage: 90)
+        manager.startStoragePreparation()
+        for _ in 0..<10 { await Task.yield() }
+        manager.startTopUp()
+        XCTAssertFalse(settings.storagePreparationEnabled)
+        XCTAssertTrue(manager.topUpRequested)
+        XCTAssertEqual(helper.calls.last, .nativeLimit(100))
+        settings.storagePreparationEnabled = true
+        settings.apply(profile: .everyday)
+        XCTAssertFalse(settings.storagePreparationEnabled)
+    }
+    func testStorageCannotStartWithoutAuthenticatedHelperAndDisablingControlCancelsIt() async {
+        manager.isHelperInstalled = false
+        manager.startStoragePreparation()
+        XCTAssertFalse(settings.storagePreparationEnabled)
+        manager.isHelperInstalled = true
+        manager.startStoragePreparation()
+        for _ in 0..<10 { await Task.yield() }
+        settings.nativeChargeLimitEnabled = false
+        manager.releaseNativeLimitIfDisabled()
+        XCTAssertFalse(settings.storagePreparationEnabled)
+        XCTAssertEqual(helper.calls.last, .resetToDefaults)
+    }
+}
+
+
+extension NativeModeTests {
+    func testStorageAndTopUpActionsCannotEraseThermalCooldown() async {
+        let start = Date(timeIntervalSince1970: 1000)
+        var now = start
+        manager.nativeNow = { now }
+        settings.nativeChargeLimitEnabled = true
+        settings.heatProtectionEnabled = true
+        battery.batteryState = makeBatteryState(percentage: 90, temperature: 45)
+        manager.evaluateState(battery.batteryState)
+        for _ in 0..<10 { await Task.yield() }
+        now = start.addingTimeInterval(60)
+        battery.batteryState = makeBatteryState(percentage: 90, temperature: 39)
+        manager.startStoragePreparation()
+        XCTAssertEqual(manager.mode, .heatProtection)
+        XCTAssertFalse(helper.calls.contains(.prepareStorage))
+        for _ in 0..<10 { await Task.yield() }
+        manager.cancelStoragePreparation()
+        XCTAssertEqual(manager.mode, .heatProtection)
+        for _ in 0..<10 { await Task.yield() }
+        manager.startTopUp()
+        XCTAssertEqual(manager.mode, .heatProtection)
+        XCTAssertTrue(manager.topUpRequested)
+    }
+}

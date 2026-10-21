@@ -135,6 +135,11 @@ final class AppSettings: ObservableObject {
     // MARK: - General
 
     /// Opt-in: private PowerUI implementation with firmware-controlled hysteresis.
+    var storagePreparationEnabled: Bool {
+        get { defaults.bool(forKey: "storagePreparationEnabled") }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "storagePreparationEnabled") }
+    }
+
     var nativeChargeLimitEnabled: Bool {
         get { defaults.bool(forKey: "nativeChargeLimitEnabled") }
         set { objectWillChange.send(); defaults.set(newValue, forKey: "nativeChargeLimitEnabled") }
@@ -211,6 +216,8 @@ final class AppSettings: ObservableObject {
     }
 
     func apply(profile: ChargeProfile) {
+        // Selecting a daily profile explicitly ends the temporary storage mode.
+        storagePreparationEnabled = false
         // Subscribers evaluate on the next run loop, after the complete policy is saved.
         chargeLimit = profile.chargeLimit
         sailingRange = profile.chargeLimit - profile.resumeAt

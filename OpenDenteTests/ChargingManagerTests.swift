@@ -8,6 +8,7 @@ import XCTest
 final class MockChargingControl: ChargingControl, @unchecked Sendable {
     enum Call: Equatable, Sendable {
         case nativeLimit(Int)
+        case prepareStorage
         case enableCharging
         case inhibitCharging
         case forceDischarge(enable: Bool)
@@ -22,6 +23,11 @@ final class MockChargingControl: ChargingControl, @unchecked Sendable {
 
     /// If true, completion reports failure (simulates helper crash/disconnect)
     var shouldFail = false
+
+    func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?) {
+        calls.append(.prepareStorage)
+        completion?(!shouldFail, shouldFail ? "storage mock failure" : nil)
+    }
 
     func setNativeChargeLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
         calls.append(.nativeLimit(percent))

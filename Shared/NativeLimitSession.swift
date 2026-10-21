@@ -38,6 +38,19 @@ final class NativeLimitSession {
               percent >= currentPercentage else {
             throw Failure(message: "Native limit rejected: invalid target or target below the current level")
         }
+        try applyWithRecovery(percent)
+    }
+
+    /// Explicit one-shot preparation intent, fixed at Apple's approximate storage
+    /// level. Ordinary profiles retain their no-drain invariant.
+    func setStorageLimit(currentPercentage: Int) throws {
+        guard (50...100).contains(currentPercentage) else {
+            throw Failure(message: "Storage preparation rejected: invalid or already lower battery level")
+        }
+        try applyWithRecovery(50)
+    }
+
+    private func applyWithRecovery(_ percent: Int) throws {
         if restorationPending { try restore() }
         if try load() == nil { try save(capture()) }
         do { try apply(percent) }

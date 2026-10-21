@@ -18,6 +18,10 @@ import Foundation
     /// Experimental native ceiling. Never cuts adapter power.
     func setNativeChargeLimit(percent: Int, reply: @escaping (Bool, String?) -> Void)
 
+    /// Deliberate storage preparation only: fixed native target 50%, permitted
+    /// below the current level. Authenticated and journaled like ordinary limits.
+    func prepareStorage(reply: @escaping (Bool, String?) -> Void)
+
     /// Heartbeat from app to keep watchdog alive
     func heartbeat(reply: @escaping (Bool) -> Void)
 

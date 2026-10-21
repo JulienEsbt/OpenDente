@@ -1,5 +1,11 @@
 # Changements de l’édition personnelle
 
+## 0.5.0 — modes explicites (en préparation)
+
+- Mode stockage temporaire à 50 %, indépendant des seuils quotidiens. Au-dessus de 50 %, commande dédiée autorisant explicitement la descente sur secteur ; au-dessous, recharge vers 50 %. Aucun calcul lancé pour consommer davantage. Arrêt manuel, profil quotidien ou charge ponctuelle quittent ce mode.
+- Commandes ordinaires toujours protégées contre une cible inférieure au niveau courant. Nouvelle commande du service 1.6.0 limitée à la préparation à 50 %, authentifiée et journalisée avant écriture.
+- Les changements de mode conservent la pause thermique et son délai de refroidissement. Nouveaux tests de transitions et de récupération ; validation matérielle à effectuer avant livraison.
+
 ## 0.4.1 — préparation au stockage et essais réels, 21 octobre 2026
 
 - Guide de stockage prolongé dans Charge, avec niveau de batterie courant et étapes Apple autour de 50 %. Aucun changement automatique des réglages, décharge forcée ou extinction.

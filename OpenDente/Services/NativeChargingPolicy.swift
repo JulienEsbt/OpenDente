@@ -8,20 +8,23 @@ struct NativeChargingPolicy {
     private(set) var thermalPause = false
     private(set) var lastHotDate: Date?
 
+    mutating func resetChargingCycle() { chargingToLimit = false }
+
     struct Decision: Equatable {
         let mode: ChargingMode
         let target: Int
+        var allowsStorageDrain = false
     }
 
     mutating func evaluate(_ state: BatteryState, limit: Int, resumeAt: Int?,
-                           heatLimit: Double?, topUp: Bool, now: Date) -> Decision {
+                           heatLimit: Double?, topUp: Bool, now: Date, storage: Bool = false) -> Decision {
         let level = state.percentage
         guard state.isPluggedIn else {
             chargingToLimit = false
             thermalPause = false
             lastHotDate = nil
             let waitingInBand = resumeAt.map { level >= $0 } ?? false
-            return Decision(mode: .onBattery, target: max(20, level, waitingInBand ? level : limit))
+            return Decision(mode: .onBattery, target: storage ? max(50, level) : max(20, level, waitingInBand ? level : limit))
         }
         if let threshold = heatLimit {
             if let temperature = state.temperature, temperature.isFinite {
@@ -41,6 +44,11 @@ struct NativeChargingPolicy {
         }
         if thermalPause { return Decision(mode: .heatProtection, target: max(20, level)) }
         if topUp { return Decision(mode: .topUp, target: 100) }
+        if storage {
+            chargingToLimit = false
+            return Decision(mode: level > 50 ? .discharging : (level < 50 ? .charging : .paused),
+                            target: 50, allowsStorageDrain: level > 50)
+        }
         if level >= limit { chargingToLimit = false }
         else if resumeAt == nil || level < resumeAt! { chargingToLimit = true }
         if chargingToLimit { return Decision(mode: .charging, target: max(level, limit)) }

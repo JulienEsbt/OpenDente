@@ -133,3 +133,25 @@ extension NativeLimitSessionTests {
         XCTAssertEqual(reading.percentage, 89)
     }
 }
+
+
+extension NativeLimitSessionTests {
+    func testOnlyDedicatedStorageCommandCanRequestBelowCurrentLevel() throws {
+        let store = Store(), session = store.session()
+        XCTAssertThrowsError(try session.setLimit(50, currentPercentage: 98))
+        try session.setStorageLimit(currentPercentage: 98)
+        XCTAssertEqual(store.events, ["save", "apply:50"])
+        try session.restore()
+        XCTAssertEqual(store.events.suffix(2), ["restore:80", "clear"])
+    }
+    func testStorageRejectsInvalidOrAlreadyLowerReadingBeforeWriting() {
+        let store = Store(), session = store.session()
+        for level in [-1, 0, 49, 101] { XCTAssertThrowsError(try session.setStorageLimit(currentPercentage: level)) }
+        XCTAssertTrue(store.events.isEmpty)
+    }
+    func testStorageCannotWriteWithoutRecoveryJournal() {
+        let store = Store(); store.failSave = true
+        XCTAssertThrowsError(try store.session().setStorageLimit(currentPercentage: 90))
+        XCTAssertEqual(store.events, ["save"])
+    }
+}

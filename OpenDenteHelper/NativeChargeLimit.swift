@@ -34,6 +34,19 @@ final class NativeChargeLimit {
         }, clear: { try FileManager.default.removeItem(atPath: self.path) })
 
     func setLimit(_ percent: Int) throws {
+        let reading = try currentReading()
+        try session.setLimit(percent, currentPercentage: reading.percentage)
+    }
+
+    func prepareStorage() throws {
+        let reading = try currentReading()
+        guard reading.description[kIOPSPowerSourceStateKey] as? String == kIOPSACPowerValue else {
+            throw NativeLimitSession.Failure(message: "Storage discharge requires connected external power")
+        }
+        try session.setStorageLimit(currentPercentage: reading.percentage)
+    }
+
+    private func currentReading() throws -> InternalBatteryReading {
         guard Self.isAvailable,
               let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
               let sources = IOPSCopyPowerSourcesList(info)?.takeRetainedValue() as? [CFTypeRef] else {
@@ -42,8 +55,7 @@ final class NativeChargeLimit {
         let descriptions = sources.compactMap {
             IOPSGetPowerSourceDescription(info, $0)?.takeUnretainedValue() as? [String: Any]
         }
-        let reading = try InternalBatteryReading.read(descriptions)
-        try session.setLimit(percent, currentPercentage: reading.percentage)
+        return try InternalBatteryReading.read(descriptions)
     }
     func restore() throws { try session.restore() }
 

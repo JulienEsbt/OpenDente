@@ -178,6 +178,14 @@ final class HelperClient: @unchecked Sendable {
         }
     }
 
+    func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?) {
+        withProxy { helper in
+            helper.prepareStorage { success, error in
+                if let completion { DispatchQueue.main.async { completion(success, error) } }
+            }
+        }
+    }
+
     func enableCharging(completion: (@Sendable (Bool, String?) -> Void)? = nil) {
         withProxy { helper in
             helper.enableCharging { success, error in

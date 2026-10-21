@@ -104,3 +104,38 @@ final class NativeChargingPolicyTests: XCTestCase {
         }
     }
 }
+
+
+extension NativeChargingPolicyTests {
+    func testExplicitStorageRequestsDrainToFiftyWithoutChangingUsualPolicy() {
+        var policy = NativeChargingPolicy()
+        let decision = policy.evaluate(makeBatteryState(percentage: 98, isCharging: false), limit: 80,
+            resumeAt: 70, heatLimit: 40, topUp: false, now: Date(), storage: true)
+        XCTAssertEqual(decision.mode, .discharging)
+        XCTAssertEqual(decision.target, 50)
+        XCTAssertTrue(decision.allowsStorageDrain)
+        let usual = policy.evaluate(makeBatteryState(percentage: 98, isCharging: false), limit: 80,
+            resumeAt: 70, heatLimit: 40, topUp: false, now: Date())
+        XCTAssertEqual(usual.target, 98)
+        XCTAssertFalse(usual.allowsStorageDrain)
+    }
+    func testStorageStopsDrainAtFiftyAndChargesIfBelow() {
+        var policy = NativeChargingPolicy()
+        for (level, mode) in [(50, ChargingMode.paused), (45, .charging)] {
+            let d = policy.evaluate(makeBatteryState(percentage: level), limit: 80, resumeAt: 70,
+                heatLimit: 40, topUp: false, now: Date(), storage: true)
+            XCTAssertEqual(d.target, 50); XCTAssertEqual(d.mode, mode); XCTAssertFalse(d.allowsStorageDrain)
+        }
+    }
+    func testStorageNeverForcesDrainWhileHotOrUnplugged() {
+        var policy = NativeChargingPolicy()
+        let hot = policy.evaluate(makeBatteryState(percentage: 90, temperature: 45), limit: 80,
+            resumeAt: 70, heatLimit: 40, topUp: false, now: Date(), storage: true)
+        XCTAssertEqual(hot.mode, .heatProtection); XCTAssertEqual(hot.target, 90)
+        XCTAssertFalse(hot.allowsStorageDrain)
+        let unplugged = policy.evaluate(makeBatteryState(percentage: 90, isPluggedIn: false), limit: 80,
+            resumeAt: 70, heatLimit: 40, topUp: false, now: Date(), storage: true)
+        XCTAssertEqual(unplugged.mode, .onBattery); XCTAssertEqual(unplugged.target, 90)
+        XCTAssertFalse(unplugged.allowsStorageDrain)
+    }
+}

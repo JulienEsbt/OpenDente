@@ -31,7 +31,7 @@ struct ChargeControlsView: View {
             }
             Slider(value: Binding(
                 get: { Double(settings.chargeLimit) },
-                set: { settings.chargeLimit = Int($0.rounded()) }
+                set: { settings.storagePreparationEnabled = false; settings.chargeLimit = Int($0.rounded()) }
             ), in: 20...100, step: 1)
             .controlSize(.small)
             .accessibilityLabel("Limite habituelle de charge")
@@ -47,6 +47,10 @@ struct ChargeControlsView: View {
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Divider()
+            if charging.nativeLimitAvailable {
+                StoragePreparationControls(charging: charging, settings: settings, state: state, compact: true)
+                Divider()
+            }
             if charging.topUpRequested {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Charge complète ponctuelle", systemImage: "arrow.up.to.line.circle")
@@ -65,7 +69,7 @@ struct ChargeControlsView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent).controlSize(.large)
-                .disabled(!controlAvailable || !state.isPluggedIn || charging.mode == .discharging)
+                .disabled(!controlAvailable || !state.isPluggedIn || (charging.mode == .discharging && !charging.isPreparingStorage))
                 .help("Charge ponctuelle à 100 %, avec retour à la limite habituelle au débranchement")
             }
             HStack {
@@ -75,7 +79,7 @@ struct ChargeControlsView: View {
                         .help("Pause à partir de \(TemperatureDisplay.format(settings.heatProtectionTemp))")
                 }
                 Spacer(minLength: 4)
-                if charging.mode == .discharging {
+                if charging.mode == .discharging && !charging.isPreparingStorage {
                     Button("Arrêter la décharge") { charging.stopDischarge() }.controlSize(.small)
                 } else if !charging.nativeLimitAvailable {
                     Menu {
@@ -97,7 +101,7 @@ struct ChargeControlsView: View {
     }
 
     private func profileButton(_ profile: ChargeProfile) -> some View {
-        let selected = settings.selectedProfile == profile
+        let selected = !charging.isPreparingStorage && settings.selectedProfile == profile
         return Button { settings.apply(profile: profile) } label: {
             VStack(spacing: 4) {
                 Text(profile.title).font(.system(size: 11, weight: .medium))

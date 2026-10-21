@@ -100,7 +100,7 @@ struct PopoverView: View {
                         .frame(width: hasReading ? geometry.size.width * fill : 0)
                     Rectangle().fill(Color.primary)
                         .frame(width: 2, height: 12)
-                        .offset(x: geometry.size.width * CGFloat(settings.chargeLimit) / 100 - 1)
+                        .offset(x: geometry.size.width * CGFloat(charging.activeChargeLimit) / 100 - 1)
                 }
             }
             .frame(height: 8)
@@ -108,7 +108,7 @@ struct PopoverView: View {
             HStack {
                 Text(state.isPluggedIn || charging.mode == .discharging ? "Chargeur branché" : "Sur batterie")
                 Spacer()
-                Text("Repère : \(settings.chargeLimit) %")
+                Text("Repère : \(charging.activeChargeLimit) %")
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
@@ -196,6 +196,7 @@ struct PopoverView: View {
         if charging.nativeLimitAvailable {
             if !charging.usesNativeLimit { return "Suivi de batterie — contrôle désactivé." }
             if let issue = charging.nativeLimitIssue ?? charging.nativePauseWarning { return issue }
+            if charging.isPreparingStorage { return StoragePreparationControls.detail(state, mode: charging.mode) }
             if !state.isPluggedIn { return "Réglages conservés pour le prochain branchement." }
             guard let target = charging.nativeLimitTarget else { return "Consigne native en attente de confirmation." }
             if charging.mode == .heatProtection {

@@ -237,7 +237,7 @@ struct ChargingTab: View {
                     Text("Arrêter à")
                     Slider(value: Binding(
                         get: { Double(settings.chargeLimit) },
-                        set: { settings.chargeLimit = Int($0.rounded()) }
+                        set: { settings.storagePreparationEnabled = false; settings.chargeLimit = Int($0.rounded()) }
                     ), in: 20...100, step: 1)
                     .accessibilityLabel("Limite habituelle de charge")
                     Text("\(settings.chargeLimit) %").monospacedDigit().frame(width: 50, alignment: .trailing)
@@ -325,6 +325,9 @@ struct ChargingTab: View {
                 Link("Vieillissement lithium-ion : Battery University", destination: URL(string: "https://batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries")!)
             }
             Section("Stockage prolongé") {
+                if charging.nativeLimitAvailable {
+                    StoragePreparationControls(charging: charging, settings: settings, state: battery.batteryState)
+                }
                 DisclosureGroup("Préparer le Mac autour de 50 %") {
                     if battery.batteryState == .unknown {
                         Label("En attente d’une mesure de batterie.", systemImage: "battery.50percent")
@@ -337,7 +340,7 @@ struct ChargingTab: View {
                         Label("\(battery.batteryState.percentage) % : recharge jusqu’à environ 50 %, puis débranche.", systemImage: "battery.50percent")
                     }
                     Text("1. Vise environ 50 % avant une longue inutilisation. Si nécessaire, tu peux choisir un plafond de 50 % plus haut dans cette page. Remets ensuite ton plafond habituel pour l’usage quotidien.")
-                    Text("2. Débranche le chargeur, puis éteins le Mac depuis le menu Pomme. OpenDente ne décharge pas la batterie pour ce guide et n’éteint pas le Mac à ta place.")
+                    Text("2. Débranche le chargeur, puis éteins le Mac depuis le menu Pomme. Le mode peut préparer le niveau sur secteur ; OpenDente n’éteint pas le Mac à ta place.")
                     Text("3. Range-le dans un endroit frais et sec, à moins de 32 °C. Pour plus de six mois, Apple conseille de revenir à environ 50 % tous les six mois.")
                     Text("Une fois le Mac éteint, l’app ne peut ni surveiller le niveau ni recharger la batterie. La zone 45–55 % affichée ici est un repère pratique autour de 50 %, pas une plage officielle Apple.")
                         .foregroundStyle(.secondary)

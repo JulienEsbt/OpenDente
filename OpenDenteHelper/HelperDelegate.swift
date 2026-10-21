@@ -218,6 +218,15 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate, HelperProtocol {
         }
     }
 
+    func prepareStorage(reply: @escaping (Bool, String?) -> Void) {
+        perform(reply) {
+            guard chargingAPI == .unknown, NativeChargeLimit.isAvailable else {
+                throw NativeLimitSession.Failure(message: "Native storage preparation unavailable")
+            }
+            try native.prepareStorage()
+        }
+    }
+
     func enableCharging(reply: @escaping (Bool, String?) -> Void) {
         perform(reply) { try hardware.restoreDefaults(resetLED: false) }
     }
