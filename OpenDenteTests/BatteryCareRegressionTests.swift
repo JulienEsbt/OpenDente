@@ -11,8 +11,8 @@ final class BatteryCareRegressionTests: XCTestCase {
     private var helper: MockChargingControl!
     private var manager: ChargingManager!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         suiteName = "com.opendente.tests.battery-care.\(UUID().uuidString)"
         settings = AppSettings(defaults: UserDefaults(suiteName: suiteName)!)
         settings.controlMagSafeLED = false
@@ -26,13 +26,13 @@ final class BatteryCareRegressionTests: XCTestCase {
         manager.chargingAPI = .tahoe
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         settings.defaults.removePersistentDomain(forName: suiteName)
         manager = nil
         helper = nil
         battery = nil
         settings = nil
-        super.tearDown()
+        try await super.tearDown()
     }
 
     private func evaluate(_ state: BatteryState) {

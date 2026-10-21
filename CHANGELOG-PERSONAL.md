@@ -4,6 +4,9 @@
 
 ### Corrections
 
+- Fixtures XCTest exécutées sur le MainActor via les points d'entrée asynchrones ;
+  tests de vues isolés sur le MainActor. Les 299 tests natifs réussissent sans
+  avertissement Swift de concurrence, avec les mêmes assertions.
 - Arrêt explicite du script lorsque Xcode complet n'est pas initialisé/sélectionné,
   avant la génération du projet.
 - Marqueur de lancement réservé à l'action XCTest du schéma pour désactiver les

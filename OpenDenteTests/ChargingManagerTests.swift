@@ -145,8 +145,8 @@ final class ChargingManagerTests: XCTestCase {
     private var settings: AppSettings!
     private var sleepMock: MockSleepAssertionControl!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
         settings = AppSettings(defaults: defaults)
@@ -165,13 +165,13 @@ final class ChargingManagerTests: XCTestCase {
         settings.disableSleepUntilChargeLimit = false
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         UserDefaults.standard.removePersistentDomain(forName: suiteName)
         manager = nil
         mock = nil
         sleepMock = nil
         settings = nil
-        super.tearDown()
+        try await super.tearDown()
     }
 
     // =========================================================================
