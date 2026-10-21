@@ -111,6 +111,8 @@ schemes:
       config: Debug
     test:
       config: Debug
+      environmentVariables:
+        OPENDENTE_TESTING: "1"
       targets:
         - OpenDenteTests
     archive:

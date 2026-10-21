@@ -4,6 +4,10 @@
 
 ### Corrections
 
+- Arrêt explicite du script lorsque Xcode complet n'est pas initialisé/sélectionné,
+  avant la génération du projet.
+- Marqueur de lancement réservé à l'action XCTest du schéma pour désactiver les
+  services réels dans l'app hôte, avec détection des deux variables XCTest usuelles.
 - Compilation du service : conversion explicite du code courant en `SecStaticCode`
   avant lecture du certificat, avec validation du code en mémoire et sur disque.
 - Ajout d'un contrôle macOS des sources intégrales du helper, incluant les API

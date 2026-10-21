@@ -22,7 +22,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Tests load into the app process for symbol access, but we skip real services
     /// to avoid SMC commands and UserDefaults pollution from the test host.
     private static var isRunningTests: Bool {
-        ProcessInfo.processInfo.environment["XCTestBundlePath"] != nil
+        let environment = ProcessInfo.processInfo.environment
+        return environment["OPENDENTE_TESTING"] == "1"
+            || environment["XCTestBundlePath"] != nil
+            || environment["XCTestConfigurationFilePath"] != nil
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

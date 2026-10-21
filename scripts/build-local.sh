@@ -21,6 +21,13 @@ for dependency in xcodebuild xcodegen codesign security; do
   fi
 done
 
+# xcodebuild also exists with Command Line Tools alone, but cannot build/test apps.
+if ! xcodebuild -version >/dev/null 2>&1; then
+  echo 'Xcode complet doit être installé, initialisé et sélectionné. Les Command Line Tools seuls ne suffisent pas.' >&2
+  echo 'Ouvrir Xcode pour terminer son installation, puis sélectionner son dossier Developer avec xcode-select ou DEVELOPER_DIR.' >&2
+  exit 2
+fi
+
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 signing_identity="$1"
 signing_team="${2:-}"
