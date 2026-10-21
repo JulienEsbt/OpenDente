@@ -1,3 +1,8 @@
+> **Édition personnelle 0.2.0 — sources de développement.**
+> Commencer par [README-PERSONAL.md](README-PERSONAL.md) pour les fonctions, la signature locale et les essais macOS nécessaires.
+> Le [bilan de validation](VALIDATION.md) distingue les tests exécutés des vérifications natives restantes.
+> Documentation amont conservée ci-dessous pour la provenance.
+
 # OpenDente
 
 Battery charge limiter for macOS. Menu bar app - pick a target level (e.g. 80%), the system stops charging when it gets there.
