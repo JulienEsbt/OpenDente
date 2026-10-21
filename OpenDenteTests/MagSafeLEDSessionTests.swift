@@ -84,5 +84,13 @@ final class MagSafeLEDSessionTests: XCTestCase {
         XCTAssertEqual(h.events, ["persist:true", "write:3"])
         XCTAssertTrue(h.marker)
     }
+    func testAnimationFramesReuseExistingRecoveryJournal() throws {
+        let h = Hardware(), session = h.session()
+        try session.set(3); try session.set(1); try session.set(4); try session.set(1)
+        XCTAssertEqual(h.events.filter { $0 == "persist:true" }.count, 1)
+        XCTAssertTrue(h.marker)
+        try session.restore()
+        XCTAssertFalse(h.marker)
+    }
 
 }

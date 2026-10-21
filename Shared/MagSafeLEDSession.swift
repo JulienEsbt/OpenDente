@@ -24,8 +24,10 @@ final class MagSafeLEDSession {
         guard Self.allowed.contains(color) else { throw Failure(message: "Unsupported MagSafe LED color") }
         if color == 0 { try restore(force: true); return }
         if restorationPending { try restore() }
-        try persist(true)
-        needsRecovery = true
+        if !needsRecovery {
+            try persist(true)
+            needsRecovery = true
+        }
         do {
             try write(color)
             var actual = try read()

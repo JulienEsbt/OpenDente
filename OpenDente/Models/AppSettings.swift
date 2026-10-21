@@ -143,6 +143,24 @@ final class AppSettings: ObservableObject {
         set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDThermalColor") }
     }
 
+    var nativeLEDTopUpColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDTopUpColor") as? Int ?? 4) ?? .orange }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDTopUpColor") }
+    }
+    var nativeLEDCompleteColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDCompleteColor") as? Int ?? 3) ?? .green }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDCompleteColor") }
+    }
+    func applyDistinctLEDSignals() {
+        nativeMagSafeLEDEnabled = true
+        nativeLEDChargingColor = .pulsingOrange
+        nativeLEDPausedColor = .pulsingGreen
+        nativeLEDStorageColor = .alternating
+        nativeLEDThermalColor = .off
+        nativeLEDTopUpColor = .orange
+        nativeLEDCompleteColor = .green
+    }
+
     var controlMagSafeLED: Bool {
         get { defaults.object(forKey: "controlMagSafeLED") as? Bool ?? true }
         set { objectWillChange.send(); defaults.set(newValue, forKey: "controlMagSafeLED") }

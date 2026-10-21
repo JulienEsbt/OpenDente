@@ -5,6 +5,7 @@
 - Retour automatique au plafond sur secteur, sur activation explicite : une batterie au-dessus du plafond y redescend au lancement ou au branchement, puis maintien sans cycles forcés. Commande distincte du maintien ordinaire et du stockage 50 %, journalisée et authentifiée.
 - Priorité de la pause thermique, du stockage et de la charge ponctuelle conservée. Arrêter la décharge désactive le retour automatique sans écraser le plafond.
 - Explication de la veille : l’app suspend ses mesures, macOS conserve la consigne ; aucune restauration vers 100 % n’est demandée à l’endormissement. Reprise des contrôles au réveil couverte par régression.
+- Signalisation distincte : orange clignotant en charge normale, vert clignotant en maintien, alternance en décharge, orange fixe puis vert fixe pour 100 %, extinction en pause thermique. Motifs sur le rythme de mesure existant, sans timer supplémentaire ni codes matériels de défaut. Journal de récupération réutilisé entre les phases.
 - App 0.6.0 (10), service 1.7.0 ; essais finaux décrits dans VALIDATION.md.
 
 ## 0.5.0 — stockage, voyant et guide, 21 octobre 2026

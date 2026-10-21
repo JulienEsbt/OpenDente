@@ -68,7 +68,7 @@ final class ChargingManager: ObservableObject {
     @Published var nativeLEDHardwareAvailable = false
     @Published private(set) var nativeLEDIssue: String?
     @Published private(set) var magSafeLEDPreviewActive = false
-    private var nativeLEDPreviewColor: UInt8?
+    private var nativeLEDPreviewChoice: MagSafeLEDChoice?
     private var nativeLEDPreviewUntil: Date?
     private var nativeLEDSleeping = false
     private var nativeLEDOwned = false
@@ -1131,7 +1131,7 @@ final class ChargingManager: ObservableObject {
 
     func previewMagSafeLED(_ color: MagSafeLEDChoice) {
         guard isHelperInstalled, nativeLimitAvailable, nativeLEDHardwareAvailable else { return }
-        nativeLEDPreviewColor = color.byte
+        nativeLEDPreviewChoice = color
         nativeLEDPreviewUntil = nativeNow().addingTimeInterval(10)
         magSafeLEDPreviewActive = true
         nativeLEDLastAttempt = .distantPast
@@ -1161,18 +1161,20 @@ final class ChargingManager: ObservableObject {
         let color: UInt8
         if nativeLEDSleeping || !battery.batteryState.isPluggedIn {
             color = HelperConstants.ledAuto
-        } else if magSafeLEDPreviewActive, let preview = nativeLEDPreviewColor {
-            color = preview
+        } else if magSafeLEDPreviewActive, let preview = nativeLEDPreviewChoice {
+            color = preview.output(at: now)
         } else if !settings.nativeMagSafeLEDEnabled {
             color = HelperConstants.ledAuto
         } else if lastIsCharging {
-            color = settings.nativeLEDChargingColor.byte
+            color = (topUpRequested ? settings.nativeLEDTopUpColor : settings.nativeLEDChargingColor).output(at: now)
         } else if mode == .discharging {
-            color = settings.nativeLEDStorageColor.byte
+            color = settings.nativeLEDStorageColor.output(at: now)
         } else if mode == .heatProtection {
-            color = settings.nativeLEDThermalColor.byte
+            color = settings.nativeLEDThermalColor.output(at: now)
+        } else if topUpRequested {
+            color = (battery.batteryState.percentage >= 100 ? settings.nativeLEDCompleteColor : settings.nativeLEDTopUpColor).output(at: now)
         } else if [.paused, .sailing].contains(mode) {
-            color = settings.nativeLEDPausedColor.byte
+            color = settings.nativeLEDPausedColor.output(at: now)
         } else {
             color = HelperConstants.ledAuto
         }
