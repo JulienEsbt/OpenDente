@@ -6,6 +6,13 @@ final class NativeLimitSession {
     struct Snapshot: Codable, Equatable {
         let enabled: Int?
         let limit: Int?
+        /// Entire MCL preference subset, including temporary override dates.
+        /// Nil supports recovery journals created by helper 1.5.0.
+        let preferences: Data?
+
+        init(enabled: Int?, limit: Int?, preferences: Data? = nil) {
+            self.enabled = enabled; self.limit = limit; self.preferences = preferences
+        }
     }
     struct Failure: LocalizedError {
         let message: String
@@ -48,5 +55,27 @@ final class NativeLimitSession {
         try restoreOriginals(snapshot)
         try clear()
         restorationPending = false
+    }
+}
+
+/// Bounded property-list storage preserves Date/Data values without constructing
+/// archived classes. Only the charge-limit namespace may be restored.
+enum NativeLimitPreferences {
+    static func encode(_ values: [String: Any]) throws -> Data {
+        guard values.count <= 64, values.keys.allSatisfy({ $0.lowercased().hasPrefix("mcl") }) else {
+            throw NativeLimitSession.Failure(message: "Invalid native charge preference namespace")
+        }
+        let data = try PropertyListSerialization.data(fromPropertyList: values, format: .binary, options: 0)
+        guard data.count <= 16384 else { throw NativeLimitSession.Failure(message: "Native charge preference journal too large") }
+        return data
+    }
+
+    static func decode(_ data: Data) throws -> [String: Any] {
+        guard data.count <= 16384,
+              let values = try PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
+            throw NativeLimitSession.Failure(message: "Invalid native charge preference journal")
+        }
+        _ = try encode(values)
+        return values
     }
 }

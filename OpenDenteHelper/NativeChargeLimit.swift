@@ -12,7 +12,7 @@ final class NativeChargeLimit {
     private static let frameworkLoaded = dlopen("/System/Library/PrivateFrameworks/PowerUI.framework/Versions/A/PowerUI", RTLD_NOW) != nil
     private static var clientClass: AnyClass? {
         guard frameworkLoaded, let cls = NSClassFromString("PowerUISmartChargeClient"),
-              ["initWithClientName:", "isMCLSupported", "isMCLCurrentlyEnabled:", "enableMCL:", "disableMCL:"]
+              ["initWithClientName:", "isMCLSupported", "setMCLLimit:error:", "getMCLLimitWithError:"]
                 .allSatisfy({ class_getInstanceMethod(cls, NSSelectorFromString($0)) != nil }) else { return nil }
         return cls
     }
@@ -27,10 +27,10 @@ final class NativeChargeLimit {
     var restorationPending: Bool { session.restorationPending }
     private lazy var session = NativeLimitSession(
         load: { try self.load() }, save: { try self.save($0) },
-        capture: { try self.capture() }, apply: { try self.write(enabled: 1, limit: $0) },
+        capture: { try self.capture() }, apply: { try self.apply($0) },
         restore: { snapshot in
-            try Self.disableViaAgent()
-            try self.write(enabled: snapshot.enabled, limit: snapshot.limit)
+            try Self.setLimitViaAgent(100)
+            try self.restorePreferences(snapshot)
         }, clear: { try FileManager.default.removeItem(atPath: self.path) })
 
     func setLimit(_ percent: Int) throws {
@@ -48,17 +48,24 @@ final class NativeChargeLimit {
     func restore() throws { try session.restore() }
 
     private func validate(_ snapshot: NativeLimitSession.Snapshot) throws {
-        guard snapshot.enabled == nil || snapshot.enabled == 0 || snapshot.enabled == 1,
+        guard snapshot.enabled == nil || (0...2).contains(snapshot.enabled!),
               snapshot.limit == nil || (20...100).contains(snapshot.limit!),
-              snapshot.enabled != 1 || snapshot.limit != nil else {
-            throw NativeLimitSession.Failure(message: "Invalid native-limit recovery settings; no defaults invented")
+              snapshot.enabled != 2 || snapshot.limit != nil else {
+            throw NativeLimitSession.Failure(message: "État de recharge Apple non pris en charge ; aucun réglage modifié (état \(snapshot.enabled.map(String.init) ?? "absent")).")
+        }
+        if let data = snapshot.preferences {
+            let values = try NativeLimitPreferences.decode(data)
+            guard (values["MCLFeatureState"] as? NSNumber)?.intValue == snapshot.enabled,
+                  (values["mclLimitValue"] as? NSNumber)?.intValue == snapshot.limit else {
+                throw NativeLimitSession.Failure(message: "Inconsistent native charge recovery journal")
+            }
         }
     }
     private func load() throws -> NativeLimitSession.Snapshot? {
         guard needsRecovery else { return nil }
         try checkFile()
         let data = try Data(contentsOf: URL(fileURLWithPath: path))
-        guard data.count < 4096 else { throw NativeLimitSession.Failure(message: "Invalid native-limit journal size") }
+        guard data.count < 32768 else { throw NativeLimitSession.Failure(message: "Invalid native-limit journal size") }
         let snapshot = try JSONDecoder().decode(NativeLimitSession.Snapshot.self, from: data)
         try validate(snapshot)
         return snapshot
@@ -88,13 +95,23 @@ final class NativeChargeLimit {
             }
             return number.intValue
         }
-        let snapshot = try NativeLimitSession.Snapshot(enabled: read(Self.stateKey), limit: read(Self.limitKey))
+        let preferences = try NativeLimitPreferences.encode(readPreferences())
+        let snapshot = try NativeLimitSession.Snapshot(enabled: read(Self.stateKey), limit: read(Self.limitKey), preferences: preferences)
         try validate(snapshot)
         return snapshot
     }
-    private func write(enabled: Int?, limit: Int?) throws {
-        CFPreferencesSetValue(Self.stateKey, enabled.map(NSNumber.init(value:)), Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
-        CFPreferencesSetValue(Self.limitKey, limit.map(NSNumber.init(value:)), Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+    private func readPreferences() -> [String: Any] {
+        let keys = CFPreferencesCopyKeyList(Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost) as? [String] ?? []
+        var values: [String: Any] = [:]
+        for key in keys where key.lowercased().hasPrefix("mcl") {
+            if let value = CFPreferencesCopyValue(key as CFString, Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost) {
+                values[key] = value
+            }
+        }
+        return values
+    }
+
+    private func reloadPreferences() throws {
         guard CFPreferencesSynchronize(Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost),
               let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "notify_post") else {
             throw NativeLimitSession.Failure(message: "Cannot save native charge settings")
@@ -102,14 +119,65 @@ final class NativeChargeLimit {
         typealias Post = @convention(c) (UnsafePointer<CChar>) -> UInt32
         let result = "com.apple.smartcharging.defaultschanged".withCString { unsafeBitCast(symbol, to: Post.self)($0) }
         guard result == 0 else { throw NativeLimitSession.Failure(message: "Cannot notify the macOS charge agent") }
+    }
+
+    private func apply(_ percent: Int) throws {
+        // The agent owns its feature-state enumeration (disabled is 1 on the
+        // tested macOS 27.2). Never presume that writing 1 enables the feature.
+        // Its setter accepts 80...100; calling it below 80 is unsafe. For a lower
+        // target, first activate 80 (above our freshly checked current level),
+        // then replace only the target preference, retaining the agent's state.
+        try Self.setLimitViaAgent(max(80, percent))
+        if percent < 80 {
+            CFPreferencesSetValue(Self.limitKey, NSNumber(value: percent), Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+            try reloadPreferences()
+        }
         let observed = try capture()
-        guard observed == NativeLimitSession.Snapshot(enabled: enabled, limit: limit) else {
-            throw NativeLimitSession.Failure(message: "Native charge preference readback mismatch")
+        guard observed.limit == percent else {
+            throw NativeLimitSession.Failure(message: "Native charge target readback mismatch")
         }
     }
 
-    /// Clearing preferences alone does not release an already registered limit.
-    /// Ask the agent to disable its policy before restoring the original values.
+    private func restorePreferences(_ snapshot: NativeLimitSession.Snapshot) throws {
+        if let data = snapshot.preferences {
+            let originals = try NativeLimitPreferences.decode(data)
+            for key in Set(readPreferences().keys).union(originals.keys) {
+                CFPreferencesSetValue(key as CFString, originals[key] as CFPropertyList?, Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+            }
+            try reloadPreferences()
+            guard NSDictionary(dictionary: readPreferences()).isEqual(to: originals) else {
+                throw NativeLimitSession.Failure(message: "Native charge restoration readback mismatch")
+            }
+        } else {
+            // Legacy helper 1.5.0 journals contain only these two values.
+            CFPreferencesSetValue(Self.stateKey, snapshot.enabled.map(NSNumber.init(value:)), Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+            CFPreferencesSetValue(Self.limitKey, snapshot.limit.map(NSNumber.init(value:)), Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+            try reloadPreferences()
+            let observed = try capture()
+            guard observed.enabled == snapshot.enabled, observed.limit == snapshot.limit else {
+                throw NativeLimitSession.Failure(message: "Legacy native charge restoration readback mismatch")
+            }
+        }
+    }
+
+    private static func setLimitViaAgent(_ percent: Int) throws {
+        guard (80...100).contains(percent) else { throw NativeLimitSession.Failure(message: "Unsafe PowerUI setter target") }
+        typealias Setter = @convention(c) (AnyObject, Selector, UInt8, UnsafeMutablePointer<Unmanaged<NSError>?>) -> Bool
+        typealias Getter = @convention(c) (AnyObject, Selector, UnsafeMutablePointer<Unmanaged<NSError>?>) -> UInt8
+        let client = try makeClient()
+        guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "objc_msgSend") else {
+            throw NativeLimitSession.Failure(message: "PowerUI target interface unavailable")
+        }
+        var error: Unmanaged<NSError>?
+        guard unsafeBitCast(symbol, to: Setter.self)(client, NSSelectorFromString("setMCLLimit:error:"), UInt8(percent), &error), error == nil else {
+            throw NativeLimitSession.Failure(message: error?.takeUnretainedValue().localizedDescription ?? "PowerUI rejected the target")
+        }
+        let readback = unsafeBitCast(symbol, to: Getter.self)(client, NSSelectorFromString("getMCLLimitWithError:"), &error)
+        guard error == nil, readback == UInt8(percent) else {
+            throw NativeLimitSession.Failure(message: "PowerUI target acknowledgement mismatch")
+        }
+    }
+
     private static func makeClient() throws -> AnyObject {
         typealias Alloc = @convention(c) (AnyClass, Selector) -> Unmanaged<AnyObject>
         typealias Init = @convention(c) (AnyObject, Selector, NSString) -> Unmanaged<AnyObject>?
@@ -123,23 +191,4 @@ final class NativeChargeLimit {
         return client
     }
 
-    private static func disableViaAgent() throws {
-        typealias Query = @convention(c) (AnyObject, Selector, UnsafeMutablePointer<Unmanaged<NSError>?>) -> UInt64
-        typealias Action = @convention(c) (AnyObject, Selector, UnsafeMutablePointer<Unmanaged<NSError>?>) -> Bool
-        let client = try makeClient()
-        guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "objc_msgSend") else {
-            throw NativeLimitSession.Failure(message: "PowerUI release interface unavailable")
-        }
-        var error: Unmanaged<NSError>?
-        let enabled = unsafeBitCast(symbol, to: Query.self)(client, NSSelectorFromString("isMCLCurrentlyEnabled:"), &error)
-        guard error == nil else { throw error!.takeUnretainedValue() }
-        if enabled == 0 {
-            guard unsafeBitCast(symbol, to: Action.self)(client, NSSelectorFromString("enableMCL:"), &error), error == nil else {
-                throw NativeLimitSession.Failure(message: "PowerUI could not prepare native limit release")
-            }
-        }
-        guard unsafeBitCast(symbol, to: Action.self)(client, NSSelectorFromString("disableMCL:"), &error), error == nil else {
-            throw NativeLimitSession.Failure(message: "PowerUI could not release native limit; journal retained")
-        }
-    }
 }
