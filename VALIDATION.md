@@ -1,3 +1,69 @@
+# Validation de l’édition personnelle
+
+## État actuel — 0.5.0 (9), 21 octobre 2026
+
+Cette section remplace l’état courant de 0.4.1 ci-dessous ; les observations anciennes sont conservées comme historique. App installée dans `/Users/julienesbt/Applications/OpenDente.app`, service **1.6.1**, sources de l’app `9d5d5cf266e7b639c9634ded151e920fe8b0a81f`. Le code du service et l’app gardent le même certificat Apple Development, empreinte publique `DDAA721FBC3F2B656F612F4E5988519B593F6DA9`. Aucun export de clé privée, changement d’authentification ou contournement de signature.
+
+### Compilation et tests
+
+| Contrôle | Résultat | Preuve |
+|---|---|---|
+| XCTest natif arm64 | **363/363**, aucun échec | `build/NativeTests-20261021-led-fixed.xcresult`, `modes-led-fixed-xctest.log` |
+| Service complet, types Security/XPC | Réussite | `build/validation/modes-led-final-helper/native-typecheck.log` |
+| Bancs complémentaires du service | **35** : 17 récupération, 13 cycle de vie, 5 watchdog | `build/validation/modes-led-final-helper.log` |
+| Release universelle | arm64 et x86_64 compilés ; seule l’architecture arm64 exécutée | `modes-led-fixed-release.log` |
+| Signatures strictes app et service | Valides, même certificat feuille | certificats publics de contrôle ; aucun secret dans le lot |
+| Guide et crédits dans le bundle | JSON chargé et recherché dans l’app installée ; LICENSE et notices présents | régression BundledGuideTests et contrôle du paquet final |
+
+Les tests des politiques et du service utilisent du matériel simulé. Une première Release avait révélé le guide absent du paquet : le test de ressources reproduit cet échec, puis passe après correction de la déclaration XcodeGen. Les tests et la nouvelle Release ont été exécutés après cette correction. Le dernier lot de 363 tests couvre aussi les deux régressions de réponse du voyant. Les avertissements AppIntents sans dépendance ne sont pas des erreurs de charge.
+
+### Mesures réelles du nouveau mode stockage
+
+MagSafe connecté pendant l’essai ; niveau initial **93 %**. Aucun calcul ni charge artificielle lancé pour vider la batterie.
+
+| Heure de Paris | Observation |
+|---|---|
+| 16:16:46 | Après le redémarrage du propriétaire, l’app et le service 0.4.1 ont démarré automatiquement. Batterie 93 %, chargeur alors débranché. |
+| 16:38:28 | MagSafe rebranché par le propriétaire, ExternalConnected=true, IsCharging=false, 0 mA. |
+| 16:47:09 | Premier service 1.6.0 connecté après réenregistrement ; app 0.5.0 build 8 affichée et ouverture à la connexion activée. |
+| 16:47:28 | Clic sur Préparer le stockage à 50 %. Consigne 50 % confirmée par le service ; état initial encore à 0 mA. |
+| 16:48:46 | **Décharge sur secteur confirmée** : ExternalConnected=true, source AC Power, IsCharging=false, courant **−758 mA**, tension 12,381 V, soit environ **9,4 W** fournis par la batterie. Le panneau affiche la descente mesurée. |
+| 16:49:00 | Arrêt du mode stockage ; retour demandé au maintien du niveau courant, paramètres quotidiens toujours 80 % / reprise sous 70 %. |
+| 16:49:59 | **Annulation physiquement confirmée** : courant 0 mA, IsCharging=false, MagSafe toujours connecté. |
+
+La descente et son annulation sont observées. Il n’a pas été nécessaire d’attendre plusieurs heures jusqu’à 50 %. L’arrêt exact à 50 %, une recharge depuis un niveau inférieur à 50 % et le maintien prolongé à cette cible restent couverts par les politiques testées mais **pas observés matériellement dans cet essai court**. La surveillance thermique à chaud n’est pas testée en chauffant volontairement le Mac.
+
+### Voyant et interface
+
+La commande ACLC est disponible sur ce Mac indépendamment des anciennes commandes de charge. Les valeurs écrites restent automatique (0), éteint (1), vert (3), orange (4). La valeur 2 n’est pas utilisée ; aucun clignotement personnalisé.
+
+**Incident corrigé pendant la séance.** Avec le build 8, le propriétaire a vu une couleur trop brève suivie d’une erreur. La lecture immédiatement après la commande de retour automatique ne renvoie pas nécessairement zéro : elle indique aussi la couleur courante du système. La comparaison erronée a maintenu une récupération en boucle ; cette récupération générale pouvait restaurer le réglage Apple à 100 % et relancer la charge. Cet incident invalide les premières confirmations de voyant comme preuve d’un usage stable. Il a été reproduit par deux tests rouges puis corrigé avant livraison. Aucun échec n’est masqué : les journaux de la première version sont conservés.
+
+Le build **9**, service **1.6.1**, attend brièvement la confirmation d’une couleur. Pour le retour automatique, le succès de l’écriture est l’accusé de libération et la lecture doit rester une valeur connue, sans exiger zéro. La récupération d’un voyant seul n’efface plus la politique de charge d’un client actif. Une perte de heartbeat restaure toujours tous les contrôles.
+
+| Heure de Paris | Contrôle après correction |
+|---|---|
+| 17:01:07 | Service 1.6.1 connecté, cible de maintien 96 % acceptée. |
+| 17:01:29 | Aperçu vert, ACLC lu à 3. |
+| 17:01:43–17:01:47 | Aperçu orange, ACLC lu à 4. |
+| 17:02:06 | Aperçu éteint, ACLC lu à 1 ; IsCharging=false, courant 0 mA. |
+| Après ces aperçus | Propriétaire : « Les trois états tiennent correctement ». Confirmation visuelle sur son câble. |
+| 17:03:31 | Bouton Rendre le voyant à macOS sans erreur ; lecture de couleur système 3, aucun impératif de zéro ; charge toujours arrêtée, courant 0 mA. |
+
+Les couleurs par mode sont ensuite réactivées. Les traces montrent la fin des aperçus et le retour à la règle. Les tests couvrent journalisation avant écriture, réponse différée, échec de relecture, restauration partielle et reprise, perte du client, veille sans anciennes clés de charge, fin d’aperçu, séparation voyant/charge et restauration générale après perte de heartbeat.
+
+Le guide hors ligne affiche les modes, les commandes de service, les réglages, le stockage, les LED et la comparaison. La recherche « veille automatique » est vérifiée dans l’app installée et son rendu relu visuellement. Le panneau et Charge montrent la préparation active puis le bouton de démarrage après annulation.
+
+### Configuration et portée
+
+Contrôle natif actif, **80 % / reprise sous 70 %**, pause supplémentaire **40 °C**, stockage arrêté, prévention de veille automatique désactivée, ouverture à la connexion activée. Voyant personnalisé : orange pendant charge mesurée, vert pendant pause, orange pour stockage, éteint pour pause thermique. Retour au contrôle système disponible à tout moment. AlDente reste arrêté et son fonctionnement en arrière-plan désactivé.
+
+Le maintien final est confirmé à 96 %, courant nul et chargeur connecté. Le mode stockage demeure arrêté. Les essais de reprise et de veille de 27 s de la séance 0.4.1 ci-dessous restent les preuves de la politique quotidienne inchangée. Le redémarrage a été observé avec 0.4.1 avant cette mise à jour ; aucun nouveau redémarrage de 0.5.0 n’est revendiqué. La nouvelle récupération LED pendant la veille est testée sur le banc, pas présentée comme un nouvel essai physique de sommeil. USB-C n’est pas testé matériellement. Le moteur PowerUI privé reste expérimental et ne garantit pas une coupure thermique immédiate. L’app n’est pas notarifiée.
+
+---
+
+## Historique jusqu’à 0.4.1
+
 # Bilan de validation — 21 octobre 2026
 
 ## Livraison 0.4.1 (7), service 1.5.2
