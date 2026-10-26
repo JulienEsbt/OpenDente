@@ -2,163 +2,146 @@
 
 # OpenDente · Personal Edition
 
-**Native battery care for the Mac you use every day.**
+**Battery care, at home in your Mac’s menu bar.**
 
-Charge limits, a resume threshold, temporary modes and clear feedback — in the menu bar.
+Set a charge limit. See what the battery is doing. Keep your everyday settings in the background.
 
-[English](README.md) · [Français](README.fr.md)
+**English** · [Français](README.fr.md)
 
-![Platform: macOS](https://img.shields.io/badge/platform-macOS-24292f?logo=apple)
-![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
-![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-299da4)
-![Status: experimental](https://img.shields.io/badge/status-experimental-d49a43)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibility) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.7.2](https://img.shields.io/badge/version-0.7.2-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/license-GPL--3.0-24292f)](LICENSE)
+
+[Features](#features) · [Screenshots](#screenshots) · [Build & run](#build-and-run) · [Documentation](#documentation)
 
 </div>
 
-OpenDente Personal is a community fork of [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente), developed by [JulienEsbt](https://github.com/JulienEsbt). It keeps the original SwiftUI app and adds French controls, everyday profiles, a temporary storage mode, MagSafe signals and an experimental native macOS backend for a Mac where the original SMC charging keys are unavailable.
+A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://github.com/JulienEsbt) as a fork of [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). This edition adds a French interface, everyday profiles, storage preparation, compact status and an experimental native charge backend, while preserving the original project’s history and credits.
 
 <p align="center">
-  <img src="docs/images/menu-bar.jpg" width="300" alt="OpenDente menu bar panel with an 80 percent limit, a resume threshold and temporary charge modes">
-  &nbsp;
-  <img src="docs/images/charging.jpg" width="460" alt="Native charge settings with an 80 percent ceiling, automatic return to the ceiling and resumption below 75 percent">
+  <a href="docs/images/panel.png"><img src="docs/images/panel.png" width="330" alt="OpenDente main panel at 80 percent, with daily profiles, storage preparation and one-off full charge"></a>
+  <a href="docs/images/measurements.png"><img src="docs/images/measurements.png" width="330" alt="Battery measurements and power flow in the OpenDente panel"></a>
 </p>
-<p align="center"><sub>Real captures of the installed app. The interface is currently in French; this README is available in both languages.</sub></p>
+<p align="center"><sub>Actual OpenDente 0.7.2 screenshots. The app interface is currently in French. Click an image for full resolution.</sub></p>
 
 > [!IMPORTANT]
-> **Experimental software, tested on one hardware configuration.** The native backend uses private Apple interfaces and has been exercised on a MacBook Air M3 with macOS 27.2. It is not a universal compatibility claim or an instantaneous thermal cutoff. The current build is locally signed and is not notarized. Read [compatibility and limitations](#compatibility-and-limitations) before enabling charge control.
+> **The native charge backend is experimental.** It uses private Apple interfaces and has been tested on a MacBook Air M3 running macOS 27.2. Compatibility and response times vary. This repository provides source code for local signing, with no notarized public installer. Review the [limitations](#compatibility) before enabling charge control.
 
-## What you can do
+## Features
 
-| Mode or control | Everyday behavior |
+| Control | What it does |
 |---|---|
-| **Charge limit** | Choose a daily ceiling. The native backend accepts 20–100%; values below Apple's public 80–100% range are experimental. |
-| **Resume threshold** | Wait for a natural drop below the lower threshold, then charge back to the ceiling. The app does not force repeated discharge cycles. |
-| **Return to the ceiling** | Opt in to bringing an already high battery level down to your ceiling while connected to power, then hold. |
-| **Charge to 100% once** | Temporarily request a full charge without replacing your daily settings. Thermal pauses retain priority. |
-| **Prepare for storage at 50%** | Use a separate temporary target: discharge toward 50% when above it, charge toward it when below. Shut down manually when ready. |
-| **Additional thermal pause** | Request a pause above a chosen battery temperature. Resume after cooling by 2°C and at least five minutes without exceeding the threshold. |
-| **MagSafe signals** | Choose fixed colors, slow blinking or alternation for charging, holding, discharge, thermal pause and one-off full charge. |
-| **Quiet background operation** | Start at login without opening a window. Click the menu bar icon when needed; closing a window keeps the app running. |
+| **Daily limit & profiles** | Choose a ceiling and switch between Bureau, Quotidien and Mobilité profiles. The native backend accepts requests from 20–100%; targets below Apple’s public 80–100% range remain experimental. |
+| **Resume threshold** | Resume charging after a natural drop below a lower threshold, then continue to the ceiling. No repeated discharge cycles are forced. |
+| **Return to the ceiling** | Optionally discharge an already high battery level toward your daily ceiling while plugged in, then hold there. |
+| **One-off full charge** | Temporarily request 100% without replacing your daily settings. Thermal pauses retain priority. |
+| **Storage preparation** | Use a separate 50% target, charging or discharging toward it as needed. Daily settings are retained; unplug and shut down manually when ready. |
+| **Additional thermal pause** | Request a pause at a configurable internal battery temperature. Resume after cooling by 2°C and at least five minutes without exceeding the threshold. |
+| **MagSafe signals** | Assign fixed green, orange or off, slow blinking and alternating patterns to charge states. Ten-second previews make each signal easy to check. |
+| **Quiet background operation** | Launch at login directly into the menu bar. Closing a window keeps the app running; open the panel only when you need it. |
 
-The [compact menu bar](docs/images/menu-bar-layout.jpg) places the percentage inside the battery, with temperature and power stacked beside it. The classic layout remains available in settings. Native-backend information opens on demand; service and command errors remain visible.
+The compact status puts the percentage **inside the battery**, with a separate level track and optional temperature, power and mode indicators. The classic layout remains available. Customize the panel’s measurements, inspect energy flows, choose notifications, search the offline guide or export a local diagnostic report.
 
-Battery temperature, capacity, cycles, power, current and adapter information remain available, alongside a simple power-flow display, configurable notifications, a searchable offline guide and a local diagnostic export. Missing measurements stay missing.
-
-## A closer look
+## Screenshots
 
 <details>
-<summary><strong>Thermal controls, MagSafe signals and the offline guide</strong></summary>
+<summary><strong>Explore charge settings, MagSafe, the compact display and the built-in guide</strong></summary>
 
 <p align="center">
-  <img src="docs/images/thermal.jpg" width="390" alt="Additional thermal pause and background-operation settings">
-  <img src="docs/images/magsafe.jpg" width="390" alt="Six customizable MagSafe signals and ten-second previews">
+  <a href="docs/images/charge-settings.png"><img src="docs/images/charge-settings.png" width="380" alt="Charge settings with the native backend enabled, an 80 percent ceiling and a 70 percent resume threshold"></a>
+  <a href="docs/images/thermal-settings.png"><img src="docs/images/thermal-settings.png" width="380" alt="Configurable thermal pause, cooldown explanation and optional idle-sleep prevention"></a>
+  <br><sub>Charge policy and return to the ceiling · Additional thermal pause</sub>
 </p>
 <p align="center">
-  <img src="docs/images/guide.jpg" width="560" alt="Searchable offline guide showing the storage mode and everyday charge controls">
+  <a href="docs/images/magsafe-settings.png"><img src="docs/images/magsafe-settings.png" width="380" alt="MagSafe signal assignments for charging, holding, discharge, thermal pause and one-off full charge"></a>
+  <a href="docs/images/menu-bar-settings.png"><img src="docs/images/menu-bar-settings.png" width="380" alt="Compact menu bar preview and optional percentage, temperature, power and mode indicators"></a>
+  <br><sub>MagSafe colors and patterns · Compact menu bar</sub>
+</p>
+<p align="center">
+  <a href="docs/images/panel-settings.png"><img src="docs/images/panel-settings.png" width="380" alt="Settings to show, hide and reorder battery measurements in the panel"></a>
+  <a href="docs/images/offline-guide.png"><img src="docs/images/offline-guide.png" width="380" alt="Searchable offline guide explaining daily limits, profiles and temporary modes"></a>
+  <br><sub>Choose your measurements · Find help without leaving the app</sub>
 </p>
 
-Captures are unmodified app-window screenshots. [Capture notes](docs/images/README.md) record their version and scope.
+These unmodified captures show example settings: **80/70% and 35°C**. They are customizable choices, not fixed defaults or evidence of a thermal test. The app’s thermal default is 40°C; the recorded everyday validation used 80/75%. See the [capture notes](docs/images/README.md).
 
 </details>
 
-## Compatibility and limitations
+## Compatibility
 
 | Area | Current scope |
 |---|---|
-| Build target | macOS 14 or later; Apple Silicon is the project focus. Intel execution has not been tested. |
-| Hardware validation | MacBook Air M3, 16 GB, macOS 27.2; MagSafe charging. |
-| Original SMC backend | Preserved for machines exposing compatible keys; this fork does not claim fresh validation across those models. |
-| Native backend | Private PowerUI interfaces, detected at runtime. Unavailable controls remain unavailable. |
-| USB-C Power Delivery | Designed to regulate the internal battery independently of the charging port; USB-C charging and pauses have been observed with a 20 W adapter. |
-| Distribution | Source build and local signing; no notarized public installer is supplied here. |
+| Build target | macOS 14 or later, Swift 6. Universal Release compilation covers arm64 and x86_64; only arm64 execution has been tested. |
+| Hardware validation | MacBook Air M3, 16 GB, macOS 27.2. Real charging checks used USB-C Power Delivery and MagSafe. |
+| Native backend | Private PowerUI interfaces, detected at runtime, for this Mac where the original SMC charging keys are unavailable. |
+| Original SMC backend | Preserved for compatible machines. This fork does not claim fresh validation across those models. |
+| Distribution | Build from source and sign locally with your own certificate. The app and privileged helper must use the same signing identity. |
 
-The earlier 0.7.0 test at 66% remained inconclusive. The local 0.7.2 session confirmed a hold at 78% and a thermal-policy stop at 79% over USB-C, using a temporary low thermal threshold and the real sensor, without heating the Mac. This does not establish exact regulation at every target below 80% or an immediate thermal cutoff. See VALIDATION.md for timing, setup and remaining checks.
+**A requested target is not an immediate hardware cutoff.** Native changes can take several minutes. macOS allows a few percentage points of tolerance and may occasionally charge to 100% to maintain its gauge. See [Apple’s charge-limit documentation](https://support.apple.com/en-us/102338).
 
-**The requested state and the measured state are different.** A native command can take several minutes to take effect. macOS may occasionally charge to 100% to maintain its state-of-charge estimate. A requested pause or a green LED does not prove that battery current has stopped.
+During sleep, macOS retains the last native target; OpenDente does not continuously monitor temperature or animate the LED. Controls resume on wake. The app cannot run when the Mac is powered off. Optional idle-sleep prevention does not block manual sleep or lid-close sleep.
 
-While the Mac is asleep, macOS retains the last native charge target; the app does not continuously sample temperature or animate the LED. Controls resume after wake. Idle-sleep prevention is optional and does not block manual sleep or lid-close sleep.
-
-Quitting asks the helper to restore the saved Apple settings and system LED behavior. For an 80% system fallback, quit OpenDente, set Apple's charge limit to 80% with Optimized Battery Charging enabled, then relaunch it. **Apple's setting and this native backend use the same mechanism, not two independent charge gates.** A sleep test is not a full-shutdown test.
-
-The 40°C internal-temperature default is an app precaution, not a battery-sensor threshold prescribed by Apple. This is an additional, deferred pause; Apple's own hardware and system protections remain in place.
+On quit, the helper requests restoration of the saved Apple settings and system LED behavior. **The Apple limit and this native backend share the same mechanism**; they are not independent fallbacks. Configure the Apple policy you want restored before enabling the app’s native mode. The 40°C thermal default is an app precaution, not an Apple-prescribed internal sensor threshold or an instantaneous safety cutoff. Apple’s own protections remain in place.
 
 ## Build and run
 
-You need full **Xcode**, **XcodeGen**, and a signing identity with a certificate and private key for both the app and helper. A bare ad hoc signature is rejected by the helper. Use your own identity; no private key is included in this repository.
+Install and initialize **full Xcode** first; Command Line Tools alone are insufficient. You also need **XcodeGen** and an Apple Development signing identity with its certificate and private key. The helper rejects an ad hoc signature.
 
 ```sh
-git clone https://github.com/JulienEsbt/OpenDente.git
+git clone --branch feature/personal-battery-care https://github.com/JulienEsbt/OpenDente.git
 cd OpenDente
-git switch feature/personal-battery-care
 brew install xcodegen
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 
 bash scripts/build-local.sh "Apple Development: YOUR NAME (CERTIFICATE ID)" "TEAM_ID"
 ```
 
-The command above selects this edition on `feature/personal-battery-care`. Once it has been merged, `main` can be used instead.
+This edition currently lives on `feature/personal-battery-care`; use `main` after it is merged. Replace the signing placeholders with your own identity. The script generates the Xcode project, runs native tests, builds a signed Debug app and verifies matching app/helper certificates. It does not install or launch the privileged service.
 
-The script generates the Xcode project, runs the native tests, builds a signed Debug app and checks that app and helper use the same certificate. It does **not** launch the app or register its privileged service.
+1. Copy `build/DerivedData/Build/Products/Debug/OpenDente.app` into **Applications** and keep one installed copy.
+2. Launch it, then click its battery icon in the menu bar.
+3. In **Général**, activate the signed service when needed and enable **Ouvrir à la connexion** for quiet login startup. Approve any macOS authorization locally.
+4. In **Charge**, review your thresholds and explicitly enable the native backend if offered. Keep only one battery-control app active.
 
-1. Copy `build/DerivedData/Build/Products/Debug/OpenDente.app` into **Applications**. Keep one installed copy.
-2. Open it from Applications, then click its menu bar icon.
-3. Review **Général** for the helper status and enable **Ouvrir à la connexion** for quiet login startup. macOS may require local approval for the signed service.
-4. In **Charge**, review your limits and explicitly enable the native backend if it is offered. Use only one active battery-control app.
+For a Release build, signing details and troubleshooting, see the [local development guide](README-PERSONAL.md).
 
-For a Release build, open the generated project in Xcode, select your signing team for both targets and build the Release configuration. [Detailed local build and signing notes](README-PERSONAL.md) cover the implementation and validation workflow.
+## Validation
 
-## Validation you can inspect
+The latest recorded validation is **0.7.2 (15), 26 October 2026**:
 
-**Version 0.7.2: 389 native XCTest cases passed on arm64.** The updated 1.7.2 helper has 36 complementary recovery, lifecycle and watchdog scenarios recorded in the validation report. Universal Release compilation covers arm64 and x86_64; only arm64 execution is claimed.
+| Check | Recorded result |
+|---|---|
+| Native tests | **389 XCTest cases passed** on arm64. |
+| Helper tests | **36 recovery, lifecycle and watchdog scenarios passed**, with simulated hardware boundaries and native Security/XPC type checking. |
+| Charging | USB-C hold at 78%; resume at 74% for the 80/75 policy, continued charge after switching supply, then measured stop and hold at 80%. |
+| Thermal policy | Physical pause/resume verified with the real sensor and a temporary low threshold, without heating the Mac. This is not a test at an actual hot-battery threshold. |
 
-Physical checks include stopping and resuming charging in a small test band, discharge toward a lower native target on MagSafe, restoration on quit, relaunch, sleep/wake and owner-confirmed MagSafe colors and patterns. USB-C charging, a hold below 80%, and a cold-threshold thermal pause/resume were measured in 0.7.2. A physical 80/75 cycle was completed: resume at 74% over USB-C 20 W, continued charge over the lower threshold after switching to the reported MagSafe/30 W supply, and stop at 80%. Physical sleep/wake evidence comes from earlier releases; no new 0.7.2 sleep test is claimed. Startup after reboot can be confirmed at the owner’s next normal restart. No deliberate overheating was performed.
+Physical sleep/wake, relaunch, restoration and MagSafe-pattern evidence is recorded from earlier releases. No new 0.7.2 sleep test or controlled full-shutdown test is claimed; startup on the latest version can be observed at the next normal reboot. Results on one Mac are not universal hardware certification.
 
-```sh
-# Native tests: inert hardware boundaries, no helper registration
-xcodegen generate
-xcodebuild test -project OpenDente.xcodeproj -scheme OpenDente \
-  -destination 'platform=macOS,arch=arm64' -derivedDataPath build/DerivedData \
-  CODE_SIGNING_ALLOWED=NO
+[Full validation record](VALIDATION.md) · [Helper-test scope and commands](tests/helper/README.md)
 
-# Complementary helper scenarios and native helper type checking
-python3 tests/helper/run_tests.py
-```
+## Documentation
 
-Test counts are local validation results, not a CI badge or a claim of superiority over another app. [Full validation record](VALIDATION.md) · [Helper-test scope](tests/helper/README.md)
+| Start here | Contents |
+|---|---|
+| [User guide — Français](GUIDE-UTILISATION.md) | Controls, everyday use, storage, sleep and battery-care references. |
+| [Development & signing — Français](README-PERSONAL.md) | Xcode setup, local builds and technical details. |
+| [Feature comparison — English](docs/FEATURE-COMPARISON.md) / [Français](COMPARATIF.md) | Original OpenDente, this edition, AlDente and possible next steps. |
+| [Specification — Français](SPEC-PERSONAL.md) | Intended behavior and constraints. |
+| [Changelog — Français](CHANGELOG-PERSONAL.md) | Version history. |
 
-## How it is built
+For battery-care context, see Apple’s [charge limits](https://support.apple.com/en-us/102338) and [long-term storage guidance](https://www.apple.com/batteries/maximizing-performance/). No particular battery-lifespan gain is promised. Scheduling, Shortcuts integration and a validated multi-user workflow are not included in this edition.
 
-```text
-SwiftUI menu bar app
-  ├─ BatteryService: measurements from IOKit / IORegistry / SMC
-  ├─ ChargingManager: daily policy, temporary intents and observed state
-  └─ Certificate-authenticated XPC
-       └─ Privileged helper
-            ├─ Original SMC control, when available
-            ├─ Experimental native PowerUI target
-            └─ Recovery journal and watchdog
-```
+## Architecture and contributing
 
-The app reads and presents measurements; the signed helper performs privileged operations. The helper checks the app identifier and matching signing certificate. Restrictive changes are journaled before writing, and failed restoration retains recovery state for another attempt.
+The SwiftUI app reads measurements through IOKit, IORegistry and SMC, and applies daily policy through `ChargingManager`. A certificate-authenticated XPC connection delegates privileged operations to the helper, which selects the available SMC or native backend. A recovery journal and watchdog support restoration after failures.
 
-There is no telemetry, analytics, account or update server added to the app. Diagnostic exports are local and optional; review identifiers and logs before posting a report publicly.
+No telemetry, analytics, account or update server is added to the app. Diagnostic exports stay local and optional; review hardware identifiers and logs before sharing them publicly.
 
-## AlDente, Apple and next steps
+Contributions should describe the Mac, macOS version, active backend and observed behavior. Keep changes focused, run the relevant native and helper tests, and distinguish simulated checks from physical measurements. Compatibility reports with clear reproduction steps are welcome.
 
-OpenDente already covers the everyday controls: ceiling, resume threshold, return to the ceiling, one-off full charge, thermal pause, MagSafe feedback and measurements. It does not have AlDente's scheduling, Shortcuts integration or validated multi-user workflow. The mechanisms and sleep behavior differ, so feature names alone do not establish parity.
+## Credits and license
 
-The most useful follow-ups are **Shortcuts actions**, **optional scheduling**, and **broader hardware and session testing**. A forced monthly deep-discharge calibration is not included as routine battery maintenance. Apple's own native limit can occasionally request 100% for its gauge; that is a different mechanism.
-
-[Feature comparison and priorities](docs/FEATURE-COMPARISON.md) · [Comparatif français](COMPARATIF.md) · [AlDente's published features](https://apphousekitchen.com/fr/aldente/fonctionnalites/)
-
-For battery-care context: [Apple charge limits](https://support.apple.com/en-us/102338), [Apple lithium-ion cycles](https://www.apple.com/batteries/why-lithium-ion/) and [storage guidance](https://www.apple.com/batteries/maximizing-performance/). No particular lifespan gain is promised.
-
-## Contributing and credits
-
-Build and test a focused change, describe your Mac and macOS version, and distinguish observed hardware behavior from simulated tests. For compatibility issues, include the active backend and measured behavior; redact diagnostic identifiers before sharing. See the [specification](SPEC-PERSONAL.md), [user guide](GUIDE-UTILISATION.md) and [changelog](CHANGELOG-PERSONAL.md).
-
-This remains a fork of **[killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente)**. Charge limiting, sailing mode, SMC controls, measurements, notifications and the original app architecture came from that project. Its history, license and credits are preserved; the [historical upstream README](docs/UPSTREAM-README.md) remains available.
+This project builds on **[killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente)**. Charge limiting, sailing mode, SMC controls, measurements, notifications and the original app architecture come from upstream. The original history, license and credits are preserved, along with the [upstream README](docs/UPSTREAM-README.md).
 
 Additional acknowledgements: [Battery-Toolkit](https://github.com/mhaeuser/Battery-Toolkit), [SMCKit](https://github.com/beltex/SMCKit), [actuallymentor/battery](https://github.com/actuallymentor/battery), [batt](https://github.com/charlie0129/batt), and [Ampere / AZ Code Lab](https://github.com/az-code-lab/ampere) for the adapted native mechanism.
 
-**GPL-3.0.** See [LICENSE](LICENSE) and [third-party notices](THIRD-PARTY-NOTICES.md), including the MIT attribution for the adapted Ampere code. This project is not affiliated with Apple or AppHouseKitchen.
+**GPL-3.0.** See [LICENSE](LICENSE) and [third-party notices](THIRD-PARTY-NOTICES.md), including the MIT attribution for the adapted Ampere code. OpenDente Personal is not affiliated with Apple or AppHouseKitchen.
