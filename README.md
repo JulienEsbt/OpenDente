@@ -4,11 +4,13 @@
 
 **Battery care, at home in your Mac’s menu bar.**
 
-Set a charge limit. See what the battery is doing. Keep your everyday settings in the background.
+Set a charge limit. Understand your battery. Keep your everyday settings in the background.
+
+French & English · Light & dark · Native SwiftUI
 
 **English** · [Français](README.fr.md)
 
-[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibility) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.7.2](https://img.shields.io/badge/version-0.8.0-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/license-GPL--3.0-24292f)](LICENSE)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibility) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.8.0](https://img.shields.io/badge/version-0.8.0-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/license-GPL--3.0-24292f)](LICENSE)
 
 [Features](#features) · [Screenshots](#screenshots) · [Build & run](#build-and-run) · [Documentation](#documentation)
 
@@ -17,10 +19,10 @@ Set a charge limit. See what the battery is doing. Keep your everyday settings i
 A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://github.com/JulienEsbt) as a fork of [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). This edition adds French and English interfaces, everyday profiles, storage preparation, compact status and an experimental native charge backend, while preserving the original project’s history and credits.
 
 <p align="center">
-  <a href="docs/images/panel.png"><img src="docs/images/panel.png" width="330" alt="OpenDente main panel at 80 percent, with daily profiles, storage preparation and one-off full charge"></a>
-  <a href="docs/images/measurements.png"><img src="docs/images/measurements.png" width="330" alt="Battery measurements and power flow in the OpenDente panel"></a>
+  <a href="docs/images/panel-en-light.png"><img src="docs/images/panel-en-light.png" width="330" alt="English panel in light mode: daily profiles, storage at 50 percent and one-off full charge"></a>
+  <a href="docs/images/panel-en-dark.png"><img src="docs/images/panel-en-dark.png" width="330" alt="English panel in dark mode with an 80 percent daily limit"></a>
 </p>
-<p align="center"><sub>Actual OpenDente 0.7.2 screenshots. French interface shown; 0.8.0 also includes English and improved light-mode colors. Click an image for full resolution.</sub></p>
+<p align="center"><sub>OpenDente 0.8.0 · English · Light and dark appearance · Click to enlarge.</sub></p>
 
 > [!IMPORTANT]
 > **The native charge backend is experimental.** It uses private Apple interfaces and has been tested on a MacBook Air M3 running macOS 27.2. Compatibility and response times vary. This repository provides source code for local signing, with no notarized public installer. Review the [limitations](#compatibility) before enabling charge control.
@@ -29,7 +31,7 @@ A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://g
 
 | Control | What it does |
 |---|---|
-| **Daily limit & profiles** | Choose a ceiling and switch between Bureau, Quotidien and Mobilité profiles. The native backend accepts requests from 20–100%; targets below Apple’s public 80–100% range remain experimental. |
+| **Daily limit & profiles** | Choose a ceiling and switch between Desk, Daily and Travel profiles. The native backend accepts requests from 20–100%; targets below Apple’s public 80–100% range remain experimental. |
 | **Resume threshold** | Resume charging after a natural drop below a lower threshold, then continue to the ceiling. No repeated discharge cycles are forced. |
 | **Return to the ceiling** | Optionally discharge an already high battery level toward your daily ceiling while plugged in, then hold there. |
 | **One-off full charge** | Temporarily request 100% without replacing your daily settings. Thermal pauses retain priority. |
@@ -41,30 +43,50 @@ A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://g
 
 The compact status puts the percentage **inside the battery**, with a separate level track and optional temperature, power and mode indicators. The classic layout remains available. Customize the panel’s measurements, inspect energy flows, choose notifications, search the offline guide or export a local diagnostic report.
 
+<p align="center">
+  <a href="docs/images/menu-bar.png"><img src="docs/images/menu-bar.png" width="148" alt="Percentage inside the battery, separate level track, temperature and power"></a>
+</p>
+<p align="center"><sub>Details in the panel. Essentials in the menu bar.</sub></p>
+
 ## Screenshots
 
+Every view below shows **version 0.8.0**, in English or French. Colors follow the Mac’s appearance; choose a language in **Settings → General → Interface language**. Switching takes effect immediately and preserves charging settings.
+
+<p align="center">
+  <a href="docs/images/general-en-light.png"><img src="docs/images/general-en-light.png" width="360" alt="English General settings in light mode: language selection, launch at login and version 0.8.0"></a>
+  <a href="docs/images/general-fr-dark.png"><img src="docs/images/general-fr-dark.png" width="360" alt="French General settings in dark mode: automatic language, login startup and connected service"></a>
+</p>
+<p align="center"><sub>English in light mode · French in dark mode</sub></p>
+
 <details>
-<summary><strong>Explore charge settings, MagSafe, the compact display and the built-in guide</strong></summary>
+<summary><strong>Explore charging, thermal pause, storage and MagSafe signals</strong></summary>
 
 <p align="center">
-  <a href="docs/images/charge-settings.png"><img src="docs/images/charge-settings.png" width="380" alt="Charge settings with the native backend enabled, an 80 percent ceiling and a 70 percent resume threshold"></a>
-  <a href="docs/images/thermal-settings.png"><img src="docs/images/thermal-settings.png" width="380" alt="Configurable thermal pause, cooldown explanation and optional idle-sleep prevention"></a>
-  <br><sub>Charge policy and return to the ceiling · Additional thermal pause</sub>
+  <a href="docs/images/charge-en-light.png"><img src="docs/images/charge-en-light.png" width="360" alt="English charging settings: 80 percent ceiling, return to the ceiling and resume below 70 percent"></a>
+  <a href="docs/images/thermal-en-light.png"><img src="docs/images/thermal-en-light.png" width="360" alt="Additional thermal pause and optional idle-sleep prevention in light mode"></a>
 </p>
-<p align="center">
-  <a href="docs/images/magsafe-settings.png"><img src="docs/images/magsafe-settings.png" width="380" alt="MagSafe signal assignments for charging, holding, discharge, thermal pause and one-off full charge"></a>
-  <a href="docs/images/menu-bar-settings.png"><img src="docs/images/menu-bar-settings.png" width="380" alt="Compact menu bar preview and optional percentage, temperature, power and mode indicators"></a>
-  <br><sub>MagSafe colors and patterns · Compact menu bar</sub>
-</p>
-<p align="center">
-  <a href="docs/images/panel-settings.png"><img src="docs/images/panel-settings.png" width="380" alt="Settings to show, hide and reorder battery measurements in the panel"></a>
-  <a href="docs/images/offline-guide.png"><img src="docs/images/offline-guide.png" width="380" alt="Searchable offline guide explaining daily limits, profiles and temporary modes"></a>
-  <br><sub>Choose your measurements · Find help without leaving the app</sub>
-</p>
+<p align="center"><sub>Daily charging policy · Additional thermal pause</sub></p>
 
-These unmodified captures show example settings: **80/70% and 35°C**. They are customizable choices, not fixed defaults or evidence of a thermal test. The app’s thermal default is 40°C; the recorded everyday validation used 80/75%. See the [capture notes](docs/images/README.md).
+<p align="center">
+  <a href="docs/images/storage-en-light.png"><img src="docs/images/storage-en-light.png" width="360" alt="Temporary 50 percent storage target and battery-care guidance"></a>
+  <a href="docs/images/magsafe-en-light.png"><img src="docs/images/magsafe-en-light.png" width="360" alt="MagSafe state assignments and previews for colors, blinking and alternating signals"></a>
+</p>
+<p align="center"><sub>Storage preparation · MagSafe colors and patterns</sub></p>
 
 </details>
+
+<details>
+<summary><strong>Customize the menu bar and browse the offline guide</strong></summary>
+
+<p align="center">
+  <a href="docs/images/menu-bar-en-light.png"><img src="docs/images/menu-bar-en-light.png" width="360" alt="Compact menu bar settings with optional percentage, temperature, power and mode indicators"></a>
+  <a href="docs/images/guide-en-light.png"><img src="docs/images/guide-en-light.png" width="360" alt="Searchable English offline guide explaining daily settings and temporary modes"></a>
+</p>
+<p align="center"><sub>Configurable compact display · Searchable built-in guide</sub></p>
+
+</details>
+
+These are real, unretouched screenshots. **80/70% and 35°C** illustrate customizable choices, not universal recommendations or evidence of a thermal test. The app’s thermal default is 40°C. [Screenshot provenance](docs/images/README.md).
 
 ## Compatibility
 
@@ -106,12 +128,12 @@ For a Release build, signing details and troubleshooting, see the [local develop
 
 ## Validation
 
-Version **0.8.0 (16)** adds bilingual presentation and adaptive colors; its software checks are recorded in [VALIDATION.md](VALIDATION.md). The latest physical charging validation remains **0.7.2 (15), 26 October 2026**:
+Version **0.8.0 (16)** adds both languages and adaptive colors. The [validation record](VALIDATION.md) separates current software checks from physical tests performed on earlier releases, including **0.7.2 (15), 26 October 2026**:
 
 | Check | Recorded result |
 |---|---|
-| Native tests | **389 XCTest cases passed** on arm64. |
-| Helper tests | **36 recovery, lifecycle and watchdog scenarios passed**, with simulated hardware boundaries and native Security/XPC type checking. |
+| Native tests — 0.8.0 | **397 XCTest cases passed in French and 397 in English** on arm64, including translation, interpolation, contrast and SwiftUI rendering. |
+| Unchanged helper — 0.7.2 record | **36 recovery, lifecycle and watchdog scenarios passed**, with simulated hardware boundaries and native Security/XPC type checking. |
 | Charging | USB-C hold at 78%; resume at 74% for the 80/75 policy, continued charge after switching supply, then measured stop and hold at 80%. |
 | Thermal policy | Physical pause/resume verified with the real sensor and a temporary low threshold, without heating the Mac. This is not a test at an actual hot-battery threshold. |
 

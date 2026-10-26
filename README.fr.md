@@ -6,9 +6,11 @@
 
 Choisir un plafond. Comprendre l’état de la batterie. Retrouver ses réglages au quotidien, en arrière-plan.
 
+Français et anglais · Clair et sombre · Interface native SwiftUI
+
 [English](README.md) · **Français**
 
-[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibilité) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.7.2](https://img.shields.io/badge/version-0.8.0-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/licence-GPL--3.0-24292f)](LICENSE)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibilité) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.8.0](https://img.shields.io/badge/version-0.8.0-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/licence-GPL--3.0-24292f)](LICENSE)
 
 [Fonctionnalités](#fonctionnalités) · [Captures](#captures-décran) · [Installation](#compiler-et-lancer) · [Documentation](#documentation)
 
@@ -17,10 +19,10 @@ Choisir un plafond. Comprendre l’état de la batterie. Retrouver ses réglages
 Une application native SwiftUI pour la batterie du Mac, maintenue par [JulienEsbt](https://github.com/JulienEsbt) à partir de [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). Cette édition ajoute une interface en français et en anglais, des profils quotidiens, la préparation au stockage, un affichage compact et un moteur natif de charge expérimental, tout en conservant l’historique et les crédits du projet d’origine.
 
 <p align="center">
-  <a href="docs/images/panel.png"><img src="docs/images/panel.png" width="330" alt="Panneau principal OpenDente à 80 %, avec profils quotidiens, préparation au stockage et charge ponctuelle complète"></a>
-  <a href="docs/images/measurements.png"><img src="docs/images/measurements.png" width="330" alt="Mesures de la batterie et flux d’énergie dans le panneau OpenDente"></a>
+  <a href="docs/images/panel-fr-light.png"><img src="docs/images/panel-fr-light.png" width="330" alt="Panneau français en mode clair : profils, stockage à 50 % et charge ponctuelle complète"></a>
+  <a href="docs/images/panel-fr-dark.png"><img src="docs/images/panel-fr-dark.png" width="330" alt="Panneau français en mode sombre avec plafond quotidien à 80 %"></a>
 </p>
-<p align="center"><sub>Captures réelles d’OpenDente 0.7.2. Interface française illustrée ; la 0.8.0 propose aussi l’anglais et des couleurs adaptées au mode clair. Cliquer sur une image pour l’ouvrir en pleine résolution.</sub></p>
+<p align="center"><sub>OpenDente 0.8.0 · Français · Mode clair et mode sombre · Cliquer pour agrandir.</sub></p>
 
 > [!IMPORTANT]
 > **Le moteur natif de charge est expérimental.** Il utilise des interfaces privées Apple et a été testé sur un MacBook Air M3 sous macOS 27.2. La compatibilité et les délais varient. Le dépôt fournit les sources pour une signature locale, sans installateur public notarifié. Lire les [limites](#compatibilité) avant d’activer le contrôle de charge.
@@ -41,30 +43,50 @@ Une application native SwiftUI pour la batterie du Mac, maintenue par [JulienEsb
 
 L’affichage compact place le pourcentage **dans la batterie**, avec une jauge séparée et des indicateurs facultatifs de température, puissance et mode. La présentation classique reste disponible. Le panneau permet de choisir ses mesures, de consulter les flux d’énergie, de configurer les notifications, de rechercher dans le guide hors ligne et d’exporter un diagnostic local.
 
+<p align="center">
+  <a href="docs/images/menu-bar.png"><img src="docs/images/menu-bar.png" width="148" alt="Pourcentage intégré à la batterie, jauge séparée, température et puissance"></a>
+</p>
+<p align="center"><sub>Le détail dans le panneau. L’essentiel dans la barre des menus.</sub></p>
+
 ## Captures d’écran
 
+Toutes les vues ci-dessous proviennent de **la version 0.8.0**, en français ou en anglais. Les couleurs s’adaptent à l’apparence du Mac ; la langue se choisit dans **Réglages → Général → Langue de l’interface**. Le changement est immédiat et conserve les réglages de charge.
+
+<p align="center">
+  <a href="docs/images/general-fr-dark.png"><img src="docs/images/general-fr-dark.png" width="360" alt="Général en français et mode sombre : langue automatique, démarrage à la connexion et service connecté"></a>
+  <a href="docs/images/general-en-light.png"><img src="docs/images/general-en-light.png" width="360" alt="General en anglais et mode clair : choix de langue, ouverture à la connexion et version 0.8.0"></a>
+</p>
+<p align="center"><sub>Français en mode sombre · Anglais en mode clair</sub></p>
+
 <details>
-<summary><strong>Découvrir la charge, MagSafe, l’affichage compact et le guide intégré</strong></summary>
+<summary><strong>Régler la charge, la pause thermique, le stockage et le voyant MagSafe</strong></summary>
 
 <p align="center">
-  <a href="docs/images/charge-settings.png"><img src="docs/images/charge-settings.png" width="380" alt="Réglages de charge avec moteur natif actif, plafond à 80 % et reprise sous 70 %"></a>
-  <a href="docs/images/thermal-settings.png"><img src="docs/images/thermal-settings.png" width="380" alt="Pause thermique configurable, explication du refroidissement et prévention facultative de veille automatique"></a>
-  <br><sub>Politique de charge et retour au plafond · Pause thermique supplémentaire</sub>
+  <a href="docs/images/charge-fr-dark.png"><img src="docs/images/charge-fr-dark.png" width="360" alt="Charge en français : plafond de 80 %, retour au plafond et reprise sous 70 %"></a>
+  <a href="docs/images/thermal-en-light.png"><img src="docs/images/thermal-en-light.png" width="360" alt="Pause thermique et prévention de veille en anglais et mode clair"></a>
 </p>
-<p align="center">
-  <a href="docs/images/magsafe-settings.png"><img src="docs/images/magsafe-settings.png" width="380" alt="Règles du voyant MagSafe pour la charge, le maintien, la décharge, la pause thermique et la charge complète ponctuelle"></a>
-  <a href="docs/images/menu-bar-settings.png"><img src="docs/images/menu-bar-settings.png" width="380" alt="Aperçu de la barre compacte et indicateurs facultatifs de pourcentage, température, puissance et mode"></a>
-  <br><sub>Couleurs et motifs MagSafe · Barre des menus compacte</sub>
-</p>
-<p align="center">
-  <a href="docs/images/panel-settings.png"><img src="docs/images/panel-settings.png" width="380" alt="Réglages pour afficher, masquer et réordonner les mesures de batterie du panneau"></a>
-  <a href="docs/images/offline-guide.png"><img src="docs/images/offline-guide.png" width="380" alt="Guide hors ligne avec recherche, expliquant les limites, les profils et les modes temporaires"></a>
-  <br><sub>Choisir ses mesures · Trouver de l’aide sans quitter l’app</sub>
-</p>
+<p align="center"><sub>Plafond et reprise — français · Pause thermique — anglais</sub></p>
 
-Ces captures non retouchées montrent des exemples de réglages : **80/70 % et 35 °C**. Ces choix sont personnalisables ; ils ne représentent ni des défauts imposés ni une preuve d’essai thermique. Le défaut thermique de l’app est de 40 °C et la validation quotidienne consignée utilise 80/75 %. Voir les [notes de capture](docs/images/README.md).
+<p align="center">
+  <a href="docs/images/storage-en-light.png"><img src="docs/images/storage-en-light.png" width="360" alt="Préparation au stockage à 50 % et conseils batterie dans les réglages anglais"></a>
+  <a href="docs/images/magsafe-en-light.png"><img src="docs/images/magsafe-en-light.png" width="360" alt="Règles et aperçus des couleurs, clignotements et alternances du voyant MagSafe"></a>
+</p>
+<p align="center"><sub>Cible temporaire de stockage · Signaux MagSafe — interface anglaise</sub></p>
 
 </details>
+
+<details>
+<summary><strong>Personnaliser la barre des menus et consulter le guide hors ligne</strong></summary>
+
+<p align="center">
+  <a href="docs/images/menu-bar-fr-dark.png"><img src="docs/images/menu-bar-fr-dark.png" width="360" alt="Réglages français de l’affichage compact et des indicateurs facultatifs"></a>
+  <a href="docs/images/guide-fr-dark.png"><img src="docs/images/guide-fr-dark.png" width="360" alt="Guide intégré en français avec recherche et explication des modes de charge"></a>
+</p>
+<p align="center"><sub>Affichage compact personnalisable · Guide intégré avec recherche</sub></p>
+
+</details>
+
+Les captures sont réelles et non retouchées. Les valeurs **80/70 % et 35 °C** illustrent des choix personnalisables ; elles ne constituent pas une recommandation universelle ni une preuve d’essai thermique. Le défaut thermique de l’app est de 40 °C. [Provenance des images](docs/images/README.md).
 
 ## Compatibilité
 
@@ -106,12 +128,12 @@ Pour une Release, les détails de signature et le dépannage, consulter le [guid
 
 ## Validation
 
-La version **0.8.0 (16)** ajoute l’interface bilingue et les couleurs adaptatives ; ses contrôles logiciels figurent dans [VALIDATION.md](VALIDATION.md). Le dernier bilan physique de charge reste celui de **0.7.2 (15), 26 octobre 2026**.
+La version **0.8.0 (16)** ajoute les deux langues et les couleurs adaptatives. Le [bilan de validation](VALIDATION.md) distingue les contrôles logiciels actuels des essais physiques réalisés sur les versions précédentes, notamment **0.7.2 (15), le 26 octobre 2026**.
 
 | Contrôle | Résultat consigné |
 |---|---|
-| Tests natifs | **389 tests XCTest réussis** sur arm64. |
-| Tests du service | **36 scénarios de récupération, cycle de vie et watchdog réussis**, avec accès matériels simulés et contrôle natif des types Security/XPC. |
+| Tests natifs 0.8.0 | **397 tests XCTest réussis en français et 397 en anglais** sur arm64, incluant traduction, interpolation, contraste et rendu SwiftUI. |
+| Service inchangé — bilan 0.7.2 | **36 scénarios de récupération, cycle de vie et watchdog réussis**, avec accès matériels simulés et contrôle natif des types Security/XPC. |
 | Charge | Maintien USB-C à 78 % ; reprise à 74 % pour la politique 80/75, poursuite après changement d’alimentation, puis arrêt mesuré et maintien à 80 %. |
 | Politique thermique | Pause et reprise physiques vérifiées avec le vrai capteur et un seuil temporaire bas, sans chauffer le Mac. Ce n’est pas un essai à température réellement élevée. |
 
