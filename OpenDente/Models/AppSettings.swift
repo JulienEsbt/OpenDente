@@ -93,6 +93,11 @@ final class AppSettings: ObservableObject {
 
     // MARK: - Status Bar Display
 
+    var compactStatusBar: Bool {
+        get { defaults.object(forKey: "compactStatusBar") as? Bool ?? true }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "compactStatusBar") }
+    }
+
     var statusBarShowPercentage: Bool {
         get { defaults.object(forKey: "statusBarShowPercentage") as? Bool ?? true }
         set { objectWillChange.send(); defaults.set(newValue, forKey: "statusBarShowPercentage") }

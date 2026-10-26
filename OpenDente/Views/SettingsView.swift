@@ -392,6 +392,12 @@ struct StatusBarTab: View {
 
     var body: some View {
         Form {
+            Section("Présentation") {
+                Toggle("Affichage compact", isOn: $settings.compactStatusBar)
+                Text("Pourcentage dans la batterie ; température et puissance sur deux lignes. Le survol conserve les détails.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section("Afficher dans la barre des menus") {
                 Toggle("Pourcentage de batterie", isOn: $settings.statusBarShowPercentage)
                 Toggle("Température", isOn: $settings.statusBarShowTemperature)
@@ -404,11 +410,14 @@ struct StatusBarTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 HStack(spacing: 6) {
-                    Image(systemName: statusBarIcon)
-                        .font(.system(size: 15))
-                    if !statusBarPreview.isEmpty {
-                        Text(statusBarPreview)
-                            .font(.system(size: 13, design: .monospaced))
+                    if settings.compactStatusBar {
+                        Image(nsImage: CompactStatusBar.image(state: battery.batteryState,
+                            mode: charging.mode, settings: settings))
+                    } else {
+                        Image(systemName: statusBarIcon).font(.system(size: 15))
+                        if !statusBarPreview.isEmpty {
+                            Text(statusBarPreview).font(.system(size: 13, design: .monospaced))
+                        }
                     }
                 }
                 .padding(8)

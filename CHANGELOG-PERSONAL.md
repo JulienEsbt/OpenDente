@@ -1,5 +1,18 @@
 # Changements de l’édition personnelle
 
+## 0.7.1 — chiffres plus lisibles, 25 octobre 2026
+
+- Face uniforme derrière le pourcentage : le niveau ne coupe plus les chiffres en deux contrastes. Police plus grande et grasse ; petite jauge inférieure indépendante, sans élargir l’icône compacte.
+- Régression du rendu réel à 20, 50, 68 et 100 % : fond opaque des deux côtés, chiffres évidés et jauge distincte. **384 XCTest natifs réussis**, Release universelle signée.
+- Service 1.7.0 et politique de charge inchangés. Livraison locale ; aucun commit ni push sans la clé du propriétaire.
+
+## 0.7.0 — barre compacte et aide discrète, 25 octobre 2026
+
+- Pourcentage dans la batterie ; température et puissance sur deux lignes. Le mode reste indiqué, le survol et l’accessibilité conservent les détails. Présentation classique toujours disponible dans Barre des menus, avec aperçu identique au rendu réel.
+- La carte native permanente laisse place à une aide volontaire dans l’en-tête. Les erreurs de service, de consigne et de pause restent visibles.
+- Rafraîchissement immédiat de la barre après modification des préférences. Trois régressions ajoutées : préférence persistante, encombrement réduit à informations égales et lecture absente sans faux 0 %.
+- 383 XCTest natifs et 36 scénarios complémentaires du service réussis. Veille/réveil et reconnexion vérifiés, seuils 80/75 rétablis. Une pause à 66 % acceptée mais non confirmée physiquement est documentée sans revendication de réussite. Service 1.7.0 et politique de charge inchangés. Livraison locale ; commit signé et publication différés par le propriétaire.
+
 ## 0.6.2 — diagnostic natif et présentation publique, 21 octobre 2026
 
 - L’export identifie maintenant PowerUI lorsqu’il est disponible, au lieu d’annoncer un moteur SMC non détecté. Il distingue disponibilité, activation choisie, cible acquittée et mesure physique.

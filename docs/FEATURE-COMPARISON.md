@@ -6,7 +6,7 @@ Reviewed on **21 October 2026** against [AppHouseKitchen's feature documentation
 
 ## Feature map
 
-| Feature | OpenDente Personal 0.6.2, native backend | AlDente's published offer |
+| Feature | OpenDente Personal 0.7.0, native backend | AlDente's published offer |
 |---|---|---|
 | Charge limit | Available; deferred native target, measured state shown separately | Free / Pro |
 | Lower resume threshold / sailing mode | Available; natural drop, then a charge cycle up to the ceiling | Pro |

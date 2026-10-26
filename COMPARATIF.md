@@ -6,7 +6,7 @@ Comparaison relue le **21 octobre 2026** à partir des [fonctions publiées par 
 
 ## Fonctions présentes et écarts
 
-| Fonction | OpenDente personnel 0.6.2, moteur natif | Offre publiée d’AlDente |
+| Fonction | OpenDente personnel 0.7.0, moteur natif | Offre publiée d’AlDente |
 |---|---|---|
 | Limite de charge | Oui ; cible native différée, état mesuré présenté séparément | Free / Pro |
 | Seuil de reprise / Mode Voile | Oui ; baisse naturelle, puis recharge jusqu’au plafond | Pro |

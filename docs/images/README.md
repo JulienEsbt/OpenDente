@@ -1,13 +1,11 @@
 # Screenshot notes / Notes de capture
 
-Five real app-window screenshots captured on **21 October 2026** from the installed **OpenDente 0.6.1 (11)**, on a MacBook Air M3 with macOS 27.2. Version 0.6.2 changes the diagnostic report only; these screens remain representative of its interface.
+Six real, unmodified app-window captures from a MacBook Air M3 running macOS 27.2:
 
-- `menu-bar.jpg`: menu bar panel, 80% ceiling and resumption below 75%; the Mac was on battery at 76%.
-- `charging.jpg`: native charging controls and everyday thresholds.
-- `thermal.jpg`: additional thermal pause and background/sleep settings.
-- `magsafe.jpg`: per-state light signals and temporary previews.
-- `guide.jpg`: offline guide filtered with “stockage”.
+- `menu-bar.jpg`: **25 October 2026, local OpenDente 0.7.0 (13)**. The panel shows a 66% battery, a connected adapter and the daily 80/75 thresholds.
+- `menu-bar-layout.jpg`: **25 October 2026, local OpenDente 0.7.1 (14)**. Actual compact preview at 61%, with a uniform number background and a separate lower level track. All measurement choices remain enabled.
+- `charging.jpg`, `thermal.jpg`, `magsafe.jpg`, `guide.jpg`: **21 October 2026, OpenDente 0.6.1 (11)**. These controls retain their presentation in 0.7.1. The guide capture is filtered with “stockage”.
 
-The JPEG files are unmodified window captures, not mockups or simulated measurements. They exclude the desktop and menu bar, account details and hardware serial numbers. The translucent panel uses the appearance produced by the window-capture API. No hardware mode was changed solely to create these images. The README scales their display; original image dimensions are preserved.
+These JPEGs are real windows, not mockups or simulated measurements. They exclude account details and hardware serial numbers. The panel’s translucent appearance is produced by the window-capture API. Image dimensions are preserved; the README scales their display.
 
-Ces cinq captures réelles ne sont pas retouchées. Elles montrent l’interface française, les seuils conservés et les valeurs présentes au moment de la capture. Elles ne constituent ni une preuve de compatibilité sur tous les Mac ni une promesse de durée de vie de la batterie. Les essais sont décrits dans [VALIDATION.md](../../VALIDATION.md).
+Ces captures ne sont pas retouchées et ne constituent pas une validation matérielle universelle. Les limites, essais et mesures sont détaillés dans [VALIDATION.md](../../VALIDATION.md).

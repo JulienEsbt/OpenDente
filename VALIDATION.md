@@ -1,6 +1,52 @@
 # Validation de l’édition personnelle
 
-## État actuel — 0.6.2 (12), diagnostic et documentation publique
+## État actuel — 0.7.1 (14), 25 octobre 2026, livraison locale
+
+Correctif d’affichage installé sur place dans `/Applications/OpenDente.app`, révision **`7b24a03+local:53b9160d0164`**. Pourcentage sur une face uniforme avec police plus lisible ; niveau représenté par une jauge inférieure séparée. Aucun changement de charge, de privilèges ou de réglage quotidien. Service 1.7.0 conservé à l’identique, y compris son fichier installé.
+
+- **384/384 XCTest natifs arm64 réussis**, zéro échec (`NativeTests-20261025-071-final.xcresult`, `071-xctest-final.log`). La nouvelle régression raster vérifie le rendu réel à 20, 50, 68 et 100 % : contraste uniforme, chiffres évidés, jauge partielle ou pleine. Le contrôle du fond échoue avant le correctif ; la suite finale réussit après correction.
+- **Release universelle arm64/x86_64 compilée et signée**, vérification stricte réussie. Paquet installé identique à la Release ; seules `Contents/Info.plist` et `Contents/MacOS/OpenDente` remplacées. Les 36 scénarios du service inchangé restent ceux exécutés en 0.7.0 ; ils ne sont pas présentés comme une nouvelle exécution.
+- Relance discrète puis panneau ouvert manuellement ; réglages Général : **0.7.1 (14)**, **Connecté — mode natif disponible**, ouverture à la connexion ON. Aperçu réel à 61 % vérifié et capturé ; réglages fermés ensuite.
+- Aucun nouvel essai physique de charge engagé pour ce changement visuel. Les résultats et réserves de la séance 0.7.0 ci-dessous restent applicables : cycle réel complet 80/75, extinction complète, pause thermique et USB-C non validés. La cible à 66 % acceptée sans arrêt confirmé reste explicitement non concluante.
+- Travail conservé localement à la demande du propriétaire, sans commit, push ni modification de sa règle de signature Git. Base publiée : `7b24a03a01bd74499c583ff0bbe2c26bf2ee4d7b`.
+
+---
+
+## Historique — 0.7.0 (13), 25 octobre 2026, livraison locale
+
+App mise à jour sur place dans **`/Applications/OpenDente.app`**. Révision locale **`7b24a03+local:be839f0092a5`**, empreinte des sources Swift et de `project.yml` dans `070-source.json`. Aucun commit ni push de ce lot : le propriétaire demande explicitement de rester en local jusqu’au retour de sa clé de signature Git. La branche reste au commit publié `7b24a03a01bd74499c583ff0bbe2c26bf2ee4d7b` ; les corrections et le compte rendu sont conservés dans le dépôt pour un futur commit signé. La règle de signature Git reste inchangée.
+
+### Logiciel et présentation
+
+- **383/383 XCTest natifs arm64 réussis**, zéro échec (`NativeTests-20261025-070.xcresult`, `070-xctest.log`). Les trois nouvelles régressions couvrent le choix compact persistant, l’encombrement à informations égales et l’absence de faux 0 % sans mesure. Échec de compilation attendu avant implémentation, puis suite complète verte.
+- **36 scénarios du service réexécutés** : 17 récupération matérielle, 14 cycle de vie, 5 watchdog. Contrôle natif complet des types Security/XPC réussi. Les accès matériels de ces bancs sont simulés ; les avertissements de variables inutilisées proviennent de l’extraction sans les journaux, pas des sources de production.
+- **Release universelle arm64/x86_64 compilée et signée** ; arm64 exécuté. Vérification stricte réussie hors sandbox ; certificats feuille app/service identiques, empreinte publique `DDAA721FBC3F2B656F612F4E5988519B593F6DA9`. Le service **1.7.0** et son fichier signé sont réutilisés à l’identique ; aucun changement de politique de charge ou d’accès privilégié.
+- Pourcentage intégré à la batterie, température et puissance sur deux lignes, indication du mode et détails accessibles. Aperçu et barre utilisent le même rendu. Bascule classique/compact vérifiée en direct ; retour final au compact, mesures toutes activées. La carte native permanente a disparu ; l’aide s’ouvre volontairement, et le vrai avertissement de pause non confirmée reste visible.
+
+### Contrôles réels et portée
+
+| Contrôle | Observation du 25 octobre |
+|---|---|
+| Fermeture de l’ancienne app | Cible Apple **80 %** relue par le getter PowerUI, sans erreur, app arrêtée. Cela vérifie la restitution à la fermeture, pas l’extinction complète. |
+| Lancement 0.7.0 | Nouveau processus, lancement discret puis panneau ouvert manuellement. Général affiche **0.7.0 (13)** et **Connecté — mode natif disponible**. |
+| Ouverture à la connexion | ON dans l’app ; entrée BTM active pointant sur `/Applications/OpenDente.app`. Aucun nouveau redémarrage complet ni changement de session effectué. |
+| Veille/réveil | Software Sleep à **18:09:19**, 30 s ; DarkWake 10 s puis Maintenance Sleep jusqu’au réveil utilisateur à **18:12:49**. Watchdog suspendu/repris dans les journaux du service. Cible **80 %** avant et après, chargeur resté connecté. Les mesures reprennent après réveil. |
+| Pause temporaire à 66 % | Consigne **66 %** acquittée et relue. Sur 90 s, `IsCharging` reste vrai et le courant rapporté varie ; **arrêt physique non confirmé**. L’avertissement prévu apparaît. Cet essai sous la plage publique Apple ne valide ni un arrêt immédiat ni la régulation sous 80 %. Certaines valeurs du contrôleur sont aussi lentes à se rafraîchir ; elles ne sont pas assimilées à une mesure instantanée fiable. |
+| Retour aux réglages quotidiens | Bouton 80 % / reprise sous 75 % appliqué ; avertissement effacé et cible 80 % relue. |
+| Débranchement/rebranchement | Passage réellement observé sur batterie puis retour secteur. Après reconnexion, **18:24:19** : `ExternalConnected=true`, `IsCharging=true`, `InstantAmperage=284 mA`, tension 11,937 V, cible native **80 %**. L’app repasse en charge sans action manuelle sur son contrôle. |
+| Panneau fermé | Processus toujours actif ; nouvelles confirmations de cible dans les journaux sans fenêtre à maintenir ouverte. |
+
+Aucun cycle complet jusqu’à 80 % nouvellement attendu, aucune chauffe volontaire, aucun essai USB-C identifié ni extinction complète. Le test court à 66 % n’est pas présenté comme une réussite de pause. Les résultats historiques et les simulations n’en remplacent pas la preuve physique. [Apple](https://support.apple.com/fr-fr/102338) décrit une limite publique entre 80 et 100 %, avec quelques points de tolérance et des charges occasionnelles à 100 % pour la jauge.
+
+### Configuration finale et suite locale
+
+Contrôle natif ON, plafond **80 %**, reprise sous **75 %**, retour au plafond sur secteur ON, pause supplémentaire **40 °C**, stockage OFF, prévention de veille automatique OFF. Voyant personnalisé conservé. Ouverture à la connexion ON, affichage compact ON avec pourcentage, température, puissance et mode. La consigne macOS reste active pendant la veille, mais l’app ne prend pas de décisions thermiques en continu pendant le sommeil. À l’arrêt propre, elle demande de restaurer la politique Apple sauvegardée ; seule cette restauration lors de Quitter a été vérifiée à 80 %, sans prétendre à un essai Mac éteint.
+
+Les preuves récentes sont regroupées dans l’archive locale de validation avant rangement des compilations temporaires à la Corbeille. Pour la prochaine séance : relire le diff et ce résultat matériel incomplet, puis signer les lots avec la clé lorsqu’elle sera disponible. **Aucune publication différée automatique n’est programmée.**
+
+---
+
+## Historique — 0.6.2 (12), diagnostic et documentation publique
 
 App unique mise à jour **sur place dans `/Applications/OpenDente.app`**, révision binaire `195d535a6f26c8b49d64a18e1c76efbfbd216a14`. Le correctif touche le rapport de diagnostic, pas la politique de charge. Service **1.7.0 inchangé**, même binaire signé et même fichier de service conservés. Vérification stricte des signatures et identité des fichiers entre Release préparée et app installée réussies (`062-install.json`). Aucun nouvel accès ni certificat créé.
 

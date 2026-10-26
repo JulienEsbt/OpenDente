@@ -1,8 +1,8 @@
 # OpenDente — édition personnelle
 
-Version de développement **0.6.2 expérimentale**, préparée le 21 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
+Version de développement **0.7.1 expérimentale**, mise à jour le 25 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
 
-Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 380 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
+Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 384 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
 
 ## Installation quotidienne et lancement discret
 

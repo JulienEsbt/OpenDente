@@ -158,6 +158,10 @@ Autorise les demandes de notifications de l’app. Leur affichage dépend aussi 
 
 Permettent de choisir les événements annoncés. Les notifications ne remplacent pas l’état réel affiché dans le panneau. Le bouton de notification de test existe seulement dans les builds de développement.
 
+### Affichage compact
+
+Place le pourcentage dans l’icône de batterie et les mesures de température et de puissance sur deux lignes. Conserve les choix de mesures et le détail au survol. Désactiver ce réglage retrouve la présentation classique. Dans le panneau, cliquer sur « Contrôle macOS » explique le moteur natif expérimental ; les erreurs restent signalées sans cette ouverture.
+
 ### Barre des menus : pourcentage · température · consommation · icône du mode
 
 Choisit les éléments visibles à côté de l’icône dans la barre du Mac. Ne change ni les seuils ni la puissance de charge.

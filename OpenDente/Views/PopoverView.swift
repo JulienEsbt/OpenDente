@@ -5,6 +5,7 @@ struct PopoverView: View {
     @ObservedObject var battery = BatteryService.shared
     @ObservedObject var charging = ChargingManager.shared
     @ObservedObject var settings = AppSettings.shared
+    @State private var showsNativeInfo = false
     @Environment(\.openSettings) private var openSettingsAction
 
     private var state: BatteryState { battery.batteryState }
@@ -54,7 +55,25 @@ struct PopoverView: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text("OpenDente").font(.headline)
-                Text("Édition personnelle").font(.caption).foregroundStyle(.secondary)
+                if charging.nativeLimitAvailable {
+                    Button { showsNativeInfo.toggle() } label: {
+                        Label(charging.usesNativeLimit ? "Contrôle macOS" : "Suivi uniquement", systemImage: "info.circle")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Comprendre le contrôle natif expérimental")
+                    .popover(isPresented: $showsNativeInfo) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Contrôle natif expérimental").font(.headline)
+                            Text("OpenDente confie ses consignes à macOS via une interface Apple privée, susceptible de changer. Une demande peut prendre environ une minute ; macOS peut dépasser le plafond pour sa jauge.")
+                            Text("En veille, macOS garde la dernière consigne. Les mesures et la pause thermique de l’app reprennent au réveil. À l’arrêt, OpenDente restitue le réglage Apple sauvegardé.")
+                            Button("Réglages…") { showsNativeInfo = false; openSettings() }
+                        }
+                        .font(.caption).padding(16).frame(width: 280)
+                    }
+                } else {
+                    Text("Édition personnelle").font(.caption).foregroundStyle(.secondary)
+                }
             }
             Spacer()
             Button(action: openSettings) {
@@ -134,9 +153,9 @@ struct PopoverView: View {
                 else { openSettings() }
             }
         } else if charging.nativeLimitAvailable {
-            notice(title: "Mode natif expérimental", text: charging.nativeLimitIssue ?? charging.nativePauseWarning ?? (charging.usesNativeLimit
-                ? "Limite et pauses confiées à macOS. Délai possible : 1 min ; une calibration peut dépasser la consigne. Surveillance thermique quand le Mac est éveillé."
-                : "Active le mode natif dans les réglages Charge. Les commandes SMC ne sont pas disponibles sur ce Mac."), button: "Réglages…", action: openSettings)
+            if let issue = charging.nativeLimitIssue ?? charging.nativePauseWarning {
+                notice(title: "Contrôle à vérifier", text: issue, button: "Réglages…", action: openSettings)
+            }
         } else if charging.chargingAPI == .unknown {
             notice(title: "Contrôle indisponible", text: "L’interface de charge de ce Mac n’est pas encore détectée.", button: "Réglages…", action: openSettings)
         }

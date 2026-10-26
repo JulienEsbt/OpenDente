@@ -64,6 +64,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] _ in self?.updateStatusBarText() }
             .store(in: &cancellables)
 
+        settings.objectWillChange
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.updateStatusBarText() }
+            .store(in: &cancellables)
+
         // Notifications
         NotificationService.shared.requestPermission()
         setupNotifications()
@@ -154,6 +159,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let state = battery.batteryState
         let pct = state.effectivePercentage(useHardware: settings.useHardwareBatteryPercentage)
 
+        if settings.compactStatusBar {
+            let image = CompactStatusBar.image(state: state, mode: charging.mode, settings: settings)
+            button.image = image
+            button.title = ""
+            button.toolTip = "OpenDente — " + (image.accessibilityDescription ?? "")
+            button.setAccessibilityLabel(button.toolTip)
+            lastIconName = nil
+            return
+        }
+        button.toolTip = "OpenDente — " + state.statusBarText(effectivePercentage: pct,
+            showPercentage: true, showTemperature: true, showPower: true)
+        button.setAccessibilityLabel(button.toolTip)
         let iconName = settings.statusBarShowMode
             ? charging.mode.batteryIconName(percentage: pct, isCharging: state.isCharging)
             : ChargingMode.idle.batteryIconName(percentage: pct, isCharging: false)

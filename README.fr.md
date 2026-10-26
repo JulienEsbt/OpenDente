@@ -40,6 +40,8 @@ OpenDente personnel est un fork communautaire de [killerk3emstar/OpenDente](http
 | **Signaux MagSafe** | Choisir couleurs fixes, clignotements lents ou alternance pour la charge, le maintien, la décharge, la chaleur et la charge ponctuelle. |
 | **Arrière-plan discret** | Démarrer à la connexion sans ouvrir de fenêtre. Cliquer sur l’icône au besoin ; fermer une fenêtre laisse l’app active. |
 
+La [barre compacte](docs/images/menu-bar-layout.jpg) place le pourcentage dans la batterie, avec température et puissance sur deux lignes. La présentation classique reste disponible dans les réglages. L’aide du moteur natif s’ouvre à la demande ; les erreurs de service et de consigne restent visibles.
+
 Température, capacité, cycles, puissances, courant et informations du chargeur restent consultables. L’app propose aussi un schéma simple des flux d’énergie, des notifications configurables, un guide hors ligne avec recherche et un export local de diagnostic. Les mesures absentes ne sont pas inventées.
 
 ## Voir les réglages
@@ -69,6 +71,8 @@ Les captures des fenêtres de l’app ne sont pas retouchées. Leur version et l
 | Moteur natif | Interfaces PowerUI privées, détectées à l’exécution. Un réglage ne peut pas rendre disponible une commande absente. |
 | USB-C Power Delivery | La régulation vise la batterie interne indépendamment du port ; aucun essai USB-C physique n’est revendiqué. |
 | Distribution | Compilation depuis les sources et signature locale ; aucun installateur public notarifié n’est fourni ici. |
+
+Lors du nouvel essai local 0.7.0, une cible à 66 % a été acquittée sans arrêt physique confirmé dans les 90 secondes observées. Les plafonds sous 80 % et les pauses thermiques à ces niveaux restent non validés matériellement, même si la demande est acceptée.
 
 **Une demande et son effet mesuré sont distincts.** Une commande native peut prendre environ une minute. macOS peut ponctuellement monter à 100 % pour maintenir son estimation de charge. Une pause demandée ou un voyant vert ne prouvent pas à eux seuls l’arrêt du courant de batterie.
 
@@ -105,7 +109,7 @@ Pour une Release, ouvrir le projet généré dans Xcode, sélectionner son équi
 
 ## Une validation vérifiable
 
-**Version 0.6.2 : 380 tests XCTest natifs réussis sur arm64.** Le service inchangé dispose de 36 scénarios complémentaires de récupération, cycle de vie et watchdog consignés dans le bilan. La Release universelle compile pour arm64 et x86_64 ; seule l’exécution arm64 est revendiquée.
+**Version 0.7.1 : 384 tests XCTest natifs réussis sur arm64.** Le service inchangé dispose de 36 scénarios complémentaires de récupération, cycle de vie et watchdog consignés dans le bilan. La Release universelle compile pour arm64 et x86_64 ; seule l’exécution arm64 est revendiquée.
 
 Les essais physiques comprennent l’arrêt et la reprise de charge sur une petite plage, la descente vers une cible native inférieure sur MagSafe, la restauration à la fermeture, la relance, la veille/réveil et la confirmation visuelle des couleurs et motifs MagSafe par le propriétaire. Un cycle complet 80→75→80, la chauffe volontaire, l’USB-C physique et une extinction complète ne sont pas présentés comme réalisés.
 
