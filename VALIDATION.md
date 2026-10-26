@@ -1,6 +1,54 @@
 # Validation de l’édition personnelle
 
-## État actuel — 0.7.1 (14), 25 octobre 2026, livraison locale
+## État actuel — 0.7.2 (15), 26 octobre 2026, livraison locale et validation ciblée terminées
+
+Version normale installée sur place dans `/Applications/OpenDente.app`, révision **`7b24a03+local:ff499dbf688c`**, service **1.7.2**. La jauge sous le pourcentage est séparée des chiffres, plus épaisse et plus contrastée. Le service conserve l’activation des cibles basses entre les rafraîchissements ; les consignes réussies inchangées sont espacées de trois minutes pour laisser au système son délai d’application. Les changements de cible et les erreurs conservent leur voie rapide. Aucun changement d’identité de signature ou de droits XPC.
+
+### Vérifications logicielles et installation
+
+- **389/389 XCTest natifs arm64 réussis**, zéro échec : `NativeTests-20261026-072-settle.xcresult`, `072-xctest-settle.log`. Régressions du rendu raster, de la session de cible basse et de la cadence ; les échecs attendus précèdent les correctifs.
+- **36 scénarios du service réexécutés** : 17 récupération matérielle, 14 cycle de vie, 5 watchdog ; contrôle natif complet des types Security/XPC réussi (`072-helper-scenarios-final`). Ces bancs simulent les accès matériels.
+- Release universelle arm64/x86_64 compilée ; seule l’exécution arm64 est revendiquée. Vérification stricte des signatures réussie. La livraison normale ne contient pas le marqueur du build thermique temporaire ; app installée identique à la Release préparée. Deux fichiers remplacés : Info.plist et exécutable de l’app. Service 1.7.2 conservé octet pour octet et même fichier installé.
+- Lancement discret, ouverture manuelle du panneau puis Général : 0.7.2 (15), « Connecté — mode natif disponible », ouverture à la connexion ON. Le redémarrage contrôlé de cette livraison reste à effectuer.
+
+### Mesures réelles en USB-C
+
+Adaptateur USB-C **20 W**. Les heures ci-dessous sont celles de Paris. Les traces ne contiennent pas de numéro de série. Une capacité brute et le pourcentage Apple peuvent évoluer à des rythmes différents : aucune politique ne remplace le pourcentage utilisateur par un simple rapport de capacités.
+
+| Heure | Observation |
+|---|---|
+| 10:14:22 | Chargeur connecté, **78 %**, `IsCharging=false`, courant **0 mA**, puissance batterie nulle ; limite système enregistrée 79 %. Maintien physique sous 80 % confirmé. Une assistance ponctuelle négative a aussi été observée sous charge du Mac avec cet adaptateur 20 W. |
+| 10:18:24 | Référence avant essai thermique : **78 %**, charge réelle **+794 mA**. |
+| 10:34:08 | Après corrections et relance, vrai capteur autour de **25 °C**, seuil de validation temporaire **20 °C** : mode thermique, limite enregistrée **79 %**, `IsCharging=false`, courant **0 mA**. Arrêt physique confirmé. Aucun chauffage du Mac. |
+| 10:34:50 environ | Seuil remis à **40 °C** ; batterie sous 38 °C, début de l’attente réelle de cinq minutes. Demande ponctuelle 100 % conservée mais suspendue par la pause. |
+| 10:39:53 | Fin de l’attente : retrait de la limite de pause ; courant encore nul. |
+| 10:40:33 | **79 %**, `IsCharging=true`, **+747 mA** : reprise physique confirmée après la temporisation et le délai du système. Charge ponctuelle annulée à 10:42:50, avant charge complète. |
+| 10:43:58 | Version normale lancée, seuils 80/75 et température 40 °C. Limite 80 % acquittée ; effet physique encore différé. |
+| 10:47:37 → 10:48:37 | Limite réelle 80 % enregistrée ; pourcentage monté temporairement à 81 %. Puis `IsCharging=false`, courant **−846 mA** sur secteur : arrêt et retour vers le plafond confirmés après délai. |
+| 10:51:20 | Débranchement utilisateur confirmé : alimentation batterie, 81 %, courant négatif. Début de la baisse naturelle pour le cycle de reprise sous 75 %. |
+| 11:16:42 | **74 %** réellement observés sur batterie, sous le seuil de reprise 75 %. |
+| 11:19:23 | USB-C **20 W** rebranché, **74 %**, `IsCharging=true`, **+541 mA** : reprise réelle sous le seuil. |
+| 11:35:46 | Après passage au MagSafe signalé par le propriétaire, nouvelle alimentation **30 W** détectée ; **75 %**, charge toujours active, **+1375 mA** : le cycle continue au seuil bas. |
+| 11:38:16 | **77 %**, charge toujours active, **+1773 mA** ; poursuite au-delà de 75 % confirmée. |
+| 11:42:18 → 11:43:18 | **80 %** atteints, courant d’abord positif, puis `IsCharging=false`, **0 mA**, capacité brute stable à 2932. Le maintien est encore observé à 11:44:48 : fin réelle du cycle 80/75 confirmée. |
+
+L’essai thermique emploie les mêmes lectures et décisions de production, avec uniquement une plage de réglage temporairement étendue vers le bas dans un build local de validation. Il valide le déclenchement, la priorité sur la charge ponctuelle, l’attente réelle et la reprise, **pas une chauffe réelle à 40 °C ni une coupure thermique de sécurité instantanée**. La baisse réelle du capteur de 2 °C n’a pas été forcée ; le retour à 40 °C place la mesure réelle sous le seuil de reprise. La version normale, plage 30–45 °C, est réinstallée avant les essais quotidiens.
+
+Avant les corrections, des cibles basses acquittées laissaient une limite réelle à 80 % ou un courant positif. Ces essais ne sont pas des réussites. L’arrêt final a été observé après plusieurs corrections et une relance ; l’effet propre de chaque changement n’a pas été isolé matériellement. Des délais de plusieurs minutes et un dépassement temporaire de la consigne restent possibles. Le panneau distingue demande acceptée et charge effectivement observée.
+
+### Portée des essais de veille et de lancement
+
+Cycle physique avec seuils **80/75** confirmé : baisse naturelle, reprise à **74 % en USB-C 20 W**, poursuite à **75 puis 77 %** après changement vers l’alimentation 30 W/MagSafe, puis arrêt et maintien réels à **80 %**. Il ne s’agit pas d’un cycle complet effectué sur une seule alimentation. Les essais physiques de veille/réveil des versions précédentes restent les preuves disponibles ; aucune nouvelle veille n’a été effectuée en 0.7.2. À la demande du propriétaire, ces essais ne seront pas répétés systématiquement après chaque correctif. Le lancement automatique de cette version après redémarrage pourra être confirmé lors de son prochain redémarrage habituel, en relevant les processus avant toute ouverture manuelle de l’app. Ce contrôle complémentaire ne bloque pas la sauvegarde ni la publication des corrections. Le propriétaire rapporte par ailleurs avoir branché le Mac à 52 %, l’avoir éteint, puis l’avoir retrouvé à 80 % : observation utilisateur cohérente avec le plafond Apple, sans télémétrie continue ni essai contrôlé d’extinction.
+
+Les preuves logicielles sont copiées dans l’archive locale de validation avant rangement des compilations et du build thermique à la Corbeille. Une recherche dans Applications, Applications utilisateur, Dev, Codex, Téléchargements et Bureau ne retrouve qu’un bundle OpenDente actif : `/Applications/OpenDente.app`. Le dépôt et le projet Xcode sont conservés ; Corbeille non vidée.
+
+Réglages quotidiens : contrôle natif ON, plafond **80 %**, reprise sous **75 %**, retour au plafond ON, pause supplémentaire **40 °C**, stockage OFF, prévention de veille OFF, ouverture à la connexion ON, affichage compact et mesures ON. Le propriétaire a autorisé l’enregistrement sous forme de commits signés avec sa Ledger et leur publication sur son fork. La règle de signature Git est conservée. La révision binaire ci-dessus identifie la compilation locale avant ces commits ; aucun nouveau build n’est nécessaire pour ces seules mises à jour documentaires. Aucun suivi différé automatique n’est programmé.
+
+Dernier contrôle ponctuel à **11:50:33** : app toujours active sans ouverture de fenêtre, batterie **80 %**, chargeur **30 W** détecté, `IsCharging=false`, courant **0 mA**. Seuils sauvegardés relus : 80 %, plage 5 points (reprise sous 75 %), protection 40 °C, retour au plafond ON et stockage OFF.
+
+---
+
+## Historique — 0.7.1 (14), 25 octobre 2026, livraison locale
 
 Correctif d’affichage installé sur place dans `/Applications/OpenDente.app`, révision **`7b24a03+local:53b9160d0164`**. Pourcentage sur une face uniforme avec police plus lisible ; niveau représenté par une jauge inférieure séparée. Aucun changement de charge, de privilèges ou de réglage quotidien. Service 1.7.0 conservé à l’identique, y compris son fichier installé.
 

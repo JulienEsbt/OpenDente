@@ -1,4 +1,4 @@
-# OpenDente — édition personnelle 0.7.1
+# OpenDente — édition personnelle 0.7.2
 
 Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6a75f50df8` ; reprise personnelle initiale `0f53a5e`. Développement local dans `/Users/julienesbt/Dev/OpenDente`, branche `feature/personal-battery-care`, fork JulienEsbt/OpenDente. Historique, licence et crédits conservés.
 
@@ -17,7 +17,7 @@ Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6
 
 Le Mac cible est un MacBook Air M3, 16 Go, macOS 27.2 (26B118). Les anciennes clés SMC d’inhibition CHTE/CH0B/CH0C y sont absentes, y compris depuis le service root. Le moteur d’origine reste disponible sur les Mac qui les exposent.
 
-Le propriétaire a autorisé un moteur natif expérimental. Le service 1.7.0 utilise les interfaces privées PowerUI détectées à l’exécution ; le setter Apple 80–100 % initialise correctement l’état natif. Sous 80 %, seule la préférence de cible est ensuite modifiée. Aucun appel du setter hors de sa plage, aucune archive powerd modifiée, aucune coupure CHIE de l’adaptateur, aucun changement d’autorisations Apple ou de sudoers.
+Le propriétaire a autorisé un moteur natif expérimental. Le service 1.7.2 utilise les interfaces privées PowerUI détectées à l’exécution ; le setter Apple 80–100 % initialise correctement l’état natif. Sous 80 %, seule la préférence de cible est ensuite modifiée. Aucun appel du setter hors de sa plage, aucune archive powerd modifiée, aucune coupure CHIE de l’adaptateur, aucun changement d’autorisations Apple ou de sudoers.
 
 Avant toute modification, un journal root conserve les préférences MCL, y compris les valeurs temporaires. Un plafond ordinaire inférieur au niveau fraîchement lu est refusé. Les commandes dédiées et authentifiées prepareStorage (50 %) et dischargeToLimit (20–100 %, cible au plus égale au niveau courant) autorisent la descente explicite sur secteur. Désactivation, déconnexion, watchdog et redémarrage du service demandent la restauration ; un échec conserve le journal et l’erreur. La désactivation fonctionne aussi sans lecture courante de batterie.
 
@@ -26,17 +26,21 @@ Le service authentifie l’identifiant de l’app et son certificat identique au
 ## Limites explicites du moteur natif
 
 - Une consigne acceptée n’est pas une preuve d’arrêt. Le panneau affiche si la batterie charge encore et signale une pause non confirmée après 90 secondes.
-- Application pouvant approcher une minute ; le firmware garde son propre comportement et peut calibrer jusqu’à 100 %. Ni le seuil de reprise exact ni l’arrêt thermique immédiat ne sont garantis.
+- Application différée, plusieurs minutes observées ; le firmware garde son propre comportement et peut calibrer jusqu’à 100 %. Ni le seuil de reprise exact ni l’arrêt thermique immédiat ne sont garantis.
 - Pendant l’attente, la consigne suit les baisses naturelles du niveau. Après passage sous le seuil bas, la charge peut continuer jusqu’au plafond. Aucun exercice de batterie n’est imposé.
 - Pause thermique : reprise après au moins 5 minutes sans dépassement et 2 °C de refroidissement. Une mesure manquante ne suffit pas à lever la pause. Sous 20 %, le moteur ne peut pas maintenir exactement le niveau courant.
 - Pendant la veille, le dernier plafond reste confié à macOS. Les décisions de seuil et de température reprennent au réveil ; il n’existe pas de surveillance applicative thermique continue pendant le sommeil du Mac.
 - La régulation par pourcentage matériel et la pause dédiée à la veille restent réservées au moteur SMC. Le moteur natif permet le stockage à 50 % et le retour au plafond quotidien explicitement activé. Le voyant ACLC est contrôlé séparément des anciennes clés de charge.
 
+## Réapplication des cibles inférieures à 80 %
+
+Le service active la plage Apple validée au début d’une session, puis conserve cette activation pendant les rafraîchissements des cibles inférieures. Une réinitialisation périodique à 80 % pouvait maintenir une limite effectivement enregistrée à 80 malgré la préférence plus basse acquittée. Une charge ponctuelle à 100 % et une restauration terminée réarment l’activation suivante. La valeur de l’énumération privée de disponibilité n’est pas assimilée à un booléen de politique active.
+
 ## Validation
 
-384 XCTest natifs réussis ; 36 scénarios de récupération/cycle de vie/watchdog ; contrôle des types du helper complet et Release universelle signée. Les bancs n’exécutent pas les accès matériels de production.
+389 XCTest natifs réussis ; 36 scénarios de récupération/cycle de vie/watchdog ; contrôle des types du helper complet et Release universelle signée. Les bancs n’exécutent pas les accès matériels de production.
 
-Des arrêts et reprises physiques ont été observés à 99 % avec le service 1.5.2, ainsi que le retrait du plafond lors de la restauration. Une veille réelle de 27 secondes avec maintien après réveil et une reprise après baisse naturelle de 99 à 97 % sont observées avec une plage temporaire 100/98, ainsi que la poursuite du cycle à 98 % et le retour au maintien après restauration 80 % / 70 %. Le passage complet 80 vers 75 ou 20, l’arrêt à chaud et un essai USB-C ne sont pas revendiqués. Voir VALIDATION.md pour les preuves et la configuration réellement laissée sur le Mac.
+Des arrêts et reprises physiques ont été observés à 99 % avec le service 1.5.2, ainsi que le retrait du plafond lors de la restauration. Une veille réelle de 27 secondes avec maintien après réveil et une reprise après baisse naturelle de 99 à 97 % sont observées avec une plage temporaire 100/98, ainsi que la poursuite du cycle à 98 % et le retour au maintien après restauration 80 % / 70 %. La séance 0.7.2 ajoute des mesures en USB-C 20 W, un maintien à 78 % et une pause thermique à 79 % déclenchée avec le vrai capteur et un seuil temporaire bas, sans chauffe. La reprise après cinq minutes est mesurée. Le cycle 80/75 est confirmé avec reprise à 74 % en USB-C 20 W et fin de recharge à 80 % après passage au MagSafe signalé/alimentation 30 W. Les essais physiques de veille restent ceux des versions précédentes, sans nouvelle veille 0.7.2 revendiquée. Le lancement après redémarrage sera à confirmer au prochain redémarrage habituel ; l’arrêt à chaud réel et le passage complet vers 20 % ne sont pas revendiqués. Voir VALIDATION.md pour les preuves et la configuration réellement laissée sur le Mac.
 
 ## Hors périmètre
 

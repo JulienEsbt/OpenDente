@@ -25,19 +25,23 @@ enum CompactStatusBar {
         let showNumber = settings.statusBarShowPercentage
         let image = NSImage(size: NSSize(width: width, height: 20), flipped: false) { _ in
             guard let context = NSGraphicsContext.current?.cgContext else { return false }
-            let body = NSRect(x: 0.5, y: 3, width: 30, height: 14)
+            let body = NSRect(x: 0.5, y: showNumber ? 5 : 3, width: 30, height: showNumber ? 13 : 14)
             let outline = NSBezierPath(roundedRect: body, xRadius: 3.5, yRadius: 3.5)
             NSColor.black.withAlphaComponent(0.55).setFill()
-            NSBezierPath(roundedRect: NSRect(x: 32, y: 7, width: 2, height: 6), xRadius: 1, yRadius: 1).fill()
+            NSBezierPath(roundedRect: NSRect(x: 32, y: showNumber ? 9 : 7, width: 2, height: 6), xRadius: 1, yRadius: 1).fill()
             let inside = body.insetBy(dx: 1.5, dy: 1.5)
             if showNumber {
                 // A moving fill boundary must never cross the digits.
                 NSColor.black.setFill(); outline.fill()
-                let track = NSRect(x: 2.5, y: 4, width: 26, height: 1)
-                context.clear(track)
+                let track = NSRect(x: 0.5, y: 1, width: 30, height: 2)
+                let trackPath = NSBezierPath(roundedRect: track, xRadius: 1, yRadius: 1)
+                NSColor.black.withAlphaComponent(0.25).setFill(); trackPath.fill()
+                context.saveGState()
+                trackPath.addClip()
                 NSColor.black.setFill()
                 NSRect(x: track.minX, y: track.minY,
                     width: track.width * CGFloat(known ? pct : 0) / 100, height: track.height).fill()
+                context.restoreGState()
                 let numberAttrs: [NSAttributedString.Key: Any] = [
                     .font: NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .bold),
                     .foregroundColor: NSColor.black]

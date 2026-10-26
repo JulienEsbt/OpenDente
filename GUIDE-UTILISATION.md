@@ -40,7 +40,7 @@ Ferme réellement l’app et demande la restauration du réglage Apple sauvegard
 
 ### Activer le contrôle de charge
 
-Active le moteur expérimental de macOS 27. Désactivé, OpenDente reste un lecteur de batterie et restaure le réglage Apple sauvegardé ; le mode stockage est annulé. Une demande native peut prendre environ une minute et macOS peut dépasser une cible pour sa calibration.
+Active le moteur expérimental de macOS 27. Désactivé, OpenDente reste un lecteur de batterie et restaure le réglage Apple sauvegardé ; le mode stockage est annulé. Une demande native peut prendre plusieurs minutes et macOS peut dépasser une cible pour sa calibration.
 
 ### Arrêter à
 

@@ -1,12 +1,12 @@
 # OpenDente Personal and AlDente
 
-Reviewed on **21 October 2026** against [AppHouseKitchen's feature documentation](https://apphousekitchen.com/fr/aldente/fonctionnalites/). AlDente entries describe the vendor's published behavior, not a side-by-side hardware test. OpenDente entries describe the native backend on the tested M3 Mac; the original SMC backend has a different scope.
+Reviewed on **26 October 2026**, including the [official AlDente 1.40 release notes](https://github.com/AppHouseKitchen/AlDente-Battery_Care_and_Monitoring/releases/tag/1.40), against [AppHouseKitchen's feature documentation](https://apphousekitchen.com/fr/aldente/fonctionnalites/). AlDente entries describe the vendor's published behavior, not a side-by-side hardware test. OpenDente entries describe the native backend on the tested M3 Mac; the original SMC backend has a different scope.
 
 [English README](../README.md) · [Comparatif français](../COMPARATIF.md)
 
 ## Feature map
 
-| Feature | OpenDente Personal 0.7.0, native backend | AlDente's published offer |
+| Feature | OpenDente Personal 0.7.2, native backend | AlDente's published offer |
 |---|---|---|
 | Charge limit | Available; deferred native target, measured state shown separately | Free / Pro |
 | Lower resume threshold / sailing mode | Available; natural drop, then a charge cycle up to the ceiling | Pro |
@@ -16,13 +16,15 @@ Reviewed on **21 October 2026** against [AppHouseKitchen's feature documentation
 | Thermal protection | Additional deferred pause while awake; not an immediate hardware cutoff | Pro |
 | MagSafe LED | Fixed colors, slow blinking, alternating colors and previews; system control during sleep | Pro; MagSafe 3 discharge blinking is also offered |
 | Prevent sleep until the limit | Optional idle-sleep assertion; manual and lid-close sleep remain possible | Pro |
+| On-demand wake control independent of charging | Not implemented; the existing option covers charging toward the ceiling | Pro, new in 1.40, with a timer and low-battery release |
+| After macOS calibration | Return-to-ceiling already handles an elevated level while awake; no complete calibration workflow | Pro: return to ceiling or continue calibration, new choice in 1.40 |
 | Dedicated stop-on-sleep option | Last native target remains with macOS; no continuous app thermal polling during sleep | Pro |
 | Stop charging when the app quits | Restores the saved Apple policy; no separate indefinite app-owned stop setting | Pro |
 | Live menu bar status | Available | Pro |
 | Power flow | Simple power display; no animated Sankey visualization | Pro |
 | Hardware battery percentage | Informational measurement when available; native regulation uses the macOS percentage | Pro; current documentation also uses macOS percentage for control |
 | Fast user switching | Not validated; no multi-session arbitration guarantee | Free / Pro |
-| Scheduling | Not implemented | Pro |
+| Scheduling | Not implemented | Pro; chosen weekdays and next-run display in 1.40 |
 | Apple Shortcuts | Not implemented | Pro |
 | Guided calibration | Not implemented | Pro |
 
@@ -34,8 +36,10 @@ OpenDente also provides a dedicated temporary storage mode around 50%, an offlin
 |---|---|---|---|
 | 1 | **Shortcuts actions** for ceiling, one-off full charge and storage | Reuse existing modes from a keyboard shortcut or another workflow | Keep opt-in and thermal priority; report rejected actions and unavailable controls |
 | 2 | **Optional scheduling** for a one-off full charge | Useful before a planned day away from power | Define missed-task handling and sleep behavior; do not promise an exact departure-time percentage |
-| 3 | **Broader compatibility and user-session tests** | Most important for adoption beyond the original machine | More Mac models and macOS versions, USB-C, shutdown and account switching; avoid competing controllers |
+| 3 | **Broader compatibility and user-session tests** | Most important for adoption beyond the original machine | More Mac models and macOS versions, other USB-C supplies, shutdown and account switching; the M3/20 W USB-C test does not establish universal support |
 | 4 | **Public distribution** with notarized releases | Easier installation for other users | Separate signing/notarization and release-validation work; no public installer is advertised yet |
+
+Timed wake control could also help with long-running work, with a low-battery release. It is a convenience separate from battery care. Compressed diagnostics and last-full-charge information are lower-priority refinements.
 
 These are proposals, not hidden switches or implemented capabilities. They are not required to use the current daily ceiling and temporary modes on the tested machine.
 

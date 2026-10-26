@@ -1,5 +1,13 @@
 # Changements de l’édition personnelle
 
+## 0.7.2 — jauge visible et réapplication native corrigée, 26 octobre 2026
+
+- Jauge de niveau séparée de la face des chiffres, portée à 2 points d’épaisseur et à la largeur de la batterie. Partie vide légèrement visible ; chiffres uniformes conservés, sans élargissement de la barre des menus.
+- Correction du service 1.7.2 : l’activation à 80 % n’est plus répétée à chaque rafraîchissement d’une cible inférieure. L’état d’activation appartient à la session du helper, sans interprétation d’une énumération privée. Charge ponctuelle et restauration réarment correctement la prochaine activation.
+- Rafraîchissement des cibles inchangées espacé de trois minutes, sans retarder les nouvelles consignes ni les reprises sur erreur.
+- Cinq régressions de session/cadence ajoutées ; **389 XCTest natifs et 36 scénarios complémentaires du service réussis**. Nouveau service requis pour utiliser ce correctif. Journal de restauration et authentification XPC conservés.
+- Validation matérielle suivie dans VALIDATION.md ; livraison et modifications restent locales, sans commit ni push.
+
 ## 0.7.1 — chiffres plus lisibles, 25 octobre 2026
 
 - Face uniforme derrière le pourcentage : le niveau ne coupe plus les chiffres en deux contrastes. Police plus grande et grasse ; petite jauge inférieure indépendante, sans élargir l’icône compacte.

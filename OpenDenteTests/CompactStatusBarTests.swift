@@ -67,10 +67,14 @@ final class CompactStatusBarTests: XCTestCase {
                 bitmap.colorAt(x: x, y: y)!.alphaComponent
             } }.filter { $0 < 0.1 }.count
             XCTAssertGreaterThan(clearDigitPixels, 8)
-            // The bitmap origin is at the top: y=30 samples the lower track.
-            // It still distinguishes partial and full charge.
-            let trackAlpha = try XCTUnwrap(bitmap.colorAt(x: 50, y: 30)).alphaComponent
-            XCTAssertEqual(trackAlpha, percent == 100 ? 1 : 0, accuracy: 0.03)
+            // A 2-point track separated from the number face must stay visible.
+            // Bitmap rows run downwards; its four Retina rows are 34...37.
+            for y in 34...37 {
+                XCTAssertEqual(try XCTUnwrap(bitmap.colorAt(x: 50, y: y)).alphaComponent,
+                    percent == 100 ? 1 : 0.25, accuracy: 0.03)
+                XCTAssertEqual(try XCTUnwrap(bitmap.colorAt(x: 8, y: y)).alphaComponent, 1, accuracy: 0.03)
+            }
+            XCTAssertEqual(try XCTUnwrap(bitmap.colorAt(x: 8, y: 32)).alphaComponent, 0, accuracy: 0.03)
         }
     }
 

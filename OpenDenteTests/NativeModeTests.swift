@@ -82,6 +82,23 @@ final class NativeModeTests: XCTestCase {
         manager.evaluateState(battery.batteryState)
         XCTAssertEqual(helper.calls, [.nativeLimit(80)])
     }
+    func testUnchangedNativeTargetLeavesThreeMinutesForAgentSettlement() async {
+        let start = Date(timeIntervalSince1970: 1000)
+        var now = start
+        manager.nativeNow = { now }
+        settings.nativeChargeLimitEnabled = true
+        let state = makeBatteryState(percentage: 78, isCharging: true, temperature: 45)
+        for seconds: TimeInterval in [0, 60, 120, 179] {
+            now = start.addingTimeInterval(seconds)
+            manager.evaluateState(state)
+            for _ in 0..<10 { await Task.yield() }
+        }
+        XCTAssertEqual(helper.calls, [.nativeLimit(78)])
+        now = start.addingTimeInterval(180)
+        manager.evaluateState(state)
+        XCTAssertEqual(helper.calls, [.nativeLimit(78), .nativeLimit(78)])
+    }
+
     func testNativeFailureIsVisibleWithoutCallingLegacyChargingControls() async {
         settings.nativeChargeLimitEnabled = true
         helper.shouldFail = true

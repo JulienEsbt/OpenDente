@@ -22,6 +22,7 @@ final class NativeChargeLimit {
         typealias Supported = @convention(c) (AnyObject, Selector) -> Bool
         return unsafeBitCast(symbol, to: Supported.self)(client, NSSelectorFromString("isMCLSupported"))
     }
+    private let application = NativeLimitApplication()
     private let path = HelperConstants.stateDirectory + "/native-limit-originals.json"
     var needsRecovery: Bool { FileManager.default.fileExists(atPath: path) }
     var restorationPending: Bool { session.restorationPending }
@@ -31,6 +32,7 @@ final class NativeChargeLimit {
         restore: { snapshot in
             try Self.setLimitViaAgent(100)
             try self.restorePreferences(snapshot)
+            self.application.reset()
         }, clear: { try FileManager.default.removeItem(atPath: self.path) })
 
     func setLimit(_ percent: Int) throws {
@@ -142,16 +144,10 @@ final class NativeChargeLimit {
     }
 
     private func apply(_ percent: Int) throws {
-        // The agent owns its feature-state enumeration (disabled is 1 on the
-        // tested macOS 27.2). Never presume that writing 1 enables the feature.
-        // Its setter accepts 80...100; calling it below 80 is unsafe. For a lower
-        // target, first activate 80 (above our freshly checked current level),
-        // then replace only the target preference, retaining the agent's state.
-        try Self.setLimitViaAgent(max(80, percent))
-        if percent < 80 {
-            CFPreferencesSetValue(Self.limitKey, NSNumber(value: percent), Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
-            try reloadPreferences()
-        }
+        try application.apply(percent, setAgentLimit: Self.setLimitViaAgent, setLowerTarget: { target in
+                CFPreferencesSetValue(Self.limitKey, NSNumber(value: target), Self.domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+                try self.reloadPreferences()
+            })
         let observed = try capture()
         guard observed.limit == percent else {
             throw NativeLimitSession.Failure(message: "Native charge target readback mismatch")

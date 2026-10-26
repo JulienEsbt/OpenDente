@@ -37,12 +37,12 @@ enum HelperConstants {
     static let ledStateFilePath = stateDirectory + "/led-state"
 
     /// Helper version (bump when protocol changes)
-    static let helperVersion = "1.7.0"
+    static let helperVersion = "1.7.2"
 
     static let minVersionNativeLimit = "1.5.0"
 
-    /// First helper with certificate-bound XPC and transactional recovery.
-    static let minVersionSafeControl = "1.4.0"
+    /// Certificate-bound XPC, recovery, and corrected native low-target refresh.
+    static let minVersionSafeControl = "1.7.2"
 
     /// Minimum helper version that supports MagSafe LED control (ACLC)
     static let minVersionMagSafeLED = "1.1.0"

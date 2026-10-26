@@ -69,12 +69,12 @@ Captures are unmodified app-window screenshots. [Capture notes](docs/images/READ
 | Hardware validation | MacBook Air M3, 16 GB, macOS 27.2; MagSafe charging. |
 | Original SMC backend | Preserved for machines exposing compatible keys; this fork does not claim fresh validation across those models. |
 | Native backend | Private PowerUI interfaces, detected at runtime. Unavailable controls remain unavailable. |
-| USB-C Power Delivery | Designed to regulate the internal battery independently of the charging port; no physical USB-C test is claimed. |
+| USB-C Power Delivery | Designed to regulate the internal battery independently of the charging port; USB-C charging and pauses have been observed with a 20 W adapter. |
 | Distribution | Source build and local signing; no notarized public installer is supplied here. |
 
-The local 0.7.0 retest acknowledged a 66% target but did not confirm a physical pause within 90 seconds. Limits below 80% and thermal holds at those levels remain unverified hardware behavior, even when the request is accepted.
+The earlier 0.7.0 test at 66% remained inconclusive. The local 0.7.2 session confirmed a hold at 78% and a thermal-policy stop at 79% over USB-C, using a temporary low thermal threshold and the real sensor, without heating the Mac. This does not establish exact regulation at every target below 80% or an immediate thermal cutoff. See VALIDATION.md for timing, setup and remaining checks.
 
-**The requested state and the measured state are different.** A native command can take about a minute to take effect. macOS may occasionally charge to 100% to maintain its state-of-charge estimate. A requested pause or a green LED does not prove that battery current has stopped.
+**The requested state and the measured state are different.** A native command can take several minutes to take effect. macOS may occasionally charge to 100% to maintain its state-of-charge estimate. A requested pause or a green LED does not prove that battery current has stopped.
 
 While the Mac is asleep, macOS retains the last native charge target; the app does not continuously sample temperature or animate the LED. Controls resume after wake. Idle-sleep prevention is optional and does not block manual sleep or lid-close sleep.
 
@@ -109,9 +109,9 @@ For a Release build, open the generated project in Xcode, select your signing te
 
 ## Validation you can inspect
 
-**Version 0.7.1: 384 native XCTest cases passed on arm64.** The unchanged helper has 36 complementary recovery, lifecycle and watchdog scenarios recorded in the validation report. Universal Release compilation covers arm64 and x86_64; only arm64 execution is claimed.
+**Version 0.7.2: 389 native XCTest cases passed on arm64.** The updated 1.7.2 helper has 36 complementary recovery, lifecycle and watchdog scenarios recorded in the validation report. Universal Release compilation covers arm64 and x86_64; only arm64 execution is claimed.
 
-Physical checks include stopping and resuming charging in a small test band, discharge toward a lower native target on MagSafe, restoration on quit, relaunch, sleep/wake and owner-confirmed MagSafe colors and patterns. Complete 80→75→80 cycles, deliberate overheating, physical USB-C charging and a full shutdown are not claimed as completed tests.
+Physical checks include stopping and resuming charging in a small test band, discharge toward a lower native target on MagSafe, restoration on quit, relaunch, sleep/wake and owner-confirmed MagSafe colors and patterns. USB-C charging, a hold below 80%, and a cold-threshold thermal pause/resume were measured in 0.7.2. A physical 80/75 cycle was completed: resume at 74% over USB-C 20 W, continued charge over the lower threshold after switching to the reported MagSafe/30 W supply, and stop at 80%. Physical sleep/wake evidence comes from earlier releases; no new 0.7.2 sleep test is claimed. Startup after reboot can be confirmed at the owner’s next normal restart. No deliberate overheating was performed.
 
 ```sh
 # Native tests: inert hardware boundaries, no helper registration

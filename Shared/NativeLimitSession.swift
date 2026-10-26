@@ -101,3 +101,25 @@ enum NativeLimitPreferences {
         return values
     }
 }
+
+/// Keep a low-target activation alive across periodic refreshes. The helper
+/// owns this session; its restore path resets it before accepting a new one.
+final class NativeLimitApplication {
+    private var activated = false
+
+    func reset() { activated = false }
+
+    func apply(_ percent: Int, setAgentLimit: (Int) throws -> Void,
+               setLowerTarget: (Int) throws -> Void) throws {
+        if percent >= 80 {
+            try setAgentLimit(percent)
+            activated = percent < 100
+        } else {
+            if !activated {
+                try setAgentLimit(80)
+                activated = true
+            }
+            try setLowerTarget(percent)
+        }
+    }
+}

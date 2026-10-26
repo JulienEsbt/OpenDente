@@ -1,8 +1,8 @@
 # OpenDente — édition personnelle
 
-Version de développement **0.7.1 expérimentale**, mise à jour le 25 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
+Version de développement **0.7.2 expérimentale**, mise à jour le 26 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
 
-Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 384 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
+Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 389 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
 
 ## Installation quotidienne et lancement discret
 
@@ -12,13 +12,13 @@ Chaque lancement commence discrètement dans la barre des menus, y compris aprè
 
 ## macOS 27 : mode natif expérimental
 
-Sur le Mac cible, les clés SMC CHTE/CH0B/CH0C sont absentes, même depuis le service root. Le moteur SMC d’origine ne peut donc pas suspendre la charge. Le service 1.7.0 propose un autre moteur, activé explicitement dans **Réglages > Charge > Activer le contrôle de charge**. Sans cette activation, l’app reste un outil de suivi.
+Sur le Mac cible, les clés SMC CHTE/CH0B/CH0C sont absentes, même depuis le service root. Le moteur SMC d’origine ne peut donc pas suspendre la charge. Le service 1.7.2 propose un autre moteur, activé explicitement dans **Réglages > Charge > Activer le contrôle de charge**. Sans cette activation, l’app reste un outil de suivi.
 
 Ce moteur transmet un plafond au service PowerUI de macOS. Il utilise des interfaces et préférences Apple privées, susceptibles de changer ; sa disponibilité est contrôlée à l’exécution. Il ne modifie pas les autorisations Apple, les archives de politiques powerd ou les règles sudoers. Les mécanismes adaptés d’Ampere et leur licence MIT figurent dans `THIRD-PARTY-NOTICES.md`, également embarqué dans l’app avec la licence GPL.
 
 Différences avec le moteur SMC décrit plus bas :
 
-- La consigne est appliquée par macOS, avec un délai pouvant atteindre environ une minute. La confirmation des préférences ne prouve pas l’arrêt du courant ; le panneau continue d’afficher l’état réel de la batterie.
+- La consigne est appliquée par macOS, avec un délai pouvant atteindre plusieurs minutes. La confirmation des préférences ne prouve pas l’arrêt du courant ; le panneau continue d’afficher l’état réel de la batterie.
 - Le seuil de reprise personnalisé est réglable, y compris à 20 % pour une limite de 80 %. Pendant l’attente, OpenDente ajuste le plafond au niveau courant ; une fois sous le seuil bas, il demande le plafond habituel jusqu’à la fin du cycle. Cette régulation dépend de macOS et reste approximative, notamment pendant la veille ou une calibration. Elle ne coupe pas le chargeur et ne force pas une décharge.
 - La pause thermique supplémentaire est réglable de 30 à 45 °C. Le défaut de 40 °C est un choix de précaution de l’app, pas une recommandation Apple pour ce capteur interne. La pause reste demandée jusqu’à au moins 5 minutes sans dépassement et 2 °C de refroidissement. Une mesure perdue ne lève pas une pause. Les protections Apple restent actives ; aucun arrêt immédiat ou surveillance pendant le sommeil du Mac n’est garanti. Le maintien natif ne descend pas sous 20 %.
 - macOS peut temporairement dépasser le plafond pour calibrer sa mesure de batterie, jusqu’à 100 %. OpenDente ne supprime pas cette politique système.
@@ -86,7 +86,7 @@ Les [travaux de Keil et al. sur le vieillissement calendaire](https://portal.fis
 - **Veille :** la politique de veille est effacée au reset et à la déconnexion ; elle ne s’applique plus sans client actif. Une simple demande de veille annulable ne suspend plus le watchdog.
 - **Température :** la vérification de l’arrêt réel de charge s’exécute aussi pendant les branches de chaleur et de refroidissement. Un échec de commande conserve la pause thermique.
 - **Seuil bas :** il reste au minimum à 10 %, y compris avec un plafond de 20 % et une plage de 25 points.
-- **Compatibilité du service :** les commandes de politique de charge attendent un handshake avec le service 1.7.0 ou ultérieur. Une ancienne version affiche une erreur explicite. Les commandes de restauration restent disponibles pour revenir aux réglages macOS.
+- **Compatibilité du service :** les commandes de politique de charge attendent un handshake avec le service 1.7.2 ou ultérieur. Une ancienne version affiche une erreur explicite. Les commandes de restauration restent disponibles pour revenir aux réglages macOS.
 
 Ces changements corrigent des chemins précis du code. Ils ne garantissent pas l’absence d’autres défauts ni la compatibilité avec un matériel non testé.
 

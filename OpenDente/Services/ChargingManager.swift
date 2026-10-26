@@ -832,8 +832,11 @@ final class ChargingManager: ObservableObject {
             nativePauseWarning = "Sous 20 %, ce moteur ne peut pas demander une pause au niveau courant. Les protections de macOS restent actives."
         }
         let target = decision.target
+        // Preference reloads can restart the agent's deferred application window.
+        // Leave unchanged successful targets alone for at least three minutes;
+        // new targets and failed commands still use the five-second retry gate.
         guard !nativeCommandPending,
-              nativeLimitTarget != target || nativeLastWasStorageDrain != decision.allowsStorageDrain || nativeLastWasLimitDrain != decision.allowsLimitDrain || now.timeIntervalSince(nativeLastAttempt) >= 60,
+              nativeLimitTarget != target || nativeLastWasStorageDrain != decision.allowsStorageDrain || nativeLastWasLimitDrain != decision.allowsLimitDrain || now.timeIntervalSince(nativeLastAttempt) >= 180,
               now.timeIntervalSince(nativeLastAttempt) >= 5 else { return }
         nativeLastAttempt = now
         nativeCommandPending = true

@@ -66,15 +66,15 @@ Les captures des fenêtres de l’app ne sont pas retouchées. Leur version et l
 | Sujet | Périmètre actuel |
 |---|---|
 | Cible de compilation | macOS 14 ou ultérieur ; le projet vise les Mac Apple Silicon. L’exécution sur Intel n’est pas testée. |
-| Validation matérielle | MacBook Air M3, 16 Go, macOS 27.2 ; alimentation MagSafe. |
+| Validation matérielle | MacBook Air M3, 16 Go, macOS 27.2 ; alimentations MagSafe et USB-C. |
 | Moteur SMC d’origine | Conservé pour les machines qui exposent les clés compatibles ; aucune nouvelle validation générale de ces modèles n’est revendiquée. |
 | Moteur natif | Interfaces PowerUI privées, détectées à l’exécution. Un réglage ne peut pas rendre disponible une commande absente. |
-| USB-C Power Delivery | La régulation vise la batterie interne indépendamment du port ; aucun essai USB-C physique n’est revendiqué. |
+| USB-C Power Delivery | La régulation vise la batterie interne indépendamment du port ; recharge et pauses observées avec un adaptateur USB-C de 20 W. |
 | Distribution | Compilation depuis les sources et signature locale ; aucun installateur public notarifié n’est fourni ici. |
 
-Lors du nouvel essai local 0.7.0, une cible à 66 % a été acquittée sans arrêt physique confirmé dans les 90 secondes observées. Les plafonds sous 80 % et les pauses thermiques à ces niveaux restent non validés matériellement, même si la demande est acceptée.
+L’essai 0.7.0 à 66 % reste non concluant. La séance locale 0.7.2 confirme un maintien à 78 % et un arrêt demandé par la politique thermique à 79 % en USB-C, avec un seuil temporaire bas et le vrai capteur, sans chauffer le Mac. Cela ne valide ni chaque plafond sous 80 % ni une coupure thermique immédiate. Le délai, le montage et les contrôles restants sont détaillés dans VALIDATION.md.
 
-**Une demande et son effet mesuré sont distincts.** Une commande native peut prendre environ une minute. macOS peut ponctuellement monter à 100 % pour maintenir son estimation de charge. Une pause demandée ou un voyant vert ne prouvent pas à eux seuls l’arrêt du courant de batterie.
+**Une demande et son effet mesuré sont distincts.** Les commandes natives sont différées ; plusieurs minutes ont été observées. macOS peut ponctuellement monter à 100 % pour maintenir son estimation de charge. Une pause demandée ou un voyant vert ne prouvent pas à eux seuls l’arrêt du courant de batterie.
 
 Pendant la veille, macOS conserve la dernière cible native ; l’app ne mesure pas la température en continu et n’anime pas le voyant. Les contrôles reprennent au réveil. La prévention de veille automatique est facultative et ne bloque ni la veille manuelle ni celle du capot.
 
@@ -109,9 +109,9 @@ Pour une Release, ouvrir le projet généré dans Xcode, sélectionner son équi
 
 ## Une validation vérifiable
 
-**Version 0.7.1 : 384 tests XCTest natifs réussis sur arm64.** Le service inchangé dispose de 36 scénarios complémentaires de récupération, cycle de vie et watchdog consignés dans le bilan. La Release universelle compile pour arm64 et x86_64 ; seule l’exécution arm64 est revendiquée.
+**Version 0.7.2 : 389 tests XCTest natifs réussis sur arm64.** Le service 1.7.2 mis à jour dispose de 36 scénarios complémentaires de récupération, cycle de vie et watchdog consignés dans le bilan. La Release universelle compile pour arm64 et x86_64 ; seule l’exécution arm64 est revendiquée.
 
-Les essais physiques comprennent l’arrêt et la reprise de charge sur une petite plage, la descente vers une cible native inférieure sur MagSafe, la restauration à la fermeture, la relance, la veille/réveil et la confirmation visuelle des couleurs et motifs MagSafe par le propriétaire. Un cycle complet 80→75→80, la chauffe volontaire, l’USB-C physique et une extinction complète ne sont pas présentés comme réalisés.
+Les essais physiques comprennent l’arrêt et la reprise de charge sur une petite plage, la descente vers une cible native inférieure sur MagSafe, la restauration à la fermeture, la relance, la veille/réveil et la confirmation visuelle des couleurs et motifs MagSafe par le propriétaire. La charge USB-C, le maintien sous 80 % et la pause/reprise thermique avec seuil temporaire bas ont été mesurés en 0.7.2. Un cycle physique 80/75 est confirmé : reprise à 74 % en USB-C 20 W, poursuite au-delà du seuil bas après passage au MagSafe signalé/alimentation 30 W, arrêt à 80 %. Les preuves physiques de veille/réveil proviennent des versions précédentes ; aucune nouvelle veille 0.7.2 n’est revendiquée. Le lancement après redémarrage pourra être confirmé lors du prochain redémarrage habituel du propriétaire. Aucune chauffe volontaire n’a été effectuée.
 
 ```sh
 # Tests natifs : frontières matérielles inertes, aucun enregistrement du service

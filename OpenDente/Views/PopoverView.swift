@@ -65,7 +65,7 @@ struct PopoverView: View {
                     .popover(isPresented: $showsNativeInfo) {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Contrôle natif expérimental").font(.headline)
-                            Text("OpenDente confie ses consignes à macOS via une interface Apple privée, susceptible de changer. Une demande peut prendre environ une minute ; macOS peut dépasser le plafond pour sa jauge.")
+                            Text("OpenDente confie ses consignes à macOS via une interface Apple privée, susceptible de changer. Une demande peut prendre plusieurs minutes ; macOS peut dépasser le plafond pour sa jauge.")
                             Text("En veille, macOS garde la dernière consigne. Les mesures et la pause thermique de l’app reprennent au réveil. À l’arrêt, OpenDente restitue le réglage Apple sauvegardé.")
                             Button("Réglages…") { showsNativeInfo = false; openSettings() }
                         }

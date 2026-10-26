@@ -225,7 +225,7 @@ struct ChargingTab: View {
                 Section("Contrôle expérimental — macOS 27") {
                     Toggle("Activer le contrôle de charge", isOn: $settings.nativeChargeLimitEnabled)
                     Text(settings.nativeChargeLimitEnabled
-                         ? "Limite, seuil de reprise et pause thermique actifs. Les demandes passent par le service de charge de macOS, avec un délai pouvant approcher une minute."
+                         ? "Limite, seuil de reprise et pause thermique actifs. Les demandes passent par le service de charge de macOS, avec un délai pouvant atteindre plusieurs minutes."
                          : "Configure les seuils ci-dessous, puis active le contrôle pour les appliquer. Le suivi de batterie fonctionne aussi sans contrôle.")
                         .font(.caption).foregroundStyle(.secondary)
                     Text("macOS peut dépasser une consigne pour sa calibration. Une demande de pause n’est pas une coupure de sécurité immédiate : vérifie l’état réel dans le panneau.")
