@@ -69,6 +69,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] _ in self?.updateStatusBarText() }
             .store(in: &cancellables)
 
+        LanguageSettings.shared.$selection
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.updateStatusBarText() }
+            .store(in: &cancellables)
+
         // Notifications
         NotificationService.shared.requestPermission()
         setupNotifications()
@@ -196,7 +201,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentSize = NSSize(width: 360, height: 640)
         popover.behavior = .transient
         popover.animates = false
-        popover.contentViewController = NSHostingController(rootView: PopoverView())
+        popover.contentViewController = NSHostingController(rootView: LocalizedRoot { PopoverView() })
     }
 
     @objc private func togglePopover() {

@@ -101,16 +101,16 @@ struct PowerFlowView: View {
                     flowBar(
                         label: String(format: "%.1f W", battery.batteryPower ?? 0),
                         icon: "battery.100percent.bolt",
-                        color: .green,
+                        color: AppPalette.positive,
                         proportion: batteryProportion(battery.batteryPower ?? 0)
                     )
                 }
             case .pluggedInTrickleCharging:
                 pluggedInAdapterView {
                     flowBar(
-                        label: "En charge",
+                        label: String(localized: "En charge", bundle: L10n.bundle),
                         icon: "battery.100percent.bolt",
-                        color: .green,
+                        color: AppPalette.positive,
                         proportion: 0.1
                     )
                 }
@@ -121,20 +121,20 @@ struct PowerFlowView: View {
                     let bp = battery.batteryPower ?? 0
                     let label = bp > 0.1
                         ? String(format: "Arrêt demandé\u{2026} %.1f W", bp)
-                        : "Arrêt demandé\u{2026}"
+                        : String(localized: "Arrêt demandé\u{2026}", bundle: L10n.bundle)
                     flowBar(
                         label: label,
                         icon: "stop.circle",
-                        color: .orange,
+                        color: AppPalette.warning,
                         proportion: bp > 0.1 ? batteryProportion(bp) : 0.3
                     )
                 }
             case .pluggedInStarting:
                 pluggedInAdapterView {
                     flowBar(
-                        label: "Démarrage\u{2026}",
+                        label: String(localized: "Démarrage\u{2026}", bundle: L10n.bundle),
                         icon: "battery.100percent.bolt",
-                        color: .green,
+                        color: AppPalette.positive,
                         proportion: 0.1
                     )
                 }
@@ -154,9 +154,9 @@ struct PowerFlowView: View {
             Image(systemName: battery.isPluggedIn ? "bolt.fill" : "battery.75percent")
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 2) {
-                Text(battery.isPluggedIn ? "Sur secteur" : "Sur batterie")
+                Text(battery.isPluggedIn ? String(localized: "Sur secteur", bundle: L10n.bundle) : String(localized: "Sur batterie", bundle: L10n.bundle))
                     .font(.system(size: 11, weight: .medium))
-                Text("Mesures de puissance indisponibles")
+                Text(String(localized: "Mesures de puissance indisponibles", bundle: L10n.bundle))
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }
@@ -178,7 +178,7 @@ struct PowerFlowView: View {
                     flowBar(
                         label: String(format: "%.1f W", systemPower),
                         icon: "laptopcomputer",
-                        color: .blue,
+                        color: AppPalette.power,
                         proportion: systemProportion
                     )
                 }
@@ -206,7 +206,7 @@ struct PowerFlowView: View {
                     flowBar(
                         label: String(format: "%.1f W", adapterPower),
                         icon: "laptopcomputer",
-                        color: .blue,
+                        color: AppPalette.power,
                         proportion: adapterShare.clamped(to: 0.1...1.0)
                     )
                 }
@@ -218,7 +218,7 @@ struct PowerFlowView: View {
                 flowBar(
                     label: String(format: "%.1f W", batteryDrain),
                     icon: "laptopcomputer",
-                    color: .orange,
+                    color: AppPalette.warning,
                     proportion: batteryShare.clamped(to: 0.1...1.0)
                 )
             }
@@ -236,7 +236,7 @@ struct PowerFlowView: View {
                     flowBar(
                         label: String(format: "%.1f W", systemPower),
                         icon: "laptopcomputer",
-                        color: .orange,
+                        color: AppPalette.warning,
                         proportion: 1.0
                     )
                 } else if let bp = battery.batteryPower, abs(bp) > 0.1 {
@@ -244,14 +244,14 @@ struct PowerFlowView: View {
                     flowBar(
                         label: String(format: "%.1f W", abs(bp)),
                         icon: "laptopcomputer",
-                        color: .orange,
+                        color: AppPalette.warning,
                         proportion: 1.0
                     )
                 } else {
                     flowBar(
-                        label: "Sur batterie",
+                        label: String(localized: "Sur batterie", bundle: L10n.bundle),
                         icon: "laptopcomputer",
-                        color: .orange,
+                        color: AppPalette.warning,
                         proportion: 1.0
                     )
                 }
@@ -279,7 +279,7 @@ struct PowerFlowView: View {
         HStack(spacing: 6) {
             Image(systemName: "arrow.right")
                 .font(.system(size: 8))
-                .foregroundStyle(color.opacity(0.6))
+                .foregroundStyle(color)
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -287,7 +287,7 @@ struct PowerFlowView: View {
                         .fill(color.opacity(0.15))
 
                     RoundedRectangle(cornerRadius: 3)
-                        .fill(color.opacity(0.4))
+                        .fill(color.opacity(0.24))
                         .frame(width: max(geo.size.width * proportion, 20))
                 }
                 .overlay(
@@ -311,7 +311,7 @@ struct PowerFlowView: View {
         if let adapter = battery.adapterPower, adapter > 0.1 {
             return String(format: "%.0fW", adapter)
         }
-        return "Secteur"
+        return String(localized: "Secteur", bundle: L10n.bundle)
     }
 
     private var batterySourceIcon: String {

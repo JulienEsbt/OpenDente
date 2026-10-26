@@ -23,13 +23,13 @@ enum MagSafeLEDChoice: Int, CaseIterable, Identifiable {
     }
     var title: String {
         switch self {
-        case .system: "Automatique macOS"
-        case .off: "Éteint"
-        case .green: "Vert fixe"
-        case .orange: "Orange fixe"
-        case .pulsingGreen: "Vert clignotant lent"
-        case .pulsingOrange: "Orange clignotant lent"
-        case .alternating: "Alternance vert / orange"
+        case .system: String(localized: "Automatique macOS", bundle: L10n.bundle)
+        case .off: String(localized: "Éteint", bundle: L10n.bundle)
+        case .green: String(localized: "Vert fixe", bundle: L10n.bundle)
+        case .orange: String(localized: "Orange fixe", bundle: L10n.bundle)
+        case .pulsingGreen: String(localized: "Vert clignotant lent", bundle: L10n.bundle)
+        case .pulsingOrange: String(localized: "Orange clignotant lent", bundle: L10n.bundle)
+        case .alternating: String(localized: "Alternance vert / orange", bundle: L10n.bundle)
         }
     }
 }

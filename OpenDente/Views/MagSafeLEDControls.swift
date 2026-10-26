@@ -11,48 +11,48 @@ struct MagSafeLEDControls: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Toggle("Adapter le voyant aux modes", isOn: $settings.nativeMagSafeLEDEnabled)
+            Toggle(String(localized: "Adapter le voyant aux modes", bundle: L10n.bundle), isOn: $settings.nativeMagSafeLEDEnabled)
                 .disabled(!charging.isHelperInstalled || !charging.nativeLEDHardwareAvailable)
             if !charging.nativeLEDHardwareAvailable {
-                Text("Ce Mac n’expose pas de commande MagSafe compatible, ou le service n’est pas encore connecté.")
+                Text(String(localized: "Ce Mac n’expose pas de commande MagSafe compatible, ou le service n’est pas encore connecté.", bundle: L10n.bundle))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Button("Appliquer les signaux distincts") { settings.applyDistinctLEDSignals() }
+            Button(String(localized: "Appliquer les signaux distincts", bundle: L10n.bundle)) { settings.applyDistinctLEDSignals() }
                 .disabled(!charging.isHelperInstalled || !charging.nativeLEDHardwareAvailable)
             if settings.nativeMagSafeLEDEnabled {
-                choice("Charge confirmée", value: $settings.nativeLEDChargingColor)
-                choice("Pause confirmée", value: $settings.nativeLEDPausedColor)
-                choice("Décharge sur secteur", value: $settings.nativeLEDStorageColor)
-                choice("Pause thermique", value: $settings.nativeLEDThermalColor)
-                choice("Charge ponctuelle vers 100 %", value: $settings.nativeLEDTopUpColor)
-                choice("100 % ponctuel atteint", value: $settings.nativeLEDCompleteColor)
+                choice(String(localized: "Charge confirmée", bundle: L10n.bundle), value: $settings.nativeLEDChargingColor)
+                choice(String(localized: "Pause confirmée", bundle: L10n.bundle), value: $settings.nativeLEDPausedColor)
+                choice(String(localized: "Décharge sur secteur", bundle: L10n.bundle), value: $settings.nativeLEDStorageColor)
+                choice(String(localized: "Pause thermique", bundle: L10n.bundle), value: $settings.nativeLEDThermalColor)
+                choice(String(localized: "Charge ponctuelle vers 100 %", bundle: L10n.bundle), value: $settings.nativeLEDTopUpColor)
+                choice(String(localized: "100 % ponctuel atteint", bundle: L10n.bundle), value: $settings.nativeLEDCompleteColor)
             }
             HStack {
-                Button("Vert (10 s)") { charging.previewMagSafeLED(.green) }
-                Button("Orange (10 s)") { charging.previewMagSafeLED(.orange) }
-                Button("Éteint (10 s)") { charging.previewMagSafeLED(.off) }
+                Button(String(localized: "Vert (10 s)", bundle: L10n.bundle)) { charging.previewMagSafeLED(.green) }
+                Button(String(localized: "Orange (10 s)", bundle: L10n.bundle)) { charging.previewMagSafeLED(.orange) }
+                Button(String(localized: "Éteint (10 s)", bundle: L10n.bundle)) { charging.previewMagSafeLED(.off) }
             }
             .disabled(!charging.isHelperInstalled || !charging.nativeLEDHardwareAvailable)
             HStack {
-                Button("Vert clignotant (10 s)") { charging.previewMagSafeLED(.pulsingGreen) }
-                Button("Orange clignotant (10 s)") { charging.previewMagSafeLED(.pulsingOrange) }
-                Button("Alternance (10 s)") { charging.previewMagSafeLED(.alternating) }
+                Button(String(localized: "Vert clignotant (10 s)", bundle: L10n.bundle)) { charging.previewMagSafeLED(.pulsingGreen) }
+                Button(String(localized: "Orange clignotant (10 s)", bundle: L10n.bundle)) { charging.previewMagSafeLED(.pulsingOrange) }
+                Button(String(localized: "Alternance (10 s)", bundle: L10n.bundle)) { charging.previewMagSafeLED(.alternating) }
             }
             .disabled(!charging.isHelperInstalled || !charging.nativeLEDHardwareAvailable)
-            Button("Rendre le voyant à macOS") { charging.useSystemMagSafeLED() }
+            Button(String(localized: "Rendre le voyant à macOS", bundle: L10n.bundle)) { charging.useSystemMagSafeLED() }
                 .disabled(!charging.isHelperInstalled || !charging.nativeLEDHardwareAvailable)
             if charging.magSafeLEDPreviewActive {
-                Text("Test temporaire : retour au réglage choisi après environ 10 secondes.")
-                    .font(.caption).foregroundStyle(.teal)
+                Text(String(localized: "Test temporaire : retour au réglage choisi après environ 10 secondes.", bundle: L10n.bundle))
+                    .font(.caption).foregroundStyle(AppPalette.accent)
             }
             if let issue = charging.nativeLEDIssue {
-                Text(issue).font(.caption).foregroundStyle(.orange)
+                Text(issue).font(.caption).foregroundStyle(AppPalette.warning)
             }
-            Text("Signaux distincts : charge normale orange clignotant ; maintien vert clignotant ; décharge alternée ; charge ponctuelle orange fixe puis vert fixe à 100 % ; pause thermique éteinte.")
+            Text(String(localized: "Signaux distincts : charge normale orange clignotant ; maintien vert clignotant ; décharge alternée ; charge ponctuelle orange fixe puis vert fixe à 100 % ; pause thermique éteinte.", bundle: L10n.bundle))
                 .font(.caption).foregroundStyle(.secondary)
-            Text("Vert, orange ou éteint ; ce voyant n’est pas RGB. Une charge encore mesurée garde la couleur « Charge confirmée », même si une pause a été demandée. Le voyant ne prouve pas à lui seul l’arrêt de charge.")
+            Text(String(localized: "Vert, orange ou éteint ; ce voyant n’est pas RGB. Une charge encore mesurée garde la couleur « Charge confirmée », même si une pause a été demandée. Le voyant ne prouve pas à lui seul l’arrêt de charge.", bundle: L10n.bundle))
                 .font(.caption).foregroundStyle(.secondary)
-            Text("Retour au contrôle de macOS au débranchement, pendant la veille, à l’arrêt de l’app ou en cas de perte du client. Les clignotements sont animés par l’app éveillée, environ 2 s par phase, avec les commandes de couleur déjà vérifiées. Aucun code de défaut du chargeur n’est utilisé.")
+            Text(String(localized: "Retour au contrôle de macOS au débranchement, pendant la veille, à l’arrêt de l’app ou en cas de perte du client. Les clignotements sont animés par l’app éveillée, environ 2 s par phase, avec les commandes de couleur déjà vérifiées. Aucun code de défaut du chargeur n’est utilisé.", bundle: L10n.bundle))
                 .font(.caption).foregroundStyle(.secondary)
         }
     }

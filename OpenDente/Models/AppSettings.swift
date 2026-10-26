@@ -286,9 +286,9 @@ enum ChargeProfile: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .desk: "Bureau"
-        case .everyday: "Quotidien"
-        case .travel: "Mobilité"
+        case .desk: String(localized: "Bureau", bundle: L10n.bundle)
+        case .everyday: String(localized: "Quotidien", bundle: L10n.bundle)
+        case .travel: String(localized: "Mobilité", bundle: L10n.bundle)
         }
     }
 

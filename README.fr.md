@@ -8,19 +8,19 @@ Choisir un plafond. Comprendre l’état de la batterie. Retrouver ses réglages
 
 [English](README.md) · **Français**
 
-[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibilité) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.7.2](https://img.shields.io/badge/version-0.7.2-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/licence-GPL--3.0-24292f)](LICENSE)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibilité) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.7.2](https://img.shields.io/badge/version-0.8.0-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/licence-GPL--3.0-24292f)](LICENSE)
 
 [Fonctionnalités](#fonctionnalités) · [Captures](#captures-décran) · [Installation](#compiler-et-lancer) · [Documentation](#documentation)
 
 </div>
 
-Une application native SwiftUI pour la batterie du Mac, maintenue par [JulienEsbt](https://github.com/JulienEsbt) à partir de [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). Cette édition ajoute une interface française, des profils quotidiens, la préparation au stockage, un affichage compact et un moteur natif de charge expérimental, tout en conservant l’historique et les crédits du projet d’origine.
+Une application native SwiftUI pour la batterie du Mac, maintenue par [JulienEsbt](https://github.com/JulienEsbt) à partir de [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). Cette édition ajoute une interface en français et en anglais, des profils quotidiens, la préparation au stockage, un affichage compact et un moteur natif de charge expérimental, tout en conservant l’historique et les crédits du projet d’origine.
 
 <p align="center">
   <a href="docs/images/panel.png"><img src="docs/images/panel.png" width="330" alt="Panneau principal OpenDente à 80 %, avec profils quotidiens, préparation au stockage et charge ponctuelle complète"></a>
   <a href="docs/images/measurements.png"><img src="docs/images/measurements.png" width="330" alt="Mesures de la batterie et flux d’énergie dans le panneau OpenDente"></a>
 </p>
-<p align="center"><sub>Captures réelles d’OpenDente 0.7.2. L’interface de l’app est actuellement en français. Cliquer sur une image pour l’ouvrir en pleine résolution.</sub></p>
+<p align="center"><sub>Captures réelles d’OpenDente 0.7.2. Interface française illustrée ; la 0.8.0 propose aussi l’anglais et des couleurs adaptées au mode clair. Cliquer sur une image pour l’ouvrir en pleine résolution.</sub></p>
 
 > [!IMPORTANT]
 > **Le moteur natif de charge est expérimental.** Il utilise des interfaces privées Apple et a été testé sur un MacBook Air M3 sous macOS 27.2. La compatibilité et les délais varient. Le dépôt fournit les sources pour une signature locale, sans installateur public notarifié. Lire les [limites](#compatibilité) avant d’activer le contrôle de charge.
@@ -36,6 +36,7 @@ Une application native SwiftUI pour la batterie du Mac, maintenue par [JulienEsb
 | **Préparation au stockage** | Utiliser une cible séparée de 50 %, en recharge ou en décharge selon le niveau. Les seuils quotidiens sont conservés ; débrancher et éteindre manuellement une fois le Mac prêt. |
 | **Pause thermique supplémentaire** | Demander une pause à la température interne de batterie choisie. Reprendre après une baisse de 2 °C et au moins cinq minutes sans dépasser le seuil. |
 | **Signaux MagSafe** | Associer vert, orange ou éteint, clignotements lents et alternance aux états de charge. Des aperçus de dix secondes permettent de vérifier chaque signal. |
+| **Langue et apparence** | Suivre la langue du Mac ou choisir Français/English dans Général. Commandes, guide et notifications sont traduits ; les couleurs suivent les modes clair et sombre. |
 | **Arrière-plan discret** | Démarrer à la connexion directement dans la barre des menus. Fermer une fenêtre laisse l’app active ; ouvrir le panneau seulement au besoin. |
 
 L’affichage compact place le pourcentage **dans la batterie**, avec une jauge séparée et des indicateurs facultatifs de température, puissance et mode. La présentation classique reste disponible. Le panneau permet de choisir ses mesures, de consulter les flux d’énergie, de configurer les notifications, de rechercher dans le guide hors ligne et d’exporter un diagnostic local.
@@ -98,14 +99,14 @@ Cette édition se trouve actuellement sur `feature/personal-battery-care` ; util
 
 1. Copier `build/DerivedData/Build/Products/Debug/OpenDente.app` dans **Applications** et conserver une seule copie installée.
 2. Lancer l’app, puis cliquer sur sa batterie dans la barre des menus.
-3. Dans **Général**, activer le service signé si nécessaire et **Ouvrir à la connexion** pour le démarrage discret. Valider les autorisations macOS directement sur le Mac.
+3. Dans **Général**, choisir la langue, activer le service signé si nécessaire et **Ouvrir à la connexion** pour le démarrage discret. Valider les autorisations macOS directement sur le Mac.
 4. Dans **Charge**, vérifier les seuils et activer explicitement le moteur natif s’il est proposé. Garder une seule app de contrôle de batterie active.
 
 Pour une Release, les détails de signature et le dépannage, consulter le [guide de développement local](README-PERSONAL.md).
 
 ## Validation
 
-Dernier bilan consigné : **0.7.2 (15), 26 octobre 2026**.
+La version **0.8.0 (16)** ajoute l’interface bilingue et les couleurs adaptatives ; ses contrôles logiciels figurent dans [VALIDATION.md](VALIDATION.md). Le dernier bilan physique de charge reste celui de **0.7.2 (15), 26 octobre 2026**.
 
 | Contrôle | Résultat consigné |
 |---|---|
@@ -126,6 +127,7 @@ Les preuves physiques de veille/réveil, relance, restauration et motifs MagSafe
 | [Développement et signature — Français](README-PERSONAL.md) | Installation Xcode, builds locaux et détails techniques. |
 | [Comparatif — Français](COMPARATIF.md) / [English](docs/FEATURE-COMPARISON.md) | OpenDente d’origine, cette édition, AlDente et suites possibles. |
 | [Spécification — Français](SPEC-PERSONAL.md) | Comportements attendus et contraintes. |
+| [Langue et apparence — English](docs/LOCALIZATION.md) | Choix de langue, ressources de traduction, couleurs et contrôles ciblés. |
 | [Journal des changements — Français](CHANGELOG-PERSONAL.md) | Historique des versions. |
 
 Pour le contexte batterie, voir les [limites de recharge Apple](https://support.apple.com/fr-fr/102338) et les [conseils de stockage prolongé](https://www.apple.com/fr/batteries/maximizing-performance/). Aucun gain chiffré de durée de vie n’est promis. La planification, l’intégration Raccourcis et un parcours multiutilisateur validé ne font pas partie de cette édition.

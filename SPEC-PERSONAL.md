@@ -45,3 +45,12 @@ Des arrêts et reprises physiques ont été observés à 99 % avec le service 1.
 ## Hors périmètre
 
 Programmation horaire, Raccourcis, calibration forcée, télémétrie et mise à jour automatique. Le code macOS de contrôle matériel ne se porte pas directement à l’iPhone ou à l’Apple Watch.
+
+## Interface bilingue et lisibilité — 0.8.0
+
+- Général propose Automatique (langue du Mac), Français et English ; choix persistant et application immédiate. Le français est choisi pour une langue système principale française, l’anglais dans les autres cas.
+- Les commandes, états, notifications, aides d’accessibilité et le guide hors ligne disposent de ressources françaises et anglaises. Les identifiants de diagnostic et les préférences de charge restent stables.
+- Le choix de langue est indépendant du gestionnaire de charge : aucun redémarrage du service ni modification des seuils. Les autorisations macOS restent gérées par le système.
+- Palette sémantique avec variantes claire et sombre : accent turquoise foncé et barres de puissance lisibles en clair, accents lumineux conservés en sombre. Texte blanc sur les actions principales, profils sélectionnés identifiables par leur fond et leur bordure.
+- Vérifications : ressources complètes et arguments de format conservés, persistance de langue sans changement de politique, rendu natif inerte dans les deux apparences et contraste des couleurs de texte au moins 4,5:1 sur leur surface de référence.
+- Une seule app installée dans Applications. Les compilations temporaires et anciennes copies sont déplacées à la Corbeille après livraison ; sources, historique Git et preuves de validation sont conservés.

@@ -1,5 +1,14 @@
 # Changements de l’édition personnelle
 
+## 0.8.0 — interface bilingue et mode clair lisible, 26 octobre 2026
+
+- Choix Automatique / Français / English dans Général, appliqué immédiatement sans redémarrer le service ni changer les seuils de charge. Le suivi automatique utilise le français pour une langue principale française, l’anglais dans les autres cas.
+- Ressources natives françaises et anglaises pour les commandes, états, notifications, aides d’accessibilité et guide hors ligne. Arguments numériques et pourcentages conservés ; identifiants de diagnostic et préférences stables.
+- Palette adaptative : turquoise, vert et bleu plus foncés en clair ; accents lumineux en sombre. Fond distinct pour les actions principales, texte blanc lisible et flux d’énergie aux libellés contrastés.
+- **397 tests XCTest réussis en français et en anglais**, dont langue, catalogues, interpolation, guide, contraste et rendu SwiftUI sans commandes matérielles. Compilation Release universelle signée. Les essais physiques 0.7.2 restent les preuves matérielles ; aucun nouveau cycle de charge ou essai de veille demandé pour ce changement d’interface.
+- App 0.8.0 (16), service 1.7.2 conservé. Mise à jour à l’emplacement unique Applications ; anciens fichiers et compilations temporaires déplacés à la Corbeille. Sources, historique et captures d’origine conservés.
+- README bilingues mis à jour pour les nouvelles langues ; galerie réelle 0.7.2 conservée et explicitement datée, en attendant de nouvelles captures.
+
 ## 0.7.2 — jauge visible et réapplication native corrigée, 26 octobre 2026
 
 - Jauge de niveau séparée de la face des chiffres, portée à 2 points d’épaisseur et à la largeur de la batterie. Partie vide légèrement visible ; chiffres uniformes conservés, sans élargissement de la barre des menus.

@@ -1,6 +1,21 @@
 # Validation de l’édition personnelle
 
-## État actuel — 0.7.2 (15), 26 octobre 2026, livraison locale et validation ciblée terminées
+## État actuel — 0.8.0 (16), 26 octobre 2026, langues et apparence
+
+Périmètre : présentation, ressources localisées et palette. Aucune modification de commande du service ou de politique de batterie ; aucun nouveau cycle de charge, test de chauffe, veille ou redémarrage effectué pour ce lot.
+
+- **397/397 XCTest réussis en français et 397/397 en anglais**, zéro échec : `final-tests-fr.log`, `final-tests-en.log`. Les tests s’exécutent avec services réels désactivés et préférences isolées pour les scénarios modifiants.
+- Tests ajoutés : résolution automatique de langue, persistance indépendante des préférences de charge, ressources anglaises et guide, interpolation mixte, égalité des clés et types de paramètres entre catalogues, contraste des accents et des boutons dans les deux apparences, rendu natif SwiftUI sans appel de charge. Les trois tests initiaux de ressources/contraste échouent avant l’implémentation puis passent.
+- Revue visuelle des composants actifs en clair et sombre avec données inertes : `controls-fr-light.png`, `controls-fr-dark.png` ; contrôle anglais via `-testLanguage en`. Ces rendus ne sont pas des mesures physiques et ne remplacent pas les captures utilisateur dans les README.
+- **Release universelle arm64/x86_64 compilée et signée**. Signature du paquet vérifiée. Service 1.7.2 déjà installé conservé à l’identique ; certificat app/service identique. Aucun nouvel enregistrement privilégié demandé.
+- Vérification de l’app installée : Général affiche **0.8.0 (16)**, service **Connecté — mode natif disponible**, ouverture à la connexion **ON**. Passage immédiat en anglais, recherche `storage` dans le guide anglais et lecture des réglages de charge en anglais ; retour au choix Automatique et au français.
+- Préférences du propriétaire conservées : plafond **80 %**, reprise sous **70 %**, pause **35 °C**, retour au plafond ON, stockage OFF. Ces choix actuels diffèrent du couple 80/75 et 40 °C utilisé pour la validation matérielle précédente ; aucun remplacement automatique n’est effectué.
+- Dernière garde de présentation : ne pas réémettre une préférence de connexion inchangée quand Général réapparaît, notamment lors d’un changement de langue ; compilation Release et tests ciblés langue/cycle de vie après cet ajustement.
+- Installation au chemin unique `/Applications/OpenDente.app`, en conservant le dossier de l’app pour son enregistrement de connexion. Les anciens Contents et compilations temporaires sont déplacés à la Corbeille ; celle-ci n’est pas vidée. Le code, l’historique et les preuves précédentes restent disponibles.
+
+Les résultats physiques de 0.7.2 ci-dessous restent valables dans leur périmètre déclaré ; ils ne sont pas présentés comme de nouveaux essais 0.8.0. Les captures réelles du propriétaire sont toujours la galerie publique ; les contrôles visuels de développement restent locaux.
+
+## Historique — 0.7.2 (15), 26 octobre 2026, livraison locale et validation ciblée terminées
 
 Version normale installée sur place dans `/Applications/OpenDente.app`, révision **`7b24a03+local:ff499dbf688c`**, service **1.7.2**. La jauge sous le pourcentage est séparée des chiffres, plus épaisse et plus contrastée. Le service conserve l’activation des cibles basses entre les rafraîchissements ; les consignes réussies inchangées sont espacées de trois minutes pour laisser au système son délai d’application. Les changements de cible et les erreurs conservent leur voie rapide. Aucun changement d’identité de signature ou de droits XPC.
 

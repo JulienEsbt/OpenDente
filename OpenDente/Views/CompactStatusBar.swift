@@ -70,7 +70,7 @@ enum CompactStatusBar {
             return true
         }
         image.isTemplate = true
-        image.accessibilityDescription = ([known ? "Batterie \(pct) %" : "Lecture en cours", mode.frenchTitle] + metrics).joined(separator: ", ")
+        image.accessibilityDescription = ([known ? String(localized: "Batterie \(pct) %", bundle: L10n.bundle) : String(localized: "Lecture en cours", bundle: L10n.bundle), mode.localizedTitle] + metrics).joined(separator: ", ")
         return image
     }
 }

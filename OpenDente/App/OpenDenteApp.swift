@@ -6,7 +6,7 @@ struct OpenDenteApp: App {
 
     var body: some Scene {
         Settings {
-            SettingsView()
+            LocalizedRoot { SettingsView() }
         }
     }
 }

@@ -8,19 +8,19 @@ Set a charge limit. See what the battery is doing. Keep your everyday settings i
 
 **English** · [Français](README.fr.md)
 
-[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibility) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.7.2](https://img.shields.io/badge/version-0.7.2-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/license-GPL--3.0-24292f)](LICENSE)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibility) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.7.2](https://img.shields.io/badge/version-0.8.0-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/license-GPL--3.0-24292f)](LICENSE)
 
 [Features](#features) · [Screenshots](#screenshots) · [Build & run](#build-and-run) · [Documentation](#documentation)
 
 </div>
 
-A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://github.com/JulienEsbt) as a fork of [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). This edition adds a French interface, everyday profiles, storage preparation, compact status and an experimental native charge backend, while preserving the original project’s history and credits.
+A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://github.com/JulienEsbt) as a fork of [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). This edition adds French and English interfaces, everyday profiles, storage preparation, compact status and an experimental native charge backend, while preserving the original project’s history and credits.
 
 <p align="center">
   <a href="docs/images/panel.png"><img src="docs/images/panel.png" width="330" alt="OpenDente main panel at 80 percent, with daily profiles, storage preparation and one-off full charge"></a>
   <a href="docs/images/measurements.png"><img src="docs/images/measurements.png" width="330" alt="Battery measurements and power flow in the OpenDente panel"></a>
 </p>
-<p align="center"><sub>Actual OpenDente 0.7.2 screenshots. The app interface is currently in French. Click an image for full resolution.</sub></p>
+<p align="center"><sub>Actual OpenDente 0.7.2 screenshots. French interface shown; 0.8.0 also includes English and improved light-mode colors. Click an image for full resolution.</sub></p>
 
 > [!IMPORTANT]
 > **The native charge backend is experimental.** It uses private Apple interfaces and has been tested on a MacBook Air M3 running macOS 27.2. Compatibility and response times vary. This repository provides source code for local signing, with no notarized public installer. Review the [limitations](#compatibility) before enabling charge control.
@@ -36,6 +36,7 @@ A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://g
 | **Storage preparation** | Use a separate 50% target, charging or discharging toward it as needed. Daily settings are retained; unplug and shut down manually when ready. |
 | **Additional thermal pause** | Request a pause at a configurable internal battery temperature. Resume after cooling by 2°C and at least five minutes without exceeding the threshold. |
 | **MagSafe signals** | Assign fixed green, orange or off, slow blinking and alternating patterns to charge states. Ten-second previews make each signal easy to check. |
+| **Language & appearance** | Follow the Mac language or choose French/English in General. Controls, the offline guide and notifications are translated; colors adapt to light and dark mode. |
 | **Quiet background operation** | Launch at login directly into the menu bar. Closing a window keeps the app running; open the panel only when you need it. |
 
 The compact status puts the percentage **inside the battery**, with a separate level track and optional temperature, power and mode indicators. The classic layout remains available. Customize the panel’s measurements, inspect energy flows, choose notifications, search the offline guide or export a local diagnostic report.
@@ -98,14 +99,14 @@ This edition currently lives on `feature/personal-battery-care`; use `main` afte
 
 1. Copy `build/DerivedData/Build/Products/Debug/OpenDente.app` into **Applications** and keep one installed copy.
 2. Launch it, then click its battery icon in the menu bar.
-3. In **Général**, activate the signed service when needed and enable **Ouvrir à la connexion** for quiet login startup. Approve any macOS authorization locally.
-4. In **Charge**, review your thresholds and explicitly enable the native backend if offered. Keep only one battery-control app active.
+3. In **General**, choose the interface language, activate the signed service when needed and enable **Launch at login** for quiet login startup. Approve any macOS authorization locally.
+4. In **Charging**, review your thresholds and explicitly enable the native backend if offered. Keep only one battery-control app active.
 
 For a Release build, signing details and troubleshooting, see the [local development guide](README-PERSONAL.md).
 
 ## Validation
 
-The latest recorded validation is **0.7.2 (15), 26 October 2026**:
+Version **0.8.0 (16)** adds bilingual presentation and adaptive colors; its software checks are recorded in [VALIDATION.md](VALIDATION.md). The latest physical charging validation remains **0.7.2 (15), 26 October 2026**:
 
 | Check | Recorded result |
 |---|---|
@@ -126,6 +127,7 @@ Physical sleep/wake, relaunch, restoration and MagSafe-pattern evidence is recor
 | [Development & signing — Français](README-PERSONAL.md) | Xcode setup, local builds and technical details. |
 | [Feature comparison — English](docs/FEATURE-COMPARISON.md) / [Français](COMPARATIF.md) | Original OpenDente, this edition, AlDente and possible next steps. |
 | [Specification — Français](SPEC-PERSONAL.md) | Intended behavior and constraints. |
+| [Language & appearance — English](docs/LOCALIZATION.md) | Language selection, translation resources, adaptive colors and focused checks. |
 | [Changelog — Français](CHANGELOG-PERSONAL.md) | Version history. |
 
 For battery-care context, see Apple’s [charge limits](https://support.apple.com/en-us/102338) and [long-term storage guidance](https://www.apple.com/batteries/maximizing-performance/). No particular battery-lifespan gain is promised. Scheduling, Shortcuts integration and a validated multi-user workflow are not included in this edition.

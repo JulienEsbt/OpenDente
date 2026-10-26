@@ -34,7 +34,7 @@ struct PopoverView: View {
                     ChargeControlsView(charging: charging, settings: settings, state: state)
                     if settings.showPowerFlow && hasReading {
                         PowerFlowView(battery: state, mode: charging.mode)
-                            .accessibilityLabel("Alimentation du Mac et de la batterie")
+                            .accessibilityLabel(String(localized: "Alimentation du Mac et de la batterie", bundle: L10n.bundle))
                     }
                     BatteryDetailsView(battery: battery, charging: charging, settings: settings)
                 }
@@ -44,35 +44,35 @@ struct PopoverView: View {
             footer
         }
         .frame(width: 360, height: 640)
-        .tint(.teal)
+        .tint(AppPalette.accent)
     }
 
     private var header: some View {
         HStack(spacing: 8) {
             Image(systemName: "leaf")
                 .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(.teal)
+                .foregroundStyle(AppPalette.accent)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text("OpenDente").font(.headline)
                 if charging.nativeLimitAvailable {
                     Button { showsNativeInfo.toggle() } label: {
-                        Label(charging.usesNativeLimit ? "Contrôle macOS" : "Suivi uniquement", systemImage: "info.circle")
+                        Label(charging.usesNativeLimit ? String(localized: "Contrôle macOS", bundle: L10n.bundle) : String(localized: "Suivi uniquement", bundle: L10n.bundle), systemImage: "info.circle")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
-                    .help("Comprendre le contrôle natif expérimental")
+                    .help(String(localized: "Comprendre le contrôle natif expérimental", bundle: L10n.bundle))
                     .popover(isPresented: $showsNativeInfo) {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Contrôle natif expérimental").font(.headline)
-                            Text("OpenDente confie ses consignes à macOS via une interface Apple privée, susceptible de changer. Une demande peut prendre plusieurs minutes ; macOS peut dépasser le plafond pour sa jauge.")
-                            Text("En veille, macOS garde la dernière consigne. Les mesures et la pause thermique de l’app reprennent au réveil. À l’arrêt, OpenDente restitue le réglage Apple sauvegardé.")
-                            Button("Réglages…") { showsNativeInfo = false; openSettings() }
+                            Text(String(localized: "Contrôle natif expérimental", bundle: L10n.bundle)).font(.headline)
+                            Text(String(localized: "OpenDente confie ses consignes à macOS via une interface Apple privée, susceptible de changer. Une demande peut prendre plusieurs minutes ; macOS peut dépasser le plafond pour sa jauge.", bundle: L10n.bundle))
+                            Text(String(localized: "En veille, macOS garde la dernière consigne. Les mesures et la pause thermique de l’app reprennent au réveil. À l’arrêt, OpenDente restitue le réglage Apple sauvegardé.", bundle: L10n.bundle))
+                            Button(String(localized: "Réglages…", bundle: L10n.bundle)) { showsNativeInfo = false; openSettings() }
                         }
                         .font(.caption).padding(16).frame(width: 280)
                     }
                 } else {
-                    Text("Édition personnelle").font(.caption).foregroundStyle(.secondary)
+                    Text(String(localized: "Édition personnelle", bundle: L10n.bundle)).font(.caption).foregroundStyle(.secondary)
                 }
             }
             Spacer()
@@ -80,8 +80,8 @@ struct PopoverView: View {
                 Image(systemName: "slider.horizontal.3").frame(width: 28, height: 28)
             }
             .buttonStyle(.borderless)
-            .help("Ouvrir les réglages")
-            .accessibilityLabel("Réglages d’OpenDente")
+            .help(String(localized: "Ouvrir les réglages", bundle: L10n.bundle))
+            .accessibilityLabel(String(localized: "Réglages d’OpenDente", bundle: L10n.bundle))
             .keyboardShortcut(",", modifiers: .command)
         }
         .padding(.horizontal, 16)
@@ -98,7 +98,7 @@ struct PopoverView: View {
                     if hasReading { Text("%").font(.title3).foregroundStyle(.secondary) }
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(hasReading ? "Batterie : \(displayPercentage) pour cent" : "Lecture de la batterie en cours")
+                .accessibilityLabel(hasReading ? String(localized: "Batterie : \(displayPercentage) pour cent", bundle: L10n.bundle) : String(localized: "Lecture de la batterie en cours", bundle: L10n.bundle))
                 VStack(alignment: .leading, spacing: 4) {
                     Label(statusTitle, systemImage: statusIcon)
                         .font(.system(size: 12, weight: .semibold))
@@ -125,9 +125,9 @@ struct PopoverView: View {
             .frame(height: 8)
             .accessibilityHidden(true)
             HStack {
-                Text(state.isPluggedIn || charging.mode == .discharging ? "Chargeur branché" : "Sur batterie")
+                Text(state.isPluggedIn || charging.mode == .discharging ? String(localized: "Chargeur branché", bundle: L10n.bundle) : String(localized: "Sur batterie", bundle: L10n.bundle))
                 Spacer()
-                Text("Repère : \(charging.activeChargeLimit) %")
+                Text(String(localized: "Repère : \(charging.activeChargeLimit) %", bundle: L10n.bundle))
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
@@ -142,11 +142,11 @@ struct PopoverView: View {
             let needsApproval = helperStatus == .requiresApproval
             let canRetry = helperStatus == .enabled
             notice(
-                title: needsApproval ? "Autorisation nécessaire" : "Contrôle de charge indisponible",
+                title: needsApproval ? String(localized: "Autorisation nécessaire", bundle: L10n.bundle) : String(localized: "Contrôle de charge indisponible", bundle: L10n.bundle),
                 text: charging.helperConnectionIssue ?? (needsApproval
-                    ? "Autorise OpenDente dans les éléments d’ouverture de macOS."
-                    : "Vérifie le service de contrôle dans les réglages d’OpenDente."),
-                button: needsApproval ? "Autoriser…" : (canRetry ? "Réessayer" : "Configurer…")
+                    ? String(localized: "Autorise OpenDente dans les éléments d’ouverture de macOS.", bundle: L10n.bundle)
+                    : String(localized: "Vérifie le service de contrôle dans les réglages d’OpenDente.", bundle: L10n.bundle)),
+                button: needsApproval ? String(localized: "Autoriser…", bundle: L10n.bundle) : (canRetry ? String(localized: "Réessayer", bundle: L10n.bundle) : String(localized: "Configurer…", bundle: L10n.bundle))
             ) {
                 if needsApproval { HelperInstaller.openSystemSettings() }
                 else if canRetry { charging.connectToHelper() }
@@ -154,13 +154,13 @@ struct PopoverView: View {
             }
         } else if charging.nativeLimitAvailable {
             if let issue = charging.nativeLimitIssue ?? charging.nativePauseWarning {
-                notice(title: "Contrôle à vérifier", text: issue, button: "Réglages…", action: openSettings)
+                notice(title: String(localized: "Contrôle à vérifier", bundle: L10n.bundle), text: issue, button: String(localized: "Réglages…", bundle: L10n.bundle), action: openSettings)
             }
         } else if charging.chargingAPI == .unknown {
-            notice(title: "Contrôle indisponible", text: "L’interface de charge de ce Mac n’est pas encore détectée.", button: "Réglages…", action: openSettings)
+            notice(title: String(localized: "Contrôle indisponible", bundle: L10n.bundle), text: String(localized: "L’interface de charge de ce Mac n’est pas encore détectée.", bundle: L10n.bundle), button: String(localized: "Réglages…", bundle: L10n.bundle), action: openSettings)
         }
         if charging.systemChargeLimitConflict {
-            notice(title: "Limite macOS active", text: "Le réglage de macOS empêche actuellement la charge demandée.", button: "Batterie…") {
+            notice(title: String(localized: "Limite macOS active", bundle: L10n.bundle), text: String(localized: "Le réglage de macOS empêche actuellement la charge demandée.", bundle: L10n.bundle), button: String(localized: "Batterie…", bundle: L10n.bundle)) {
                 if let url = URL(string: "x-apple.systempreferences:com.apple.Battery-Settings.extension") {
                     NSWorkspace.shared.open(url)
                 }
@@ -183,74 +183,74 @@ struct PopoverView: View {
 
     private var footer: some View {
         HStack {
-            Label("Réglages conservés sur ce Mac", systemImage: "internaldrive")
+            Label(String(localized: "Réglages conservés sur ce Mac", bundle: L10n.bundle), systemImage: "internaldrive")
                 .font(.caption2).foregroundStyle(.secondary)
             Spacer()
-            Button("Quitter") { NSApplication.shared.terminate(nil) }
+            Button(String(localized: "Quitter", bundle: L10n.bundle)) { NSApplication.shared.terminate(nil) }
                 .buttonStyle(.borderless)
                 .font(.caption)
-                .help("Quitter et demander le rétablissement de la charge par macOS")
+                .help(String(localized: "Quitter et demander le rétablissement de la charge par macOS", bundle: L10n.bundle))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
 
     private var statusTitle: String {
-        if !hasReading { return "Lecture en cours…" }
-        if charging.systemChargeLimitConflict { return "Limite macOS" }
+        if !hasReading { return String(localized: "Lecture en cours…", bundle: L10n.bundle) }
+        if charging.systemChargeLimitConflict { return String(localized: "Limite macOS", bundle: L10n.bundle) }
         if !charging.chargeControlAvailable {
-            return state.isCharging ? "Charge en cours" : "Lecture seule"
+            return state.isCharging ? String(localized: "Charge en cours", bundle: L10n.bundle) : String(localized: "Lecture seule", bundle: L10n.bundle)
         }
         if [.paused, .sailing, .heatProtection].contains(charging.mode), state.isCharging {
-            return "Arrêt de charge demandé"
+            return String(localized: "Arrêt de charge demandé", bundle: L10n.bundle)
         }
         if [.charging, .topUp].contains(charging.mode), !state.isCharging {
-            return displayPercentage >= 100 ? "Batterie chargée" : "Charge en attente"
+            return displayPercentage >= 100 ? String(localized: "Batterie chargée", bundle: L10n.bundle) : String(localized: "Charge en attente", bundle: L10n.bundle)
         }
-        return charging.mode.frenchTitle
+        return charging.mode.localizedTitle
     }
 
     private var statusDetail: String {
-        if !hasReading { return "Les données apparaîtront ici." }
+        if !hasReading { return String(localized: "Les données apparaîtront ici.", bundle: L10n.bundle) }
         if charging.nativeLimitAvailable {
-            if !charging.usesNativeLimit { return "Suivi de batterie — contrôle désactivé." }
+            if !charging.usesNativeLimit { return String(localized: "Suivi de batterie — contrôle désactivé.", bundle: L10n.bundle) }
             if let issue = charging.nativeLimitIssue ?? charging.nativePauseWarning { return issue }
             if charging.isPreparingStorage { return StoragePreparationControls.detail(state, mode: charging.mode) }
-            if !state.isPluggedIn { return "Réglages conservés pour le prochain branchement." }
-            guard let target = charging.nativeLimitTarget else { return "Consigne native en attente de confirmation." }
+            if !state.isPluggedIn { return String(localized: "Réglages conservés pour le prochain branchement.", bundle: L10n.bundle) }
+            guard let target = charging.nativeLimitTarget else { return String(localized: "Consigne native en attente de confirmation.", bundle: L10n.bundle) }
             if charging.mode == .heatProtection {
                 return state.isCharging
-                    ? "Pause thermique demandée ; macOS charge encore."
-                    : "Charge arrêtée. Reprise après refroidissement de 2 °C et délai de 5 min."
+                    ? String(localized: "Pause thermique demandée ; macOS charge encore.", bundle: L10n.bundle)
+                    : String(localized: "Charge arrêtée. Reprise après refroidissement de 2 °C et délai de 5 min.", bundle: L10n.bundle)
             }
             if charging.mode == .discharging {
                 return (state.amperage ?? 0) < -0.05
-                    ? "Descente sur secteur vers \(settings.chargeLimit) %. Puis maintien, sans cycle forcé."
-                    : "Retour à \(settings.chargeLimit) % demandé. Décharge non encore confirmée."
+                    ? String(localized: "Descente sur secteur vers \(settings.chargeLimit) %. Puis maintien, sans cycle forcé.", bundle: L10n.bundle)
+                    : String(localized: "Retour à \(settings.chargeLimit) % demandé. Décharge non encore confirmée.", bundle: L10n.bundle)
             }
             if [.paused, .sailing].contains(charging.mode) {
-                if state.isCharging { return "Pause demandée à macOS ; la batterie charge encore." }
-                if displayPercentage > settings.chargeLimit { return "Maintien à \(target) %. Baisse naturelle vers \(settings.chargeLimit) %, sans décharge forcée." }
-                return settings.sailingModeEnabled ? "Charge arrêtée. Reprise sous \(settings.sailingLowerBound) %." : "Charge arrêtée à la limite habituelle."
+                if state.isCharging { return String(localized: "Pause demandée à macOS ; la batterie charge encore.", bundle: L10n.bundle) }
+                if displayPercentage > settings.chargeLimit { return String(localized: "Maintien à \(target) %. Baisse naturelle vers \(settings.chargeLimit) %, sans décharge forcée.", bundle: L10n.bundle) }
+                return settings.sailingModeEnabled ? String(localized: "Charge arrêtée. Reprise sous \(settings.sailingLowerBound) %.", bundle: L10n.bundle) : String(localized: "Charge arrêtée à la limite habituelle.", bundle: L10n.bundle)
             }
-            return "Objectif macOS : \(target) %. \(state.isCharging ? "La batterie charge." : "Reprise de charge en attente.")"
+            return String(localized: "Objectif macOS : \(target) %. \(state.isCharging ? String(localized: "La batterie charge.", bundle: L10n.bundle) : String(localized: "Reprise de charge en attente.", bundle: L10n.bundle))", bundle: L10n.bundle)
         }
-        if !charging.chargeControlAvailable { return "Les commandes d’OpenDente sont indisponibles." }
-        if charging.systemChargeLimitConflict { return "Vérifie les réglages Batterie." }
+        if !charging.chargeControlAvailable { return String(localized: "Les commandes d’OpenDente sont indisponibles.", bundle: L10n.bundle) }
+        if charging.systemChargeLimitConflict { return String(localized: "Vérifie les réglages Batterie.", bundle: L10n.bundle) }
         if charging.mode == .heatProtection {
-            return state.isCharging ? "Protection thermique : arrêt à confirmer." : "Reprise après refroidissement et délai de 5 min."
+            return state.isCharging ? String(localized: "Protection thermique : arrêt à confirmer.", bundle: L10n.bundle) : String(localized: "Reprise après refroidissement et délai de 5 min.", bundle: L10n.bundle)
         }
-        if [.paused, .sailing].contains(charging.mode), state.isCharging { return "La batterie reçoit encore de l’énergie." }
+        if [.paused, .sailing].contains(charging.mode), state.isCharging { return String(localized: "La batterie reçoit encore de l’énergie.", bundle: L10n.bundle) }
         switch charging.mode {
-        case .charging: return "Objectif : \(settings.chargeLimit) %."
-        case .topUp: return "100 % jusqu’au débranchement."
+        case .charging: return String(localized: "Objectif : \(settings.chargeLimit) %.", bundle: L10n.bundle)
+        case .topUp: return String(localized: "100 % jusqu’au débranchement.", bundle: L10n.bundle)
         case .paused, .sailing:
-            return settings.sailingModeEnabled ? "Reprise sous \(settings.sailingLowerBound) %." : "Reprise sous \(settings.chargeLimit) %."
-        case .discharging: return "Décharge vers \(settings.chargeLimit) %."
-        case .onBattery: return "Limite appliquée au prochain branchement."
-        case .idle: return "En attente de l’état de charge."
-        case .calibrating: return "Cycle en cours."
-        case .heatProtection: return "Refroidissement en cours."
+            return settings.sailingModeEnabled ? String(localized: "Reprise sous \(settings.sailingLowerBound) %.", bundle: L10n.bundle) : String(localized: "Reprise sous \(settings.chargeLimit) %.", bundle: L10n.bundle)
+        case .discharging: return String(localized: "Décharge vers \(settings.chargeLimit) %.", bundle: L10n.bundle)
+        case .onBattery: return String(localized: "Limite appliquée au prochain branchement.", bundle: L10n.bundle)
+        case .idle: return String(localized: "En attente de l’état de charge.", bundle: L10n.bundle)
+        case .calibrating: return String(localized: "Cycle en cours.", bundle: L10n.bundle)
+        case .heatProtection: return String(localized: "Refroidissement en cours.", bundle: L10n.bundle)
         }
     }
 
@@ -259,10 +259,10 @@ struct PopoverView: View {
     }
 
     private var statusColor: Color {
-        if charging.systemChargeLimitConflict || charging.mode == .heatProtection { return .orange }
+        if charging.systemChargeLimitConflict || charging.mode == .heatProtection { return AppPalette.warning }
         if !hasReading || !charging.chargeControlAvailable { return .secondary }
-        if displayPercentage <= 20 || charging.mode == .discharging { return .orange }
-        return .teal
+        if displayPercentage <= 20 || charging.mode == .discharging { return AppPalette.warning }
+        return AppPalette.accent
     }
 
     private func openSettings() {

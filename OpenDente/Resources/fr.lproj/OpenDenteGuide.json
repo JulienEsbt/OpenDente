@@ -41,7 +41,7 @@
     "entries": [
       {
         "title": "Activer le contrôle de charge",
-        "detail": "Active le moteur expérimental de macOS 27. Désactivé, OpenDente reste un lecteur de batterie et restaure le réglage Apple sauvegardé ; le mode stockage est annulé. Une demande native peut prendre environ une minute et macOS peut dépasser une cible pour sa calibration."
+        "detail": "Active le moteur expérimental de macOS 27. Désactivé, OpenDente reste un lecteur de batterie et restaure le réglage Apple sauvegardé ; le mode stockage est annulé. Une demande native peut prendre plusieurs minutes et macOS peut dépasser une cible pour sa calibration."
       },
       {
         "title": "Arrêter à",
@@ -133,8 +133,12 @@
     "title": "Général : lancement et service",
     "entries": [
       {
+        "title": "Langue de l’interface",
+        "detail": "Suit automatiquement la langue du Mac ou permet de choisir Français ou English. Les langues système françaises utilisent le français ; les autres utilisent l’anglais. Le changement est immédiat dans l’interface et le guide, sans redémarrer le contrôle ni modifier les seuils de charge."
+      },
+      {
         "title": "Ouvrir à la connexion",
-        "detail": "Démarre discrètement dans la barre des menus, sans ouvrir le panneau ni les réglages. Fermer une fenêtre laisse l’app en arrière-plan ; clique sur son icône pour le panneau. Enregistre l’app auprès de macOS pour qu’elle démarre après ouverture de ta session. Cela ne maintient pas l’app active lorsque le Mac est éteint. Le démarrage a été observé après ton redémarrage du 21 octobre."
+        "detail": "Démarre discrètement dans la barre des menus, sans ouvrir le panneau ni les réglages. Fermer une fenêtre laisse l’app en arrière-plan ; clique sur son icône pour le panneau. Enregistre l’app auprès de macOS pour qu’elle démarre après ouverture de session. Cela ne maintient pas l’app active lorsque le Mac est éteint."
       },
       {
         "title": "Activer le service",
@@ -201,7 +205,7 @@
       },
       {
         "title": "MagSafe et USB-C",
-        "detail": "La politique vise la batterie interne et est conçue pour les deux ports, avec une alimentation USB-C Power Delivery adaptée. Les essais matériels de cette séance utilisent MagSafe ; l’USB-C n’est pas présenté comme testé. Un chargeur trop faible peut ne pas couvrir la consommation du Mac.",
+        "detail": "La politique vise la batterie interne et est conçue pour les deux ports, avec une alimentation USB-C Power Delivery adaptée. La recharge et les pauses ont été mesurées en USB-C et MagSafe sur le Mac testé ; cela ne prouve pas une compatibilité universelle. Un chargeur trop faible peut ne pas couvrir la consommation du Mac.",
         "url": "https://support.apple.com/fr-fr/102397"
       }
     ]
@@ -215,7 +219,7 @@
       },
       {
         "title": "Ce que l’édition personnelle ajoute ou renforce",
-        "detail": "Interface française, profils Bureau/Quotidien/Mobilité, moteur expérimental macOS 27 sur ce Mac, modes temporaires séparés des seuils quotidiens, stockage à 50 %, règles MagSafe et aperçus, explications, signature identique app/service et récupération après erreurs."
+        "detail": "Interfaces française et anglaise, profils Bureau/Quotidien/Mobilité, moteur expérimental macOS 27 sur ce Mac, modes temporaires séparés des seuils quotidiens, stockage à 50 %, règles MagSafe et aperçus, explications, signature identique app/service et récupération après erreurs."
       },
       {
         "title": "Ce que nous ne prétendons pas avoir",

@@ -39,8 +39,9 @@ final class CompactStatusBarTests: XCTestCase {
     }
     func testMissingReadingDoesNotAnnounceAnInventedZeroPercent() {
         let image = CompactStatusBar.image(state: .unknown, mode: .idle, settings: settings)
-        XCTAssertTrue(image.accessibilityDescription?.contains("Lecture en cours") == true)
+        XCTAssertTrue(image.accessibilityDescription?.contains(String(localized: "Lecture en cours", bundle: L10n.bundle)) == true)
         XCTAssertFalse(image.accessibilityDescription?.contains("0 %") == true)
+        XCTAssertFalse(image.accessibilityDescription?.contains("0%") == true)
     }
     func testMiddleChargeKeepsTheNumberBackgroundUniform() throws {
         for percent in [20, 50, 68, 100] {

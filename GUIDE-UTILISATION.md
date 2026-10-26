@@ -1,5 +1,7 @@
 # Guide d’utilisation — OpenDente personnel
 
+Depuis la version 0.8.0, **Général > Langue de l’interface** propose Automatique (langue du Mac), Français et English. Le changement est immédiat pour l’interface et le guide, sans toucher aux seuils de charge. En automatique, une langue principale française utilise le français ; les autres utilisent l’anglais. Les couleurs s’adaptent aux modes clair et sombre de macOS.
+
 Aide embarquée hors ligne dans Réglages > Guide. Édition 0.6.1.
 
 ## Panneau principal et modes

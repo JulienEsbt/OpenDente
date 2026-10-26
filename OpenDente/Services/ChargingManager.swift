@@ -233,7 +233,7 @@ final class ChargingManager: ObservableObject {
                   !self.isHelperInstalled, self.helperConnectionIssue == nil else { return }
             self.helperHandshakeInProgress = false
             self.helperHandshakeID = UUID() // Ignore replies from the expired attempt.
-            self.helperConnectionIssue = "Le service ne répond pas. Réessaie la connexion dans les réglages."
+            self.helperConnectionIssue = String(localized: "Le service ne répond pas. Réessaie la connexion dans les réglages.", bundle: L10n.bundle)
         }
         let client = HelperClient.shared
         client.getVersion { [weak self] version in
@@ -243,8 +243,8 @@ final class ChargingManager: ObservableObject {
                 guard version.isVersionAtLeast(HelperConstants.helperVersion) else {
                     self.helperHandshakeInProgress = false
                     self.helperConnectionIssue = version.isEmpty
-                        ? "Connexion au service impossible. Vérifie sa signature et son autorisation."
-                        : "Le service installé est trop ancien. Réinstalle le service de cette version."
+                        ? String(localized: "Connexion au service impossible. Vérifie sa signature et son autorisation.", bundle: L10n.bundle)
+                        : String(localized: "Le service installé est trop ancien. Réinstalle le service de cette version.", bundle: L10n.bundle)
                     log.error("Refusing charging control with incompatible helper version: \(version, privacy: .public)")
                     return
                 }
@@ -253,7 +253,7 @@ final class ChargingManager: ObservableObject {
                         guard let self, self.helperHandshakeID == handshakeID else { return }
                         guard !api.isEmpty else {
                             self.helperHandshakeInProgress = false
-                            self.helperConnectionIssue = "Le service n’a pas répondu à la détection de charge. Réessaie la connexion."
+                            self.helperConnectionIssue = String(localized: "Le service n’a pas répondu à la détection de charge. Réessaie la connexion.", bundle: L10n.bundle)
                             return
                         }
                         switch api {
@@ -808,7 +808,7 @@ final class ChargingManager: ObservableObject {
         }
         guard state.percentage > 0 || state.isPluggedIn else {
             mode = .idle
-            nativePauseWarning = "Mesure de batterie indisponible ; dernière consigne conservée."
+            nativePauseWarning = String(localized: "Mesure de batterie indisponible ; dernière consigne conservée.", bundle: L10n.bundle)
             return
         }
         if !state.isPluggedIn { topUpRequested = false }
@@ -822,7 +822,7 @@ final class ChargingManager: ObservableObject {
         if asksForPause && state.isCharging {
             if nativePauseStarted == nil { nativePauseStarted = now }
             nativePauseWarning = now.timeIntervalSince(nativePauseStarted!) >= 90
-                ? "macOS charge encore malgré la demande de pause. Arrêt non confirmé ; une calibration système peut dépasser la consigne."
+                ? String(localized: "macOS charge encore malgré la demande de pause. Arrêt non confirmé ; une calibration système peut dépasser la consigne.", bundle: L10n.bundle)
                 : nil
         } else {
             nativePauseStarted = nil
@@ -848,7 +848,7 @@ final class ChargingManager: ObservableObject {
                 guard let self else { return }
                 self.nativeCommandPending = false
                 self.nativeLimitTarget = success ? target : nil
-                self.nativeLimitIssue = success ? nil : (error ?? "La consigne native n’a pas été acceptée.")
+                self.nativeLimitIssue = success ? nil : (error ?? String(localized: "La consigne native n’a pas été acceptée.", bundle: L10n.bundle))
                 if success {
                     log.info("Native target acknowledged: \(target, privacy: .public)% — physical state remains authoritative")
                 } else {
@@ -1196,7 +1196,7 @@ final class ChargingManager: ObservableObject {
                     self.nativeLEDIssue = nil
                 } else {
                     self.lastLEDColor = nil
-                    self.nativeLEDIssue = error ?? "Le voyant MagSafe n’a pas confirmé le changement."
+                    self.nativeLEDIssue = error ?? String(localized: "Le voyant MagSafe n’a pas confirmé le changement.", bundle: L10n.bundle)
                 }
             }
         }

@@ -10,6 +10,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
+    SWIFT_EMIT_LOC_STRINGS: YES
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     SWIFT_STRICT_CONCURRENCY: minimal
     SWIFT_UPCOMING_FEATURE_GLOBAL_ACTOR_ISOLATED_TYPES_USABILITY: false
@@ -35,8 +36,8 @@ targets:
         CODE_SIGN_ENTITLEMENTS: OpenDente/Resources/OpenDente.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: com.opendente.app
         PRODUCT_NAME: OpenDente
-        MARKETING_VERSION: "0.7.2"
-        CURRENT_PROJECT_VERSION: "15"
+        MARKETING_VERSION: "0.8.0"
+        CURRENT_PROJECT_VERSION: "16"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
         ENABLE_HARDENED_RUNTIME: true
