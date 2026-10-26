@@ -1,10 +1,10 @@
-# OpenDente — édition personnelle 0.7.2
+# OpenDente — édition personnelle 0.8.0
 
-Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6a75f50df8` ; reprise personnelle initiale `0f53a5e`. Développement local dans `/Users/julienesbt/Dev/OpenDente`, branche `feature/personal-battery-care`, fork JulienEsbt/OpenDente. Historique, licence et crédits conservés.
+Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6a75f50df8` ; reprise personnelle initiale `0f53a5e`. Développement local dans `/Users/julienesbt/Dev/OpenDente`, branche `main`, fork JulienEsbt/OpenDente. Historique, licence et crédits conservés.
 
 ## Fonctions livrées
 
-- App native SwiftUI dans la barre des menus, panneau français, état physique séparé des demandes, mesures disponibles sans valeurs inventées.
+- App native SwiftUI dans la barre des menus, panneau français ou anglais, état physique séparé des demandes, mesures disponibles sans valeurs inventées.
 - Plafond modifiable, reprise configurable sous un seuil bas, dont 20 % pour un plafond de 80 %. Le retour au plafond sur secteur est une option explicite, conservée au relancement. Aucun cycle continu n’est forcé.
 - Charge ponctuelle à 100 %, plafond habituel conservé ; fin au débranchement ou à l’annulation. Une pause thermique conserve la demande.
 - Pause thermique supplémentaire configurable ; défaut de précaution à 40 °C, distinct des recommandations de température ambiante Apple. Ce seuil n’est pas certifié par Apple.

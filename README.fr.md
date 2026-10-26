@@ -109,7 +109,7 @@ En veille, macOS conserve la dernière cible native ; OpenDente ne surveille pas
 Installer et initialiser **Xcode complet** ; les Command Line Tools seuls ne suffisent pas. Il faut aussi **XcodeGen** et une identité Apple Development avec certificat et clé privée. Le service refuse une signature ad hoc.
 
 ```sh
-git clone --branch feature/personal-battery-care https://github.com/JulienEsbt/OpenDente.git
+git clone --branch main https://github.com/JulienEsbt/OpenDente.git
 cd OpenDente
 brew install xcodegen
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
@@ -117,7 +117,7 @@ export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 bash scripts/build-local.sh "Apple Development: VOTRE NOM (IDENTIFIANT DU CERTIFICAT)" "TEAM_ID"
 ```
 
-Cette édition se trouve actuellement sur `feature/personal-battery-care` ; utiliser `main` après sa fusion. Remplacer les paramètres de signature par sa propre identité. Le script génère le projet Xcode, exécute les tests natifs, produit une app Debug signée et vérifie que les certificats de l’app et du service sont identiques. Il n’installe et ne lance pas le service privilégié.
+Remplacer les paramètres de signature par sa propre identité. Le script génère le projet Xcode, exécute les tests natifs, produit une app Debug signée et vérifie que les certificats de l’app et du service sont identiques. Il n’installe et ne lance pas le service privilégié.
 
 1. Copier `build/DerivedData/Build/Products/Debug/OpenDente.app` dans **Applications** et conserver une seule copie installée.
 2. Lancer l’app, puis cliquer sur sa batterie dans la barre des menus.

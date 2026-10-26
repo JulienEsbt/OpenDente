@@ -109,7 +109,7 @@ On quit, the helper requests restoration of the saved Apple settings and system 
 Install and initialize **full Xcode** first; Command Line Tools alone are insufficient. You also need **XcodeGen** and an Apple Development signing identity with its certificate and private key. The helper rejects an ad hoc signature.
 
 ```sh
-git clone --branch feature/personal-battery-care https://github.com/JulienEsbt/OpenDente.git
+git clone --branch main https://github.com/JulienEsbt/OpenDente.git
 cd OpenDente
 brew install xcodegen
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
@@ -117,7 +117,7 @@ export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 bash scripts/build-local.sh "Apple Development: YOUR NAME (CERTIFICATE ID)" "TEAM_ID"
 ```
 
-This edition currently lives on `feature/personal-battery-care`; use `main` after it is merged. Replace the signing placeholders with your own identity. The script generates the Xcode project, runs native tests, builds a signed Debug app and verifies matching app/helper certificates. It does not install or launch the privileged service.
+Replace the signing placeholders with your own identity. The script generates the Xcode project, runs native tests, builds a signed Debug app and verifies matching app/helper certificates. It does not install or launch the privileged service.
 
 1. Copy `build/DerivedData/Build/Products/Debug/OpenDente.app` into **Applications** and keep one installed copy.
 2. Launch it, then click its battery icon in the menu bar.

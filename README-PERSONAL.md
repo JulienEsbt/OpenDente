@@ -166,7 +166,7 @@ empêche l’app hôte de démarrer les services réels de batterie.
 
 ### Fork personnel
 
-Le développement se poursuit sur `feature/personal-battery-care` dans le fork
+L’édition personnelle est intégrée à `main` dans le fork
 [JulienEsbt/OpenDente](https://github.com/JulienEsbt/OpenDente). Les remotes sont :
 
 ```text
