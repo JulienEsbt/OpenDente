@@ -41,15 +41,15 @@ final class AppSettings: ObservableObject {
         set { objectWillChange.send(); defaults.set(newValue, forKey: "sailingModeEnabled") }
     }
 
-    /// Sailing range percentage (2-25), clamped on set
+    /// Sailing range percentage (2-90), clamped on set
     var sailingRange: Int {
         get {
             let v = defaults.integer(forKey: "sailingRange")
-            return v == 0 ? 10 : min(25, max(2, v))
+            return v == 0 ? 10 : min(90, max(2, v))
         }
         set {
             objectWillChange.send()
-            defaults.set(min(25, max(2, newValue)), forKey: "sailingRange")
+            defaults.set(min(90, max(2, newValue)), forKey: "sailingRange")
         }
     }
 
@@ -64,7 +64,7 @@ final class AppSettings: ObservableObject {
     var heatProtectionTemp: Double {
         get {
             let v = defaults.double(forKey: "heatProtectionTemp")
-            return (v == 0 ? 35.0 : v).clamped(to: 30...45)
+            return (v == 0 ? 40.0 : v).clamped(to: 30...45)
         }
         set {
             objectWillChange.send()
@@ -92,6 +92,11 @@ final class AppSettings: ObservableObject {
     }
 
     // MARK: - Status Bar Display
+
+    var compactStatusBar: Bool {
+        get { defaults.object(forKey: "compactStatusBar") as? Bool ?? true }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "compactStatusBar") }
+    }
 
     var statusBarShowPercentage: Bool {
         get { defaults.object(forKey: "statusBarShowPercentage") as? Bool ?? true }
@@ -122,6 +127,45 @@ final class AppSettings: ObservableObject {
 
     // MARK: - MagSafe LED
 
+    var nativeMagSafeLEDEnabled: Bool {
+        get { defaults.bool(forKey: "nativeMagSafeLEDEnabled") }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "nativeMagSafeLEDEnabled") }
+    }
+    var nativeLEDChargingColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDChargingColor") as? Int ?? 4) ?? .orange }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDChargingColor") }
+    }
+    var nativeLEDPausedColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDPausedColor") as? Int ?? 3) ?? .green }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDPausedColor") }
+    }
+    var nativeLEDStorageColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDStorageColor") as? Int ?? 4) ?? .orange }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDStorageColor") }
+    }
+    var nativeLEDThermalColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDThermalColor") as? Int ?? 1) ?? .off }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDThermalColor") }
+    }
+
+    var nativeLEDTopUpColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDTopUpColor") as? Int ?? 4) ?? .orange }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDTopUpColor") }
+    }
+    var nativeLEDCompleteColor: MagSafeLEDChoice {
+        get { MagSafeLEDChoice(rawValue: defaults.object(forKey: "nativeLEDCompleteColor") as? Int ?? 3) ?? .green }
+        set { objectWillChange.send(); defaults.set(newValue.rawValue, forKey: "nativeLEDCompleteColor") }
+    }
+    func applyDistinctLEDSignals() {
+        nativeMagSafeLEDEnabled = true
+        nativeLEDChargingColor = .pulsingOrange
+        nativeLEDPausedColor = .pulsingGreen
+        nativeLEDStorageColor = .alternating
+        nativeLEDThermalColor = .off
+        nativeLEDTopUpColor = .orange
+        nativeLEDCompleteColor = .green
+    }
+
     var controlMagSafeLED: Bool {
         get { defaults.object(forKey: "controlMagSafeLED") as? Bool ?? true }
         set { objectWillChange.send(); defaults.set(newValue, forKey: "controlMagSafeLED") }
@@ -133,6 +177,23 @@ final class AppSettings: ObservableObject {
     }
 
     // MARK: - General
+
+    /// Opt-in: private PowerUI implementation with firmware-controlled hysteresis.
+    /// Explicit opt-in: drain on external power only when above the usual cap.
+    var nativeReturnToLimitEnabled: Bool {
+        get { defaults.bool(forKey: "nativeReturnToLimitEnabled") }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "nativeReturnToLimitEnabled") }
+    }
+
+    var storagePreparationEnabled: Bool {
+        get { defaults.bool(forKey: "storagePreparationEnabled") }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "storagePreparationEnabled") }
+    }
+
+    var nativeChargeLimitEnabled: Bool {
+        get { defaults.bool(forKey: "nativeChargeLimitEnabled") }
+        set { objectWillChange.send(); defaults.set(newValue, forKey: "nativeChargeLimitEnabled") }
+    }
 
     var launchAtLogin: Bool {
         get { defaults.bool(forKey: "launchAtLogin") }
@@ -191,8 +252,53 @@ final class AppSettings: ObservableObject {
 
     // MARK: - Computed
 
-    /// Lower bound of sailing range
+    /// Keep a usable reserve even when a wide range accompanies a low ceiling.
     var sailingLowerBound: Int {
-        max(0, chargeLimit - sailingRange)
+        max(10, chargeLimit - sailingRange)
     }
+
+    /// Profiles describe the charging policy, not a promise about battery lifespan.
+    var selectedProfile: ChargeProfile? {
+        guard sailingModeEnabled, heatProtectionEnabled, !automaticDischarge else { return nil }
+        return ChargeProfile.allCases.first {
+            $0.chargeLimit == chargeLimit && $0.resumeAt == sailingLowerBound
+        }
+    }
+
+    func apply(profile: ChargeProfile) {
+        // Selecting a daily profile explicitly ends the temporary storage mode.
+        storagePreparationEnabled = false
+        // Subscribers evaluate on the next run loop, after the complete policy is saved.
+        chargeLimit = profile.chargeLimit
+        sailingRange = profile.chargeLimit - profile.resumeAt
+        sailingModeEnabled = true
+        heatProtectionEnabled = true
+        automaticDischarge = false
+    }
+}
+
+
+/// Convenient starting points; the ceiling remains freely adjustable afterwards.
+enum ChargeProfile: String, CaseIterable, Identifiable {
+    case desk, everyday, travel
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .desk: String(localized: "Bureau", bundle: L10n.bundle)
+        case .everyday: String(localized: "Quotidien", bundle: L10n.bundle)
+        case .travel: String(localized: "Mobilité", bundle: L10n.bundle)
+        }
+    }
+
+    var chargeLimit: Int {
+        switch self {
+        case .desk: 70
+        case .everyday: 80
+        case .travel: 90
+        }
+    }
+
+    var resumeAt: Int { chargeLimit - 10 }
 }

@@ -1,0 +1,94 @@
+[
+  {
+    "title": "Main panel and modes",
+    "entries": [
+      {"title":"Desk · Daily · Travel","detail":"Apply 70/60, 80/70 and 90/80 respectively: ceiling / resume below the lower threshold. They enable thermal protection and leave storage mode. Return on external power follows its own setting; repeated cycles are not forced."},
+      {"title":"Daily charge limit","detail":"Choose the daily ceiling between 20 and 100%. If Return to the ceiling on external power is enabled, a battery already above it discharges toward the ceiling; otherwise it is held and falls naturally with use. Moving the slider leaves storage mode."},
+      {"title":"Charge to 100% once","detail":"Request a temporary full charge while retaining daily thresholds. Leaves storage mode. The request waits during a thermal pause and ends on disconnect, cancellation or app exit."},
+      {"title":"Return to my limit","detail":"Cancel the one-off full charge. If return to the ceiling is enabled, request discharge toward it on external power. Otherwise, hold the current level and allow a natural drop."},
+      {"title":"Prepare storage at 50%","detail":"Enable a temporary 50% target without overwriting the daily ceiling. Above it, explicitly allow discharge on external power; below it, request charging toward 50%. No computation is started to drain the battery faster. The effect depends on the macOS service and is shown separately from the request."},
+      {"title":"Stop storage mode","detail":"Cancel the 50% target and restore daily thresholds. If return to the ceiling is enabled, discharge may continue toward the daily ceiling; disable that option to hold the current level. The storage target persists across relaunches."},
+      {"title":"Settings… · sliders icon","detail":"Open settings. Closing the settings window or panel does not quit OpenDente: monitoring continues in the background."},
+      {"title":"Quit","detail":"Exit the app and request restoration of the saved Apple setting and system LED behavior. Custom policy is no longer evaluated. Configure the Apple policy you want restored while OpenDente is closed; the native backend and Apple’s limit share the same mechanism."}
+    ]
+  },
+  {
+    "title":"Charging controls",
+    "entries":[
+      {"title":"Enable charge control","detail":"Enable the experimental macOS 27 backend. When disabled, OpenDente monitors the battery and restores the saved Apple setting; storage mode is canceled. A native request may take several minutes, and macOS may exceed the target for gauge calibration."},
+      {"title":"Stop at","detail":"The same daily ceiling as the panel slider. The temporary storage target stays separate. Profile buttons leave storage mode."},
+      {"title":"Return to the ceiling on external power","detail":"At launch, connection or a limit change, a level above the ceiling uses the battery to discharge toward it. Deliberate discharge stops at the target. No 70→80→70 cycles are forced. Thermal protection and a one-off full charge retain priority. Stopping discharge disables this option."},
+      {"title":"Choose when charging resumes · Resume below","detail":"With 80/70, charging waits until the level drops below 70%, then continues toward 80%. This spaces out charging sessions without forcing a drop from 80 to 70 on external power. Disabling it permits resumption as soon as the level falls below the ceiling. Waiting for 20% is unnecessary for battery care."},
+      {"title":"Request a pause when the battery gets warm · Temperature","detail":"Compare the internal sensor with the chosen threshold, from 30 to 45°C. The 40°C default is an app precaution, not an official Apple internal threshold. Resumption waits for at least 5 minutes without exceeding the threshold and 2°C of cooling. One-off full charge and storage honor this priority."},
+      {"title":"Prevent idle sleep until the target","detail":"Optional: delay idle sleep during charging or discharge toward a target; the display may turn off. This is not required to retain the native target already entrusted to macOS. Manual sleep and closing the lid still work. The assertion is released at the target, on disconnect or when the action ends. Leave it off to allow normal sleep."},
+      {"title":"During sleep","detail":"Panel closed: monitoring continues in the background. Mac actually asleep: the app no longer samples temperature, but macOS retains the last transmitted target. Sleep does not remove the ceiling or request 100%. Measurements and decisions resume on wake. Firmware calibration exceptions remain; a strict 80% stop is not guaranteed."},
+      {"title":"Apply 80% / resume below 75%","detail":"Apply this practical pair close to Apple’s behavior, enable the resume range and leave storage mode. The return-to-ceiling option retains its setting; no repeated cycle is imposed."},
+      {"title":"Other SMC controls","detail":"Hardware-percentage regulation and the dedicated SMC sleep pause are not offered on this Mac. The 50% storage mode and daily return to the ceiling use dedicated native commands."},
+      {"title":"Powered off and the saved Apple limit","detail":"An app cannot run when the Mac is off. To configure the restored system policy, quit OpenDente, set Apple’s charge limit and leave Optimized Battery Charging enabled. Relaunch the app: that becomes the saved Apple state to restore. Both use the same native mechanism, not independent ceilings. Sleep evidence is not a controlled full-shutdown test.","url":"https://support.apple.com/en-us/102338"},
+      {"title":"Holding, cycles and aging","detail":"External power can run the Mac with zero battery current. Spaced resumption avoids repeated top-ups; holding does not mean constant rapid switching. Research describes the effects of charge level and temperature without establishing one universal optimum for this Mac’s unpublished cells. An 80% ceiling and resumption below 75% closely follow Apple’s policy.","url":"https://portal.fis.tum.de/de/publications/calendar-aging-of-lithium-ion-batteries-i-impact-of-the-graphite-/"}
+    ]
+  },
+  {
+    "title":"MagSafe LED",
+    "entries":[
+      {"title":"Match the LED to charging modes","detail":"Enable the app’s signal rules. This changes only the LED, not the ceiling or charge speed. It is independent of the old SMC LED preference and starts disabled."},
+      {"title":"Apply distinct signals","detail":"Enable blinking orange for normal charging, blinking green for holding, alternating green/orange for discharge on external power, off for thermal pause, and solid orange then solid green for one-off 100% charging. This does not change battery thresholds or charging power."},
+      {"title":"Charging confirmed · Pause confirmed","detail":"Choose the signal while the battery is still receiving current or when a pause is measured. A pause request alone does not prematurely display the paused signal."},
+      {"title":"Discharge on external power · Thermal pause","detail":"Choose signals during storage or return-to-ceiling discharge and a thermal pause. Measured charging initially keeps its charging signal: a color never proves a stop."},
+      {"title":"Green (10 s) · Orange (10 s) · Off (10 s)","detail":"Temporary LED previews without changing battery thresholds. After about ten seconds, return to the chosen rules or macOS if customization is disabled. Hardware must confirm the write; errors appear in the section."},
+      {"title":"Return LED control to macOS","detail":"Stop the preview, disable customization and request system control, including after a failed preview. The app also restores control on disconnect, sleep, exit and recovery after client loss."},
+      {"title":"Colors and blinking","detail":"Patterns alternate only green, orange and off, about two seconds per phase on the existing measurement cadence. No additional timer or charger fault code is used. On sleep, disconnect, app exit or client loss, control returns to the system. The LED is not RGB.","url":"https://support.apple.com/en-us/102372"},
+      {"title":"One-off charge toward 100% · One-off 100% reached","detail":"Two distinct signals for the temporary full charge and completion, solid orange then solid green by default. Daily holding can therefore blink green without being confused with 100%. Blinking is animated only while the Mac is awake."},
+      {"title":"Blinking green · Blinking orange · Alternating (10 s)","detail":"Temporary pattern previews. Wait several seconds to see a full period; after ten seconds, the chosen signal returns. Returning LED control to macOS disables all patterns."}
+    ]
+  },
+  {
+    "title":"General: launch and service",
+    "entries":[
+      {"title":"Interface language","detail":"Follow the Mac language automatically, or choose Français or English. French system languages use French; other system languages fall back to English. Changes apply immediately to the interface and guide without restarting charge control or altering battery thresholds."},
+      {"title":"Launch at login","detail":"Start quietly in the menu bar without opening the panel or settings. Closing a window leaves the app in the background; click its icon for the panel. Register the app with macOS to launch after signing in. This does not keep it running when the Mac is powered off."},
+      {"title":"Activate service","detail":"Register the signed administrator service supplied in the app. It is needed for hardware commands; macOS may request local approval."},
+      {"title":"Open System Settings","detail":"Shown when macOS requires service authorization in Login Items. Opens the relevant settings page."},
+      {"title":"Retry connection","detail":"Reconnect and check service version and signature without changing battery thresholds."},
+      {"title":"Reinstall service","detail":"Request restoration first, then re-register the bundled service. Used for an update or repair, not everyday use. Enter any password or Touch ID approval directly in macOS."}
+    ]
+  },
+  {
+    "title":"Notifications, display and diagnostics",
+    "entries":[
+      {"title":"Enable notifications","detail":"Allow the app to request notifications. Their display also depends on macOS permission and Focus settings; this does not change charging."},
+      {"title":"Limit reached · One-off full charge complete · Thermal protection · Discharge complete","detail":"Choose which events are announced. Notifications do not replace the measured state in the panel. The test-notification button exists only in development builds."},
+      {"title":"Menu bar: percentage · temperature · power · mode icon","detail":"Choose visible menu bar information. The compact layout puts the percentage inside the battery and temperature/power beside it. It changes neither thresholds nor charging power."},
+      {"title":"Panel: Show energy flows","detail":"Show or hide measured power flows. Missing values are not invented; this is a readout, not a hardware control."},
+      {"title":"Panel: eye buttons · measurement order","detail":"The eye shows or hides a panel measurement. Drag rows in Shown to change their order. All measurements remain available in Battery."},
+      {"title":"Battery: measurements, USB-PD profiles, service status","detail":"Show available internal temperature, capacity, cycles, power, current, voltage and charger details. USB-PD profiles are read-only information; clicking does not change adapter voltage or power."},
+      {"title":"Export diagnostics…","detail":"Choose a file to save measurements, settings and recent logs locally. Nothing is uploaded automatically. The file can contain Mac or charger identifiers and is intended for troubleshooting; review it before public sharing."}
+    ]
+  },
+  {
+    "title":"Long-term storage and power",
+    "entries":[
+      {"title":"Prepare the Mac, then shut it down","detail":"The 50% mode prepares the battery before a long period of disuse. Around 50%, unplug and shut down from the Apple menu. The app does not shut down automatically and cannot monitor the battery when the Mac is off."},
+      {"title":"Storage","detail":"Apple recommends around 50%, powered off, in a cool, dry place below 32°C. For storage longer than six months, recharge to around 50% every six months. The guide’s 45–55% zone is a practical indication, not an official Apple range.","url":"https://www.apple.com/batteries/maximizing-performance/"},
+      {"title":"MagSafe and USB-C","detail":"The policy targets the internal battery and is designed for both ports with a suitable USB-C Power Delivery supply. Charging and pauses have been measured over USB-C and MagSafe on the tested Mac; broader compatibility is not established. An underpowered charger may not cover the Mac’s power consumption.","url":"https://support.apple.com/en-us/102397"}
+    ]
+  },
+  {
+    "title":"Compared with the original OpenDente",
+    "entries":[
+      {"title":"Existing features","detail":"The original already has charge limits, sailing/resume, thermal protection, SMC discharge, one-off full charge, LED controls, notifications and customizable measurements. These are not all additions by this fork."},
+      {"title":"What Personal Edition adds or strengthens","detail":"French and English interfaces, Desk/Daily/Travel profiles, the experimental macOS 27 backend on the tested Mac, temporary modes separate from daily thresholds, 50% storage preparation, MagSafe rules and previews, explanations, matching app/helper certificates and error recovery."},
+      {"title":"What is not claimed","detail":"No forced calibration, scheduling, Shortcuts integration, automatic updates or quantified lifespan gains. Original SMC features remain for compatible Macs; a setting cannot make an absent hardware command available."},
+      {"title":"Comparison source","detail":"Examined base: killerk3emstar/OpenDente, commit 06c5a8199f5c0657374e667073b3aa6a75f50df8. GPL license and credits are preserved.","url":"https://github.com/killerk3emstar/OpenDente/tree/06c5a8199f5c0657374e667073b3aa6a75f50df8"}
+    ]
+  },
+  {
+    "title":"Compared with AlDente",
+    "entries":[
+      {"title":"Free / Pro","detail":"The comparison distinguishes the free edition’s limit and discharge from Pro features such as sailing, thermal protection, LED control, one-off full charge, scheduling, Shortcuts and calibration. Availability depends on model and version."},
+      {"title":"Useful differences here","detail":"This edition adds 50% storage preparation, optional return to the ceiling and LED patterns animated while the app is awake. AlDente also has discharge and automatic return. Mechanisms and sleep behavior differ; the tested Mac’s results are documented separately."},
+      {"title":"Compatibility and scope","detail":"Published compatibility is not a head-to-head test on this Mac. OpenDente’s native backend remains experimental; no superiority in reliability or battery runtime is claimed."},
+      {"title":"Product documentation","detail":"Consult the published features for current availability. The repository’s comparison separates implemented features, observed behavior and possible future work.","url":"https://apphousekitchen.com/aldente-overview/features/"}
+    ]
+  }
+]

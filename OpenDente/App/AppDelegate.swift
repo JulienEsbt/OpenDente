@@ -22,7 +22,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Tests load into the app process for symbol access, but we skip real services
     /// to avoid SMC commands and UserDefaults pollution from the test host.
     private static var isRunningTests: Bool {
-        ProcessInfo.processInfo.environment["XCTestBundlePath"] != nil
+        let environment = ProcessInfo.processInfo.environment
+        return environment["OPENDENTE_TESTING"] == "1"
+            || environment["XCTestBundlePath"] != nil
+            || environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        guard !Self.isRunningTests else { return }
+        // Applies only to this app; reopening Settings must remain an explicit action.
+        settings.defaults.set(false, forKey: "NSQuitAlwaysKeepsWindows")
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -38,6 +47,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupEventMonitor()
         setupSleepWakeNotifications()
 
+        // Launch quietly, including after upgrades. The status item and explicit
+        // application reopen remain the entry points to the panel.
+
         // Check helper status and prompt for registration if needed
         checkHelperStatus()
 
@@ -48,6 +60,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
 
         charging.$mode
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.updateStatusBarText() }
+            .store(in: &cancellables)
+
+        settings.objectWillChange
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.updateStatusBarText() }
+            .store(in: &cancellables)
+
+        LanguageSettings.shared.$selection
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.updateStatusBarText() }
             .store(in: &cancellables)
@@ -93,6 +115,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
     }
 
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        guard !Self.isRunningTests else { return false }
+        if !flag && !popover.isShown { togglePopover() }
+        return true
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        guard !Self.isRunningTests else { return }
+        charging.refreshHelperStatus()
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         guard !Self.isRunningTests else { return }
         // Synchronous reset with timeout to ensure charging is re-enabled before exit
@@ -127,6 +164,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let state = battery.batteryState
         let pct = state.effectivePercentage(useHardware: settings.useHardwareBatteryPercentage)
 
+        if settings.compactStatusBar {
+            let image = CompactStatusBar.image(state: state, mode: charging.mode, settings: settings)
+            button.image = image
+            button.title = ""
+            button.toolTip = "OpenDente — " + (image.accessibilityDescription ?? "")
+            button.setAccessibilityLabel(button.toolTip)
+            lastIconName = nil
+            return
+        }
+        button.toolTip = "OpenDente — " + state.statusBarText(effectivePercentage: pct,
+            showPercentage: true, showTemperature: true, showPower: true)
+        button.setAccessibilityLabel(button.toolTip)
         let iconName = settings.statusBarShowMode
             ? charging.mode.batteryIconName(percentage: pct, isCharging: state.isCharging)
             : ChargingMode.idle.batteryIconName(percentage: pct, isCharging: false)
@@ -149,10 +198,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupPopover() {
         popover = NSPopover()
-        popover.contentSize = NSSize(width: 320, height: 420)
+        popover.contentSize = NSSize(width: 360, height: 640)
         popover.behavior = .transient
         popover.animates = false
-        popover.contentViewController = NSHostingController(rootView: PopoverView())
+        popover.contentViewController = NSHostingController(rootView: LocalizedRoot { PopoverView() })
     }
 
     @objc private func togglePopover() {
@@ -161,6 +210,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if popover.isShown {
             popover.performClose(nil)
         } else {
+            charging.refreshHelperStatus()
             battery.popoverDidOpen()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
@@ -195,13 +245,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .enabled:
             NSLog("[OpenDente] Helper is enabled")
         case .notFound:
-            NSLog("[OpenDente] Helper binary not found in app bundle")
+            if HelperInstaller.bundleIsComplete && HelperInstaller.register() { charging.connectToHelper() }
+            else { NSLog("[OpenDente] Helper registration unavailable") }
         @unknown default:
             break
         }
 
-        charging.isHelperInstalled = HelperInstaller.isRegistered
-        NSLog("[OpenDente] Helper registered: \(charging.isHelperInstalled)")
+        // The manager enables control only after a compatible helper handshake.
+        NSLog("[OpenDente] Helper registered: \(HelperInstaller.isRegistered)")
     }
 
     // MARK: - Sleep/Wake

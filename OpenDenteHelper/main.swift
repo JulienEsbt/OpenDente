@@ -17,13 +17,17 @@ nonisolated(unsafe) var delegate: HelperDelegate!
 nonisolated(unsafe) var watchdog: Watchdog!
 nonisolated(unsafe) var sleepRootPort: io_connect_t = 0
 
-watchdog = Watchdog { delegate.resetChargingDirect() }
+watchdog = Watchdog(needsRecovery: { delegate.needsRecovery },
+                    hasPendingRestoration: { delegate.hasPendingRestoration },
+                    retryPendingRestoration: { delegate.retryPendingRestoration() }) {
+    delegate.resetChargingDirect()
+}
 delegate = HelperDelegate(watchdog: watchdog)
 
 // MARK: - Crash Recovery (Layer 2)
 
 // If previous instance had charging inhibited (crash), reset immediately
-if HelperState.wasChargingInhibited() {
+if delegate.needsRecovery {
     log.warning("Previous instance had charging inhibited — resetting to safe defaults")
     delegate.resetChargingDirect()
 }
@@ -66,13 +70,15 @@ func sleepWakeCallback(
     messageArgument: UnsafeMutableRawPointer?
 ) {
     switch messageType {
-    case 0xe0000240, // kIOMessageCanSystemSleep (idle sleep)
-         0xe0000280: // kIOMessageSystemWillSleep (forced sleep)
+    case 0xe0000240: // kIOMessageCanSystemSleep: permission query, sleep may be cancelled
+        IOAllowPowerChange(sleepRootPort, Int(bitPattern: messageArgument))
+
+    case 0xe0000280: // kIOMessageSystemWillSleep
         log.info("System will sleep — suspending watchdog")
         watchdog.suspend()
         // Defense-in-depth: inhibit charging if app synced the setting.
-        // Runs in kernel power transition context — fires even if app's XPC
-        // call didn't complete before macOS suspended the app process.
+        // Runs in the helper's power notification callback, even if the app's
+        // XPC request did not complete before the app was suspended.
         delegate.inhibitChargingOnSleep()
         // Allow sleep to proceed
         let arg = Int(Int(bitPattern: messageArgument))

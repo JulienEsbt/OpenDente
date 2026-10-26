@@ -15,6 +15,16 @@ import Foundation
     /// Reset all SMC charging keys to defaults (enable charging, stop discharge)
     func resetToDefaults(reply: @escaping (Bool, String?) -> Void)
 
+    /// Experimental native ceiling. Never cuts adapter power.
+    func setNativeChargeLimit(percent: Int, reply: @escaping (Bool, String?) -> Void)
+
+    /// Deliberate storage preparation only: fixed native target 50%, permitted
+    /// below the current level. Authenticated and journaled like ordinary limits.
+    func prepareStorage(reply: @escaping (Bool, String?) -> Void)
+
+    /// Explicit return to the user-selected cap. Fresh internal-battery/AC checks.
+    func dischargeToLimit(percent: Int, reply: @escaping (Bool, String?) -> Void)
+
     /// Heartbeat from app to keep watchdog alive
     func heartbeat(reply: @escaping (Bool) -> Void)
 
@@ -32,8 +42,8 @@ import Foundation
 
     /// Sync sleep settings so the helper can independently inhibit charging on sleep.
     /// Defense-in-depth: if the app's XPC inhibit call doesn't complete before macOS
-    /// suspends the process, the helper's IOKit sleep callback fires in kernel context
-    /// and can inhibit charging as a backup.
+    /// suspends the process, the helper receives a separate IOKit sleep notification
+    /// in its own process and can inhibit charging as a backup.
     /// `sleepLEDColor`: LED color to set when inhibiting on sleep (0xFF = don't touch LED).
     func syncSleepSettings(stopChargingWhenSleeping: Bool, sleepLEDColor: UInt8, reply: @escaping (Bool) -> Void)
 }

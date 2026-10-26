@@ -8,19 +8,19 @@ final class NotificationServiceTests: XCTestCase {
     private var service: NotificationService!
     private var settings: AppSettings!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
         service = NotificationService()
         settings = AppSettings(defaults: defaults)
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         UserDefaults.standard.removePersistentDomain(forName: suiteName)
         service = nil
         settings = nil
-        super.tearDown()
+        try await super.tearDown()
     }
 
     // MARK: - Gating

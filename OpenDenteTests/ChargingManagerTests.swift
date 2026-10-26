@@ -7,6 +7,9 @@ import XCTest
 /// Completes with success by default. Set `shouldFail` to simulate helper failures.
 final class MockChargingControl: ChargingControl, @unchecked Sendable {
     enum Call: Equatable, Sendable {
+        case nativeLimit(Int)
+        case prepareStorage
+        case dischargeToLimit(Int)
         case enableCharging
         case inhibitCharging
         case forceDischarge(enable: Bool)
@@ -20,7 +23,23 @@ final class MockChargingControl: ChargingControl, @unchecked Sendable {
     func clearCalls() { calls.removeAll() }
 
     /// If true, completion reports failure (simulates helper crash/disconnect)
+    var shouldFailLED = false
     var shouldFail = false
+
+    func dischargeToLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
+        calls.append(.dischargeToLimit(percent))
+        completion?(!shouldFail, shouldFail ? "return mock failure" : nil)
+    }
+
+    func prepareStorage(completion: (@Sendable (Bool, String?) -> Void)?) {
+        calls.append(.prepareStorage)
+        completion?(!shouldFail, shouldFail ? "storage mock failure" : nil)
+    }
+
+    func setNativeChargeLimit(percent: Int, completion: (@Sendable (Bool, String?) -> Void)?) {
+        calls.append(.nativeLimit(percent))
+        completion?(!shouldFail, shouldFail ? "native mock failure" : nil)
+    }
 
     func enableCharging(completion: (@Sendable (Bool, String?) -> Void)?) {
         calls.append(.enableCharging)
@@ -56,7 +75,7 @@ final class MockChargingControl: ChargingControl, @unchecked Sendable {
 
     func setMagSafeLED(color: UInt8, completion: (@Sendable (Bool, String?) -> Void)?) {
         calls.append(.setMagSafeLED(color: color))
-        completion?(true, nil)
+        completion?(!shouldFailLED, shouldFailLED ? "LED mock failure" : nil)
     }
 
     nonisolated func resetToDefaultsSync(timeout: TimeInterval) {}
@@ -145,8 +164,8 @@ final class ChargingManagerTests: XCTestCase {
     private var settings: AppSettings!
     private var sleepMock: MockSleepAssertionControl!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
         settings = AppSettings(defaults: defaults)
@@ -165,13 +184,13 @@ final class ChargingManagerTests: XCTestCase {
         settings.disableSleepUntilChargeLimit = false
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         UserDefaults.standard.removePersistentDomain(forName: suiteName)
         manager = nil
         mock = nil
         sleepMock = nil
         settings = nil
-        super.tearDown()
+        try await super.tearDown()
     }
 
     // =========================================================================
@@ -776,10 +795,9 @@ final class ChargingManagerTests: XCTestCase {
         XCTAssertEqual(manager.mode, .onBattery)
     }
 
-    func testTopUp_lostAfterHeatProtection() {
-        // This documents CURRENT behavior: Top Up is lost after heat protection.
-        // Heat protection overrides topUp → after cooldown, normal logic resumes,
-        // mode is no longer .topUp so charging goes to paused/sailing/charging.
+    func testTopUp_resumesAfterHeatProtection() {
+        // The temporary target survives a thermal pause; heat protection keeps
+        // priority until the complete cooldown has elapsed.
         settings.heatProtectionEnabled = true
         settings.heatProtectionTemp = 35.0
 
@@ -794,11 +812,10 @@ final class ChargingManagerTests: XCTestCase {
         manager.heatProtectionTimer = Date().addingTimeInterval(-301)
         manager.evaluateState(makeBatteryState(percentage: 85, temperature: 33.0))
 
-        // Top Up is lost — mode goes to paused (85% > 80% limit)
-        XCTAssertEqual(manager.mode, .paused,
-            "Known behavior: Top Up is lost after heat protection. " +
-            "User must restart Top Up manually.")
-        XCTAssertNotEqual(manager.mode, .topUp)
+        XCTAssertEqual(manager.mode, .topUp,
+            "Top Up should resume after the thermal cooldown without another user action")
+        XCTAssertTrue(manager.topUpRequested)
+        XCTAssertEqual(settings.chargeLimit, 80, "The saved charge limit stays unchanged")
     }
 
     func testTopUp_doubleStart_noExtraEnableCall() {

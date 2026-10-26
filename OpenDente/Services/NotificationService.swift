@@ -76,23 +76,23 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         let content = UNMutableNotificationContent()
         switch event {
         case .chargeLimitReached:
-            content.title = "Charge Limit Reached"
-            content.body = "Battery has reached your charge limit. Charging paused."
+            content.title = String(localized: "Plafond atteint", bundle: L10n.bundle)
+            content.body = String(localized: "Le plafond est atteint. L’arrêt de la charge a été demandé.", bundle: L10n.bundle)
         case .topUpComplete:
-            content.title = "Top Up Complete"
-            content.body = "Battery is fully charged at 100%."
+            content.title = String(localized: "Charge à 100 % terminée", bundle: L10n.bundle)
+            content.body = String(localized: "La batterie indique 100 %. Le plafond habituel reviendra au débranchement.", bundle: L10n.bundle)
         case .heatProtection:
-            content.title = "Heat Protection Active"
-            content.body = "Charging paused due to high battery temperature."
+            content.title = String(localized: "Protection thermique active", bundle: L10n.bundle)
+            content.body = String(localized: "L’arrêt de la charge a été demandé : la température de la batterie est élevée.", bundle: L10n.bundle)
         case .dischargeComplete:
-            content.title = "Discharge Complete"
-            content.body = "Battery has discharged to your charge limit."
+            content.title = String(localized: "Décharge terminée", bundle: L10n.bundle)
+            content.body = String(localized: "La batterie a atteint le plafond demandé.", bundle: L10n.bundle)
         case .systemChargeLimitConflict:
-            content.title = "System Charge Limit Active"
-            content.body = "macOS Charge Limit is preventing charging. Lower it in System Settings > Battery."
+            content.title = String(localized: "Limite de macOS active", bundle: L10n.bundle)
+            content.body = String(localized: "La limite de macOS bloque la charge demandée. Vérifie Réglages Système > Batterie.", bundle: L10n.bundle)
         case .inhibitFailed:
-            content.title = "Charging Control Failed"
-            content.body = "Unable to stop charging. Try unplugging and re-plugging the charger."
+            content.title = String(localized: "Arrêt de charge non confirmé", bundle: L10n.bundle)
+            content.body = String(localized: "La batterie indique toujours une charge malgré les tentatives. Vérifie le chargeur et les réglages de batterie.", bundle: L10n.bundle)
         }
         content.sound = .default
 

@@ -10,6 +10,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
+    SWIFT_EMIT_LOC_STRINGS: YES
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     SWIFT_STRICT_CONCURRENCY: minimal
     SWIFT_UPCOMING_FEATURE_GLOBAL_ACTOR_ISOLATED_TYPES_USABILITY: false
@@ -25,18 +26,20 @@ targets:
         excludes:
           - Resources/Assets.xcassets/AppIcon.appiconset
       - path: Shared
-    resources:
-      - path: OpenDente/Resources/Assets.xcassets
+      - path: LICENSE
+        buildPhase: resources
+      - path: THIRD-PARTY-NOTICES.md
+        buildPhase: resources
     settings:
       base:
         INFOPLIST_FILE: OpenDente/Resources/Info.plist
         CODE_SIGN_ENTITLEMENTS: OpenDente/Resources/OpenDente.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: com.opendente.app
         PRODUCT_NAME: OpenDente
-        MARKETING_VERSION: "0.1.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.8.0"
+        CURRENT_PROJECT_VERSION: "16"
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: P4D7A49H95
+        DEVELOPMENT_TEAM: ""
         ENABLE_HARDENED_RUNTIME: true
         COMBINE_HIDPI_IMAGES: true
     entitlements:
@@ -46,10 +49,13 @@ targets:
     postBuildScripts:
       - name: "Bundle Helper & Stamp Version"
         script: |
-          # Stamp build number with git commit hash
+          # Keep CFBundleVersion numeric; source archives may have no .git folder.
           PLIST="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
-          GIT_HASH=$(git -C "${SRCROOT}" rev-parse --short HEAD)
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GIT_HASH}" "${PLIST}"
+          GIT_HASH=$(git -C "${SRCROOT}" rev-parse --short HEAD 2>/dev/null || true)
+          if [ -n "${GIT_HASH}" ]; then
+            /usr/libexec/PlistBuddy -c "Delete :OpenDenteSourceRevision" "${PLIST}" 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :OpenDenteSourceRevision string ${GIT_HASH}" "${PLIST}"
+          fi
 
           # Copy helper tool into app bundle
           HELPER_TOOLS_DIR="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Library/HelperTools"
@@ -80,7 +86,7 @@ targets:
         PRODUCT_NAME: com.opendente.helper
         SKIP_INSTALL: true
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: P4D7A49H95
+        DEVELOPMENT_TEAM: ""
         ENABLE_HARDENED_RUNTIME: true
         CODE_SIGN_ENTITLEMENTS: OpenDenteHelper/OpenDenteHelper.entitlements
 
@@ -96,4 +102,21 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.opendente.tests
         GENERATE_INFOPLIST_FILE: true
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: P4D7A49H95
+        DEVELOPMENT_TEAM: ""
+
+schemes:
+  OpenDente:
+    build:
+      targets:
+        OpenDente: all
+        OpenDenteTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      environmentVariables:
+        OPENDENTE_TESTING: "1"
+      targets:
+        - OpenDenteTests
+    archive:
+      config: Release

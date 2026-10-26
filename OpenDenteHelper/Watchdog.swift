@@ -15,9 +15,18 @@ final class Watchdog: @unchecked Sendable {
     private var isSuspended = false
     private let queue = DispatchQueue(label: "com.opendente.helper.watchdog")
     private let resetAction: @Sendable () -> Void
+    private let retryPendingRestoration: @Sendable () -> Void
+    private let needsRecovery: @Sendable () -> Bool
+    private let hasPendingRestoration: @Sendable () -> Bool
 
-    init(resetAction: @escaping @Sendable () -> Void) {
+    init(needsRecovery: @escaping @Sendable () -> Bool,
+         hasPendingRestoration: @escaping @Sendable () -> Bool,
+         retryPendingRestoration: (@Sendable () -> Void)? = nil,
+         resetAction: @escaping @Sendable () -> Void) {
+        self.needsRecovery = needsRecovery
+        self.hasPendingRestoration = hasPendingRestoration
         self.resetAction = resetAction
+        self.retryPendingRestoration = retryPendingRestoration ?? resetAction
     }
 
     deinit {
@@ -97,18 +106,16 @@ final class Watchdog: @unchecked Sendable {
 
     private func check() {
         let elapsed = Date().timeIntervalSince(lastHeartbeat)
-
-        if elapsed > 60 {
-            log.info("Heartbeat gap: \(Int(elapsed), privacy: .public)s since last heartbeat")
-        }
-
-        guard elapsed > HelperConstants.watchdogTimeout else { return }
-        guard HelperState.wasChargingInhibited() else {
-            log.debug("Watchdog: timeout but charging not inhibited, ignoring")
+        // A stale client always releases all owned controls, including when an
+        // unrelated subsystem has a pending restore.
+        if elapsed > HelperConstants.watchdogTimeout, needsRecovery() {
+            log.warning("Watchdog fired: no heartbeat for \(Int(elapsed), privacy: .public)s, resetting charging")
+            resetAction()
             return
         }
-
-        log.warning("Watchdog fired: no heartbeat for \(Int(elapsed), privacy: .public)s, resetting charging")
-        resetAction()
+        if hasPendingRestoration() {
+            log.warning("Retrying only incomplete restores while client remains alive")
+            retryPendingRestoration()
+        }
     }
 }

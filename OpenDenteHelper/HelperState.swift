@@ -16,46 +16,42 @@ enum HelperState {
     }
 
     /// Ensure the state directory exists with root-only permissions (0700)
-    static func ensureDirectory() {
+    static func ensureDirectory() throws {
         let fm = FileManager.default
         if !fm.fileExists(atPath: dir) {
-            do {
-                try fm.createDirectory(
-                    atPath: dir,
-                    withIntermediateDirectories: true,
-                    attributes: [.posixPermissions: 0o700]
-                )
-                log.info("Created state directory: \(dir, privacy: .public)")
-            } catch {
-                log.error("Failed to create state directory: \(error.localizedDescription, privacy: .public)")
-            }
+            try fm.createDirectory(
+                atPath: dir,
+                withIntermediateDirectories: false,
+                attributes: [.posixPermissions: 0o700]
+            )
         }
-        // Always enforce permissions — createDirectory ignores attributes if dir exists,
-        // and a previous version or malicious process could have set wrong permissions.
-        do {
-            try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: dir)
-        } catch {
-            log.error("Failed to enforce directory permissions: \(error.localizedDescription, privacy: .public)")
+        // Do not chmod or write through an existing user-owned directory/symlink.
+        let attributes = try fm.attributesOfItem(atPath: dir)
+        guard attributes[.type] as? FileAttributeType == .typeDirectory,
+              (attributes[.ownerAccountID] as? NSNumber)?.uint32Value == 0,
+              let permissions = attributes[.posixPermissions] as? NSNumber,
+              permissions.intValue & 0o022 == 0 else {
+            throw ChargingHardwareController.Failure(message: "Unsafe helper state directory")
         }
+        try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: dir)
     }
 
     /// Write the current charging state atomically
-    static func write(_ state: ChargingState) {
-        ensureDirectory()
-        do {
-            try state.rawValue.write(
-                toFile: path,
-                atomically: true,
-                encoding: .utf8
-            )
-            log.info("State written: \(state.rawValue, privacy: .public)")
-        } catch {
-            log.error("Failed to write state: \(error.localizedDescription, privacy: .public)")
+    static func write(_ state: ChargingState, to path: String = HelperConstants.stateFilePath) throws {
+        try ensureDirectory()
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: path) {
+            guard attributes[.type] as? FileAttributeType == .typeRegular,
+                  (attributes[.ownerAccountID] as? NSNumber)?.uint32Value == 0 else {
+                throw ChargingHardwareController.Failure(message: "Unsafe helper state file")
+            }
         }
+        try state.rawValue.write(toFile: path, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: path)
+        log.info("State written: \(state.rawValue, privacy: .public)")
     }
 
     /// Read the last known charging state (returns nil if file doesn't exist)
-    static func read() -> ChargingState? {
+    static func read(from path: String = HelperConstants.stateFilePath) -> ChargingState? {
         guard let contents = try? String(contentsOfFile: path, encoding: .utf8) else {
             return nil
         }
@@ -64,11 +60,21 @@ enum HelperState {
 
     /// Check if the helper previously had charging inhibited (crash recovery)
     static func wasChargingInhibited() -> Bool {
-        read() == .inhibited
+        // An existing unreadable/corrupt marker must not silently skip recovery.
+        FileManager.default.fileExists(atPath: path) && read() != .normal
+    }
+
+    static func writeLEDRecovery(_ required: Bool) throws {
+        try write(required ? .inhibited : .normal, to: HelperConstants.ledStateFilePath)
+    }
+
+    static func wasLEDOverridden() -> Bool {
+        FileManager.default.fileExists(atPath: HelperConstants.ledStateFilePath)
+            && read(from: HelperConstants.ledStateFilePath) != .normal
     }
 
     /// Clear the state file (set to normal)
-    static func clear() {
-        write(.normal)
+    static func clear() throws {
+        try write(.normal)
     }
 }

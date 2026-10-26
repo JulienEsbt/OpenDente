@@ -7,17 +7,17 @@ final class AppSettingsTests: XCTestCase {
     private let suiteName = "com.opendente.tests.settings"
     private var settings: AppSettings!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
         settings = AppSettings(defaults: defaults)
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         UserDefaults.standard.removePersistentDomain(forName: suiteName)
         settings = nil
-        super.tearDown()
+        try await super.tearDown()
     }
 
     // MARK: - Charge Limit Validation
@@ -59,9 +59,23 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.sailingRange, 2)
     }
 
-    func testSailingRange_clampsToMax25() {
-        settings.sailingRange = 50
-        XCTAssertEqual(settings.sailingRange, 25)
+    func testSailingRange_clampsToMax90() {
+        settings.sailingRange = 150
+        XCTAssertEqual(settings.sailingRange, 90)
+    }
+
+    func testResumeAt20WithLimit80IsAvailableAndPersists() {
+        settings.chargeLimit = 80
+        settings.sailingRange = 60
+        XCTAssertEqual(settings.sailingLowerBound, 20)
+        let reloaded = AppSettings(defaults: settings.defaults)
+        XCTAssertEqual(reloaded.sailingLowerBound, 20)
+    }
+
+    func testThermalDefaultIsAnAppPrecautionAt40AndDoesNotReplaceSavedValues() {
+        XCTAssertEqual(settings.heatProtectionTemp, 40)
+        settings.heatProtectionTemp = 35
+        XCTAssertEqual(AppSettings(defaults: settings.defaults).heatProtectionTemp, 35)
     }
 
     // MARK: - Sailing Lower Bound
