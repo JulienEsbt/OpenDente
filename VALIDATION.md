@@ -124,7 +124,7 @@ Les preuves de cette livraison sont regroupées avec les précédentes dans l’
 
 ## Historique — 0.6.1 (11), lancement discret et nettoyage
 
-App unique installée dans **`/Applications/OpenDente.app`**, révision du binaire `fcfd798e17d68b94bed61bcf5a908dcd3dd6c101`. Le dépôt et tout l’historique restent dans `/Users/julienesbt/Dev/OpenDente`. La politique de charge n’a pas changé. Le service **1.7.0** déjà signé est réutilisé à l’identique : aucune modification des sources du service ou partagées dans ce correctif. La signature stricte de l’app et du service est valide après déplacement, paquet installé identique à la Release préparée.
+App unique installée dans **`/Applications/OpenDente.app`**, révision du binaire `fcfd798e17d68b94bed61bcf5a908dcd3dd6c101`. Le dépôt et tout l’historique restent dans `<repo>/OpenDente`. La politique de charge n’a pas changé. Le service **1.7.0** déjà signé est réutilisé à l’identique : aucune modification des sources du service ou partagées dans ce correctif. La signature stricte de l’app et du service est valide après déplacement, paquet installé identique à la Release préparée.
 
 ### Contrôles effectués
 
@@ -147,7 +147,7 @@ Une recherche finale dans Applications, Applications utilisateur, Dev, Codex, T�
 
 ## Historique — livraison 0.6.0 (10), 21 octobre 2026
 
-Cette section remplace l’état courant de 0.5.0 ci-dessous ; les essais précédents restent conservés comme historique. App installée dans `/Users/julienesbt/Applications/OpenDente.app`, service **1.7.0**, révision du build **27136a4864d8d0bb7e3489a56cec33141e26afac**. Les commits de compte rendu ultérieurs ne changent pas les binaires. MacBook Air M3, macOS 27.2 ; Xcode 27.1, SDK 27.0 et XcodeGen 2.46.0.
+Cette section remplace l’état courant de 0.5.0 ci-dessous ; les essais précédents restent conservés comme historique. App installée dans `~/Applications/OpenDente.app`, service **1.7.0**, révision du build **27136a4864d8d0bb7e3489a56cec33141e26afac**. Les commits de compte rendu ultérieurs ne changent pas les binaires. MacBook Air M3, macOS 27.2 ; Xcode 27.1, SDK 27.0 et XcodeGen 2.46.0.
 
 ### Contrôles logiciels
 
@@ -206,7 +206,7 @@ Le maintien sur secteur n’impose pas de cycles répétés : un courant de batt
 
 ### Livraison 0.5.0 (9), 21 octobre 2026
 
-Cette section remplace l’état courant de 0.4.1 ci-dessous ; les observations anciennes sont conservées comme historique. App installée dans `/Users/julienesbt/Applications/OpenDente.app`, service **1.6.1**, sources de l’app `9d5d5cf266e7b639c9634ded151e920fe8b0a81f`. Le code du service et l’app gardent le même certificat Apple Development, empreinte publique `DDAA721FBC3F2B656F612F4E5988519B593F6DA9`. Aucun export de clé privée, changement d’authentification ou contournement de signature.
+Cette section remplace l’état courant de 0.4.1 ci-dessous ; les observations anciennes sont conservées comme historique. App installée dans `~/Applications/OpenDente.app`, service **1.6.1**, sources de l’app `9d5d5cf266e7b639c9634ded151e920fe8b0a81f`. Le code du service et l’app gardent le même certificat Apple Development, empreinte publique `DDAA721FBC3F2B656F612F4E5988519B593F6DA9`. Aucun export de clé privée, changement d’authentification ou contournement de signature.
 
 ### Compilation et tests
 
@@ -310,7 +310,7 @@ La nouvelle suite 0.4.1 réussit **339/339** (`build/validation/daily-xctest.log
 
 ## Configuration laissée à la fin de la séance
 
-OpenDente **0.4.1 (7)** est installé et lancé dans `/Users/julienesbt/Applications/OpenDente.app`. Contrôle natif activé, plafond habituel **80 %**, reprise sous **70 %**, pause thermique activée à **40 °C**, prévention de veille automatique désactivée, ouverture à la connexion activée. Les choix personnels d’affichage de la barre des menus sont conservés. Le niveau réel reste 98 % après l’essai : maintien au niveau courant, puis baisse naturelle à l’usage ; aucun ordre de décharge vers 80 %.
+OpenDente **0.4.1 (7)** est installé et lancé dans `~/Applications/OpenDente.app`. Contrôle natif activé, plafond habituel **80 %**, reprise sous **70 %**, pause thermique activée à **40 °C**, prévention de veille automatique désactivée, ouverture à la connexion activée. Les choix personnels d’affichage de la barre des menus sont conservés. Le niveau réel reste 98 % après l’essai : maintien au niveau courant, puis baisse naturelle à l’usage ; aucun ordre de décharge vers 80 %.
 
 Le build livré porte `OpenDenteSourceRevision=0955eec21591de2d4bbfe86cda702b1319af76f8`. L’app installée et le build livré sont identiques fichier par fichier. Le service embarqué est identique au binaire déjà installé : aucune nouvelle installation privilégiée nécessaire. Les deux signatures sont valides avec le même certificat public ; l’app reste non notarifiée.
 
@@ -329,7 +329,7 @@ Ces observations de charge concernent le service 1.5.1 dans l’app 0.3.1. Le m�
 
 ## Interface et configuration avant la séance de l’après-midi
 
-La version 0.4.0 est installée dans `/Users/julienesbt/Applications/OpenDente.app` avec sauvegarde de la précédente. Dans la section Charge, le curseur de reprise a été placé à 20 % et la température à 41 °C, puis les valeurs finales ont été appliquées : plafond 80 %, reprise sous 75 %, pause supplémentaire activée à 40 °C. Les champs sont actifs ; le texte suit les valeurs. L’ouverture à la connexion est enregistrée : l’interface confirme le statut enabled de SMAppService.mainApp, pas seulement une préférence locale.
+La version 0.4.0 est installée dans `~/Applications/OpenDente.app` avec sauvegarde de la précédente. Dans la section Charge, le curseur de reprise a été placé à 20 % et la température à 41 °C, puis les valeurs finales ont été appliquées : plafond 80 %, reprise sous 75 %, pause supplémentaire activée à 40 °C. Les champs sont actifs ; le texte suit les valeurs. L’ouverture à la connexion est enregistrée : l’interface confirme le statut enabled de SMAppService.mainApp, pas seulement une préférence locale.
 
 Avec le build 5 de 0.4.0 et le service 1.5.1, le maintien 99 % est de nouveau observé chargeur branché, IsCharging=No et courant nul. Un client ad hoc est rejeté pendant que la véritable app est connectée. Le build 6 embarque la garde de sélection interne et exige le service 1.5.2.
 
