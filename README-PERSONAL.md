@@ -6,7 +6,7 @@ Cette édition contient les sources modifiées, les tests et un script de compil
 
 ## Installation quotidienne et lancement discret
 
-L’application unique est installée dans `/Applications/OpenDente.app`. Les sources et tout l’historique Git restent dans `/Users/julienesbt/Dev/OpenDente`. L’ouverture à la connexion se règle dans Général et reflète l’enregistrement effectif auprès de macOS.
+L’application unique est installée dans `/Applications/OpenDente.app`. Les sources et tout l’historique Git restent dans `<repo>/OpenDente`. L’ouverture à la connexion se règle dans Général et reflète l’enregistrement effectif auprès de macOS.
 
 Chaque lancement commence discrètement dans la barre des menus, y compris après une mise à jour. La fenêtre des réglages n’est pas restaurée automatiquement. Fermer le panneau ou les réglages laisse le suivi actif. Cliquer sur l’icône ouvre le panneau ; rouvrir l’app déjà lancée depuis Applications permet aussi de retrouver le panneau. Seule l’action Quitter arrête le processus et demande la restitution des réglages Apple.
 

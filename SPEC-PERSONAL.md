@@ -1,6 +1,6 @@
 # OpenDente — édition personnelle 0.8.0
 
-Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6a75f50df8` ; reprise personnelle initiale `0f53a5e`. Développement local dans `/Users/julienesbt/Dev/OpenDente`, branche `main`, fork JulienEsbt/OpenDente. Historique, licence et crédits conservés.
+Base GPL-3.0 : killerk3emstar/OpenDente, commit `06c5a8199f5c0657374e667073b3aa6a75f50df8` ; reprise personnelle initiale `0f53a5e`. Développement local dans `<repo>/OpenDente`, branche `main`, fork JulienEsbt/OpenDente. Historique, licence et crédits conservés.
 
 ## Fonctions livrées
 
