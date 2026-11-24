@@ -1,0 +1,24 @@
+[
+  {
+    "file": "history-fr-dark.png",
+    "source": "Capture d’écran 2026-11-24 à 21.26.17.png",
+    "version": "0.9.1",
+    "language": "fr",
+    "appearance": "dark",
+    "width": 732,
+    "height": 840,
+    "bytes": 185693,
+    "sha256": "780e9dd8aa6eae0b7fb04de9382648578df032b0b15191cdcb0345131431dca4"
+  },
+  {
+    "file": "history-fr-light.png",
+    "source": "Capture d’écran 2026-11-24 à 21.26.30.png",
+    "version": "0.9.1",
+    "language": "fr",
+    "appearance": "light",
+    "width": 666,
+    "height": 774,
+    "bytes": 120940,
+    "sha256": "9305888df8d976798fd20f2d63ed8f96a88cf52975e9043dfc4d5a00498f3276"
+  }
+]

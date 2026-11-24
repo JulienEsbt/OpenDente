@@ -33,7 +33,11 @@ Réglages → **Historique** affiche le niveau macOS, la température et les der
 
 La collecte réutilise les mesures existantes et ne change ni le service ni la politique de charge. Aucun envoi réseau ou identifiant matériel ; stockage dans `~/Library/Application Support/OpenDente/BatteryHistory.json`, conservé entre relances et purgé à la reprise de collecte. **Désactiver** supprime les relevés ; **Effacer l’historique** permet de repartir à zéro. Aucune collecte pendant la veille, l’arrêt ou lorsque l’app est quittée.
 
-Les captures ci-dessous restent celles de 0.8.0 ; elles seront renouvelées séparément.
+<p align="center">
+  <a href="docs/images/history-fr-dark.png"><img src="docs/images/history-fr-dark.png" width="350" alt="Historique français en mode sombre : collecte locale, conservation sur sept jours, niveau et température"></a>
+  <a href="docs/images/history-fr-light.png"><img src="docs/images/history-fr-light.png" width="350" alt="Historique français en mode clair : courbe de température, derniers changements et effacement"></a>
+</p>
+<p align="center"><sub>OpenDente 0.9.1 · Historique en français · Modes sombre et clair · Cliquer pour agrandir.</sub></p>
 
 ## Fonctionnalités
 
@@ -59,7 +63,7 @@ L’affichage compact place le pourcentage **dans la batterie**, avec une jauge 
 
 ## Captures d’écran
 
-Toutes les vues ci-dessous proviennent de **la version 0.8.0**, en français ou en anglais. Les couleurs s’adaptent à l’apparence du Mac ; la langue se choisit dans **Réglages → Général → Langue de l’interface**. Le changement est immédiat et conserve les réglages de charge.
+Les captures d’historique plus haut montrent **la version 0.9.1**. La galerie de panneaux et réglages ci-dessous provient de **la version 0.8.0**, en français ou en anglais. Les couleurs s’adaptent à l’apparence du Mac ; la langue se choisit dans **Réglages → Général → Langue de l’interface**. Le changement est immédiat et conserve les réglages de charge.
 
 <p align="center">
   <a href="docs/images/general-fr-dark.png"><img src="docs/images/general-fr-dark.png" width="360" alt="Général en français et mode sombre : langue automatique, démarrage à la connexion et service connecté"></a>

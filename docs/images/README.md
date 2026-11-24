@@ -1,6 +1,21 @@
 # Screenshots / Captures d’écran
 
-## Current gallery — OpenDente 0.8.0 (16)
+## History additions — OpenDente 0.9.1 (18)
+
+Two real screenshots supplied by **JulienEsbt on 24 November 2026**, showing the History settings in French. Copied byte for byte, with no retouching, cropping or fabricated values. They supplement the existing gallery.
+
+| Repository file | Capture time (Europe/Paris) | Dimensions | Appearance | View |
+|---|---|---|---|---|
+| `history-fr-dark.png` | 21.26.17 | 732 × 840 | dark | Local collection, seven-day retention, level and temperature |
+| `history-fr-light.png` | 21.26.30 | 666 × 774 | light | Temperature, recent state changes and clear-history control |
+
+Both images show real accumulated data over part of an evening; choosing seven-day retention does not mean seven days have already been collected. Their different scroll positions show complementary parts of the same tab. The charts do not prove an immediate hardware charging cutoff.
+
+Stable filenames are suitable for portfolio reuse. [history-manifest.json](history-manifest.json) records source filenames, dimensions and SHA-256 checksums without local absolute paths. The owner’s source images remain untouched.
+
+Les deux nouvelles captures de l’historique 0.9.1, en français et en modes sombre/clair, complètent la galerie existante. Elles montrent des mesures réelles accumulées sur une partie de soirée, avec des positions de défilement complémentaires.
+
+## Panel and settings gallery — OpenDente 0.8.0 (16)
 
 Sixteen real screenshots supplied by **JulienEsbt on 26 October 2026**, captured on a MacBook Air M3 running macOS 27.2. The English and French READMEs show the main panel in their own language, in both light and dark appearance. The settings gallery also demonstrates the language picker, charging policy, storage mode, thermal controls, MagSafe signals, compact display and offline guide.
 
