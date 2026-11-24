@@ -42,6 +42,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         battery.start()
         charging.start()
 
+        battery.$batteryState.combineLatest(charging.$mode)
+            .receive(on: RunLoop.main)
+            .sink { state, mode in
+                guard state != .unknown else { return }
+                BatteryHistoryStore.shared.record(percentage: state.percentage, temperature: state.temperature,
+                    mode: mode, plugged: state.isPluggedIn)
+            }.store(in: &cancellables)
+
         setupStatusItem()
         setupPopover()
         setupEventMonitor()

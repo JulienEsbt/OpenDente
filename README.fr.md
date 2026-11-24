@@ -10,13 +10,13 @@ Français et anglais · Clair et sombre · Interface native SwiftUI
 
 [English](README.md) · **Français**
 
-[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibilité) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.8.0](https://img.shields.io/badge/version-0.8.0-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/licence-GPL--3.0-24292f)](LICENSE)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibilité) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.9.1](https://img.shields.io/badge/version-0.9.1-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/licence-GPL--3.0-24292f)](LICENSE)
 
-[Fonctionnalités](#fonctionnalités) · [Captures](#captures-décran) · [Installation](#compiler-et-lancer) · [Documentation](#documentation)
+[Fonctionnalités](#fonctionnalités) · [Historique local](#historique-local--091) · [Captures](#captures-décran) · [Installation](#compiler-et-lancer) · [Documentation](#documentation)
 
 </div>
 
-Une application native SwiftUI pour la batterie du Mac, maintenue par [JulienEsbt](https://github.com/JulienEsbt) à partir de [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). Cette édition ajoute une interface en français et en anglais, des profils quotidiens, la préparation au stockage, un affichage compact et un moteur natif de charge expérimental, tout en conservant l’historique et les crédits du projet d’origine.
+Une application native SwiftUI pour la batterie du Mac, maintenue par [JulienEsbt](https://github.com/JulienEsbt) à partir de [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). Cette édition ajoute une interface en français et en anglais, des profils quotidiens, la préparation au stockage, un affichage compact, un historique local et un moteur natif de charge expérimental, tout en conservant l’historique et les crédits du projet d’origine.
 
 <p align="center">
   <a href="docs/images/panel-fr-light.png"><img src="docs/images/panel-fr-light.png" width="330" alt="Panneau français en mode clair : profils, stockage à 50 % et charge ponctuelle complète"></a>
@@ -26,6 +26,14 @@ Une application native SwiftUI pour la batterie du Mac, maintenue par [JulienEsb
 
 > [!IMPORTANT]
 > **Le moteur natif de charge est expérimental.** Il utilise des interfaces privées Apple et a été testé sur un MacBook Air M3 sous macOS 27.2. La compatibilité et les délais varient. Le dépôt fournit les sources pour une signature locale, sans installateur public notarifié. Lire les [limites](#compatibilité) avant d’activer le contrôle de charge.
+
+## Historique local — 0.9.1
+
+Réglages → **Historique** affiche le niveau macOS, la température et les derniers changements de mode/branchement. Au choix **24 heures ou 7 jours** (par défaut), avec un relevé par minute plus les changements d’état (au plus 2880 points en mode 24 heures ou 20160 en mode 7 jours). Réduire la durée efface les anciens relevés ; l’allonger ne les recrée pas. Les interruptions de mesure restent des trous, sans interpolation ; les pauses thermiques signalent un état demandé par l’app, pas une preuve de coupure immédiate.
+
+La collecte réutilise les mesures existantes et ne change ni le service ni la politique de charge. Aucun envoi réseau ou identifiant matériel ; stockage dans `~/Library/Application Support/OpenDente/BatteryHistory.json`, conservé entre relances et purgé à la reprise de collecte. **Désactiver** supprime les relevés ; **Effacer l’historique** permet de repartir à zéro. Aucune collecte pendant la veille, l’arrêt ou lorsque l’app est quittée.
+
+Les captures ci-dessous restent celles de 0.8.0 ; elles seront renouvelées séparément.
 
 ## Fonctionnalités
 
@@ -39,6 +47,7 @@ Une application native SwiftUI pour la batterie du Mac, maintenue par [JulienEsb
 | **Pause thermique supplémentaire** | Demander une pause à la température interne de batterie choisie. Reprendre après une baisse de 2 °C et au moins cinq minutes sans dépasser le seuil. |
 | **Signaux MagSafe** | Associer vert, orange ou éteint, clignotements lents et alternance aux états de charge. Des aperçus de dix secondes permettent de vérifier chaque signal. |
 | **Langue et apparence** | Suivre la langue du Mac ou choisir Français/English dans Général. Commandes, guide et notifications sont traduits ; les couleurs suivent les modes clair et sombre. |
+| **Historique local** | Niveau, température et changements d’état sur 24 heures ou 7 jours. Stockage local, interruptions de mesure préservées, effacement et désactivation. |
 | **Arrière-plan discret** | Démarrer à la connexion directement dans la barre des menus. Fermer une fenêtre laisse l’app active ; ouvrir le panneau seulement au besoin. |
 
 L’affichage compact place le pourcentage **dans la batterie**, avec une jauge séparée et des indicateurs facultatifs de température, puissance et mode. La présentation classique reste disponible. Le panneau permet de choisir ses mesures, de consulter les flux d’énergie, de configurer les notifications, de rechercher dans le guide hors ligne et d’exporter un diagnostic local.

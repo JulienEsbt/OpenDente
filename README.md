@@ -10,13 +10,13 @@ French & English · Light & dark · Native SwiftUI
 
 **English** · [Français](README.fr.md)
 
-[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibility) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.8.0](https://img.shields.io/badge/version-0.8.0-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/license-GPL--3.0-24292f)](LICENSE)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-24292f?logo=apple)](#compatibility) [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](project.yml) [![Version 0.9.1](https://img.shields.io/badge/version-0.9.1-299da4)](CHANGELOG-PERSONAL.md) [![GPL v3](https://img.shields.io/badge/license-GPL--3.0-24292f)](LICENSE)
 
-[Features](#features) · [Screenshots](#screenshots) · [Build & run](#build-and-run) · [Documentation](#documentation)
+[Features](#features) · [Local history](#local-history--091) · [Screenshots](#screenshots) · [Build & run](#build-and-run) · [Documentation](#documentation)
 
 </div>
 
-A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://github.com/JulienEsbt) as a fork of [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). This edition adds French and English interfaces, everyday profiles, storage preparation, compact status and an experimental native charge backend, while preserving the original project’s history and credits.
+A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://github.com/JulienEsbt) as a fork of [killerk3emstar/OpenDente](https://github.com/killerk3emstar/OpenDente). This edition adds French and English interfaces, everyday profiles, storage preparation, compact status, local battery history and an experimental native charge backend, while preserving the original project’s history and credits.
 
 <p align="center">
   <a href="docs/images/panel-en-light.png"><img src="docs/images/panel-en-light.png" width="330" alt="English panel in light mode: daily profiles, storage at 50 percent and one-off full charge"></a>
@@ -26,6 +26,14 @@ A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://g
 
 > [!IMPORTANT]
 > **The native charge backend is experimental.** It uses private Apple interfaces and has been tested on a MacBook Air M3 running macOS 27.2. Compatibility and response times vary. This repository provides source code for local signing, with no notarized public installer. Review the [limitations](#compatibility) before enabling charge control.
+
+## Local history — 0.9.1
+
+Settings → **History** shows the macOS battery level, temperature, and recent mode/power-source changes. Choose **24 hours or 7 days** (default), with one reading per minute plus state changes (bounded to 2880 samples in 24-hour mode or 20160 in 7-day mode). Shortening retention deletes older readings; extending it cannot restore them. Measurement gaps stay disconnected; thermal markers indicate the app’s requested pause, not proof of an immediate hardware cutoff.
+
+Collection reuses existing readings and does not change the helper or charging policy. No uploads or hardware identifiers. Data stays in `~/Library/Application Support/OpenDente/BatteryHistory.json`, survives relaunch, and expires when collection resumes. Turning history **off** removes samples; **Clear history** starts fresh. No collection during sleep, shutdown or while the app is closed.
+
+Screenshots remain from 0.8.0 and will be refreshed separately.
 
 ## Features
 
@@ -39,6 +47,7 @@ A native SwiftUI battery utility for macOS, maintained by [JulienEsbt](https://g
 | **Additional thermal pause** | Request a pause at a configurable internal battery temperature. Resume after cooling by 2°C and at least five minutes without exceeding the threshold. |
 | **MagSafe signals** | Assign fixed green, orange or off, slow blinking and alternating patterns to charge states. Ten-second previews make each signal easy to check. |
 | **Language & appearance** | Follow the Mac language or choose French/English in General. Controls, the offline guide and notifications are translated; colors adapt to light and dark mode. |
+| **Local history** | Level, temperature and recent state changes over 24 hours or 7 days. Local storage, observation gaps preserved, clear/disable controls. |
 | **Quiet background operation** | Launch at login directly into the menu bar. Closing a window keeps the app running; open the panel only when you need it. |
 
 The compact status puts the percentage **inside the battery**, with a separate level track and optional temperature, power and mode indicators. The classic layout remains available. Customize the panel’s measurements, inspect energy flows, choose notifications, search the offline guide or export a local diagnostic report.

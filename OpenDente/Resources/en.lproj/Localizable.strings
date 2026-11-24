@@ -351,3 +351,29 @@
 "–" = "–";
 "—" = "—";
 "%.1f W sur %d W" = "%.1f W of %d W";
+
+/* Local battery history */
+"Historique" = "History";
+"Conserver un historique local" = "Keep local history";
+"24 heures au maximum. Un relevé par minute, plus les changements d’état. Aucune donnée envoyée ; désactiver efface les relevés." = "Up to 24 hours. One sample per minute, plus status changes. Nothing is uploaded; turning history off deletes the samples.";
+"Les premiers relevés apparaîtront ici pendant l’utilisation d’OpenDente." = "Samples will appear here while OpenDente is running.";
+"Niveau de batterie" = "Battery level";
+"Niveau de batterie sur les dernières 24 heures" = "Battery level over the last 24 hours";
+"Les interruptions de mesure ne sont pas interpolées. Les losanges signalent les pauses thermiques demandées par l’app, sans prouver une coupure matérielle immédiate." = "Measurement gaps are not interpolated. Diamonds indicate thermal pauses requested by the app, not proof of an immediate hardware cutoff.";
+"Derniers changements" = "Recent changes";
+"Effacer l’historique…" = "Clear history…";
+"Effacer les relevés locaux ?" = "Clear local samples?";
+"Effacer" = "Clear";
+"L’historique local n’a pas pu être lu." = "Local history could not be read.";
+"L’effacement de l’historique a échoué." = "History could not be cleared.";
+"L’enregistrement de l’historique a échoué." = "History could not be saved.";
+
+"Conservation" = "Retention";
+
+"24 heures" = "24 hours";
+
+"7 jours" = "7 days";
+
+"Un relevé par minute, plus les changements d’état. Tout reste sur ce Mac. Réduire la durée ou désactiver l’historique efface les anciens relevés." = "One reading per minute, plus state changes. Everything stays on this Mac. Shortening retention or disabling history deletes older readings.";
+
+"Niveau de batterie sur la période conservée" = "Battery level over the retained period";

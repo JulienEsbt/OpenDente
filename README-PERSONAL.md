@@ -1,14 +1,20 @@
 # OpenDente — édition personnelle
 
-Version de développement **0.7.2 expérimentale**, mise à jour le 26 octobre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
+Version de développement **0.9.1 expérimentale**, mise à jour le 24 novembre 2026 à partir d’[OpenDente](https://github.com/killerk3emstar/OpenDente), révision `06c5a8199f5c0657374e667073b3aa6a75f50df8`.
 
-Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 389 tests XCTest réussissent sur le MacBook Air M3 sous macOS 27.2 ; les cibles Debug et Release compilent.** La Release locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
+Cette édition contient les sources modifiées, les tests et un script de compilation. **Les 402 tests XCTest réussissent lors de la validation 0.9.1.** La compilation Debug locale est signée Apple Development, avec le même certificat pour l’app et le service. Elle n’est pas notarifiée. Les observations matérielles restent détaillées dans `VALIDATION.md`.
 
 ## Installation quotidienne et lancement discret
 
 L’application unique est installée dans `/Applications/OpenDente.app`. Les sources et tout l’historique Git restent dans `<repo>/OpenDente`. L’ouverture à la connexion se règle dans Général et reflète l’enregistrement effectif auprès de macOS.
 
 Chaque lancement commence discrètement dans la barre des menus, y compris après une mise à jour. La fenêtre des réglages n’est pas restaurée automatiquement. Fermer le panneau ou les réglages laisse le suivi actif. Cliquer sur l’icône ouvre le panneau ; rouvrir l’app déjà lancée depuis Applications permet aussi de retrouver le panneau. Seule l’action Quitter arrête le processus et demande la restitution des réglages Apple.
+
+## Historique local
+
+Réglages → **Historique** conserve le niveau macOS, la température et les changements de mode/branchement pendant **7 jours par défaut**, avec un choix **24 heures / 7 jours**. Un relevé par minute plus les transitions, au maximum 2880 points en mode 24 h ou 20160 en mode 7 jours. Les trous de mesure restent visibles et ne sont pas interpolés.
+
+Les relevés restent dans `~/Library/Application Support/OpenDente/BatteryHistory.json`, sans envoi réseau ni identifiant matériel. Réduire la conservation supprime les données trop anciennes ; désactiver efface les relevés, et Effacer permet de repartir à zéro. La collecte réutilise les mesures de l’app sans changer le service ni les commandes de charge. Elle s’arrête pendant la veille, l’arrêt ou lorsque l’app est quittée.
 
 ## macOS 27 : mode natif expérimental
 
@@ -42,7 +48,7 @@ La section Charge propose des contrôles modifiables pour la limite, la reprise,
 
 Dans **Réglages > Charge > Stockage prolongé**, un guide suit le niveau mesuré et explique la préparation autour de 50 %, le débranchement et l’extinction manuelle. La zone 45–55 % est un repère pratique de l’interface, pas une plage prescrite par Apple. Les indications restent consultables ; le nouveau bouton de mode demande réellement une cible temporaire à 50 % sans écraser le plafond quotidien, comme détaillé ci-dessous. Aucune extinction automatique. Mac éteint, aucune app ne peut surveiller ou maintenir la charge : prévoir un contrôle et une recharge autour de 50 % tous les six mois en cas de stockage très long, dans un lieu frais et sec à moins de 32 °C.
 
-Le même écran explique MagSafe et USB-C. Le moteur régule la batterie interne et est conçu pour les deux alimentations, avec un chargeur USB-C Power Delivery de puissance adaptée. Cette séance ne dispose que du câble MagSafe : le comportement USB-C n’est pas validé physiquement. Le voyant reste piloté par macOS par défaut. La section Voyant MagSafe propose une personnalisation explicite : vert, orange, éteint ou automatique, avec règles séparées pour charge mesurée, pause, préparation au stockage et pause thermique. Les aperçus durent 10 secondes. Chaque écriture est journalisée puis relue ; la restitution à macOS est tentée à la veille, au débranchement, à la fermeture et en récupération. Des motifs lents alternent les commandes vert/orange/éteint déjà vérifiées, au rythme de mesure de 2 s, sans code matériel de défaut ni timer supplémentaire. Ils cessent pendant la veille.
+Le même écran explique MagSafe et USB-C. Le moteur régule la batterie interne et est conçu pour les deux alimentations, avec un chargeur USB-C Power Delivery de puissance adaptée. Les essais réalisés avec MagSafe et USB-C sont consignés dans `VALIDATION.md` ; ils ne garantissent pas toutes les combinaisons de chargeurs et câbles. Le voyant reste piloté par macOS par défaut. La section Voyant MagSafe propose une personnalisation explicite : vert, orange, éteint ou automatique, avec règles séparées pour charge mesurée, pause, préparation au stockage et pause thermique. Les aperçus durent 10 secondes. Chaque écriture est journalisée puis relue ; la restitution à macOS est tentée à la veille, au débranchement, à la fermeture et en récupération. Des motifs lents alternent les commandes vert/orange/éteint déjà vérifiées, au rythme de mesure de 2 s, sans code matériel de défaut ni timer supplémentaire. Ils cessent pendant la veille.
 
 ## Modes et guide des commandes
 

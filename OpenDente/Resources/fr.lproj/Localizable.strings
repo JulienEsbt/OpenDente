@@ -351,3 +351,29 @@
 "–" = "–";
 "—" = "—";
 "%.1f W sur %d W" = "%.1f W sur %d W";
+
+/* Local battery history */
+"Historique" = "Historique";
+"Conserver un historique local" = "Conserver un historique local";
+"24 heures au maximum. Un relevé par minute, plus les changements d’état. Aucune donnée envoyée ; désactiver efface les relevés." = "24 heures au maximum. Un relevé par minute, plus les changements d’état. Aucune donnée envoyée ; désactiver efface les relevés.";
+"Les premiers relevés apparaîtront ici pendant l’utilisation d’OpenDente." = "Les premiers relevés apparaîtront ici pendant l’utilisation d’OpenDente.";
+"Niveau de batterie" = "Niveau de batterie";
+"Niveau de batterie sur les dernières 24 heures" = "Niveau de batterie sur les dernières 24 heures";
+"Les interruptions de mesure ne sont pas interpolées. Les losanges signalent les pauses thermiques demandées par l’app, sans prouver une coupure matérielle immédiate." = "Les interruptions de mesure ne sont pas interpolées. Les losanges signalent les pauses thermiques demandées par l’app, sans prouver une coupure matérielle immédiate.";
+"Derniers changements" = "Derniers changements";
+"Effacer l’historique…" = "Effacer l’historique…";
+"Effacer les relevés locaux ?" = "Effacer les relevés locaux ?";
+"Effacer" = "Effacer";
+"L’historique local n’a pas pu être lu." = "L’historique local n’a pas pu être lu.";
+"L’effacement de l’historique a échoué." = "L’effacement de l’historique a échoué.";
+"L’enregistrement de l’historique a échoué." = "L’enregistrement de l’historique a échoué.";
+
+"Conservation" = "Conservation";
+
+"24 heures" = "24 heures";
+
+"7 jours" = "7 jours";
+
+"Un relevé par minute, plus les changements d’état. Tout reste sur ce Mac. Réduire la durée ou désactiver l’historique efface les anciens relevés." = "Un relevé par minute, plus les changements d’état. Tout reste sur ce Mac. Réduire la durée ou désactiver l’historique efface les anciens relevés.";
+
+"Niveau de batterie sur la période conservée" = "Niveau de batterie sur la période conservée";
