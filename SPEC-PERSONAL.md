@@ -54,3 +54,13 @@ Programmation horaire, Raccourcis, calibration forcée, télémétrie et mise à
 - Palette sémantique avec variantes claire et sombre : accent turquoise foncé et barres de puissance lisibles en clair, accents lumineux conservés en sombre. Texte blanc sur les actions principales, profils sélectionnés identifiables par leur fond et leur bordure.
 - Vérifications : ressources complètes et arguments de format conservés, persistance de langue sans changement de politique, rendu natif inerte dans les deux apparences et contraste des couleurs de texte au moins 4,5:1 sur leur surface de référence.
 - Une seule app installée dans Applications. Les compilations temporaires et anciennes copies sont déplacées à la Corbeille après livraison ; sources, historique Git et preuves de validation sont conservés.
+
+## Historique local — 0.9 (24/11/2026)
+
+- Module indépendant BatteryHistoryStore ; consomme les mesures et modes déjà publiés, ne contrôle jamais le service.
+- Choix 24 h ou 7 jours (défaut), maximum 2880 points par jour conservé, une mesure/minute plus transitions de mode/branchement. Aucun compte, réseau, identifiant matériel ou nom d’application conservé.
+- Fichier JSON local borné dans Application Support/OpenDente, écriture atomique et permissions 0600 ; conservation entre relances.
+- Pause/arrêt de l’app : aucun échantillon inventé ; ruptures visibles à la reprise. Température absente reste absente.
+- Onglet Historique bilingue et adaptatif, courbes de charge et température, derniers changements ; désactivation efface les points, bouton d’effacement explicite.
+- Tests : fréquence, transitions, persistance, 24 h/7 jours, réduction de conservation, données invalides, suppression et rendu natif clair/sombre.
+- Aucune modification du helper ou de la politique quotidienne ; aucune nouvelle validation de cycle physique nécessaire pour cette fonction de lecture.

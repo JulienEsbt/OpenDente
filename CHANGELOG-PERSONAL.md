@@ -1,5 +1,19 @@
 # Changements de l’édition personnelle
 
+## 0.9.1 — 2026-11-24
+
+- Conservation de l’historique réglable : 24 heures ou 7 jours, une semaine par défaut ; réduction avec purge immédiate et choix conservé.
+- Graphiques allégés pour une semaine, sans relier les interruptions de mesure ; dates dans les événements.
+- Les actualisations inchangées ne republient plus tout l’historique.
+
+## 0.9.0 — 2026-11-24
+
+- Historique local des dernières 24 heures : niveau macOS, température et changements de mode/branchement.
+- Graphiques natifs en français/anglais, trous de mesure explicites en veille/arrêt, pauses thermiques signalées.
+- Collecte sur les mesures existantes, sans nouvel accès matériel ; désactivable et effaçable, stockage local borné.
+- Service de contrôle et politique de charge inchangés.
+
+
 ## 0.8.0 — interface bilingue et mode clair lisible, 26 octobre 2026
 
 - Choix Automatique / Français / English dans Général, appliqué immédiatement sans redémarrer le service ni changer les seuils de charge. Le suivi automatique utilise le français pour une langue principale française, l’anglais dans les autres cas.

@@ -408,3 +408,21 @@ Cette relecture et les tests réduisent des risques identifiés. La validation m
 L’archive de livraison contient les journaux, le code extrait, les manifestes de hachages, un patch par rapport à la base et un bundle Git. Les scripts `tests/portable/run.py` et `tests/helper/run_tests.py` reproduisent les tests sans droits root ni accès matériel.
 
 Les empreintes portent sur les sources exactes, pas sur une affirmation de sécurité absolue. Le bundle permet de retrouver la révision d’origine et de rejouer le contrôle négatif.
+
+## Historique local 0.9.0 — 24/11/2026
+
+- Suite native : 401 tests réussis, dont quatre cas d’historique (limites, conservation, effacement, rendu clair/sombre).
+- Neuf tests ciblés historique/localisation réussis avec langue de test anglaise.
+- Dernier contrôle après durcissement de la purge du fichier : neuf tests ciblés historique/localisation réussis (build/history-final-tests.log).
+- Collecte basée sur les publications existantes de BatteryService et ChargingManager ; aucun accès matériel supplémentaire ni modification du helper/politique.
+- Les exemples utilisés pour les graphes sont des fixtures inertes ; aucune pause thermique réelle ou nouveau cycle de charge n’est revendiqué pour cette modification de lecture.
+- Source sur feature/local-battery-history, build Debug signé avec le certificat existant. Installation locale et constat des premiers points à consigner séparément.
+
+Installation 0.9.0 (17) : copie /Applications/OpenDente.app remplacée après fermeture par Julien, signature stricte vérifiée, processus relancé et premier point réel d’historique constaté. Aucun changement aux permissions de connexion ou au service administrateur.
+
+## Historique local 0.9.1 — 24/11/2026
+
+- 402 tests natifs réussis, signatures de l’app et du helper vérifiées avec le même certificat.
+- Nouveau cas : relevé de deux jours conservé sur une semaine, supprimé après passage à 24 h ; préférence relue et absence de récupération artificielle en revenant à une semaine.
+- Conservation par défaut 7 jours, choix 24 h / 7 jours. Fichier limité à 8 Mo en lecture, 2880 points par jour au maximum, graphique sous-échantillonné avec maintien des ruptures/événements. Les données brutes conservées ne sont pas réduites pour le graphique.
+- Installation signée 0.9.1 (18) après fermeture propre, 28 relevés conservés puis 29 après relance, permissions du fichier 0600. Aucun changement aux seuils ou au service de charge, aucun nouvel essai de charge/veille/redémarrage.

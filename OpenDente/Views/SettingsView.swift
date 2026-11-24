@@ -24,6 +24,8 @@ struct SettingsView: View {
 
             BatteryInfoTab()
                 .tabItem { Label(String(localized: "Batterie", bundle: L10n.bundle), systemImage: "battery.100percent") }
+            BatteryHistoryView()
+                .tabItem { Label(String(localized: "Historique", bundle: L10n.bundle), systemImage: "chart.xyaxis.line") }
             GuideTab()
                 .tabItem { Label(String(localized: "Guide", bundle: L10n.bundle), systemImage: "book.closed") }
         }
