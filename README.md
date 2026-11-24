@@ -33,7 +33,11 @@ Settings → **History** shows the macOS battery level, temperature, and recent 
 
 Collection reuses existing readings and does not change the helper or charging policy. No uploads or hardware identifiers. Data stays in `~/Library/Application Support/OpenDente/BatteryHistory.json`, survives relaunch, and expires when collection resumes. Turning history **off** removes samples; **Clear history** starts fresh. No collection during sleep, shutdown or while the app is closed.
 
-Screenshots remain from 0.8.0 and will be refreshed separately.
+<p align="center">
+  <a href="docs/images/history-fr-dark.png"><img src="docs/images/history-fr-dark.png" width="350" alt="History in French and dark mode: local collection, seven-day retention, battery level and temperature"></a>
+  <a href="docs/images/history-fr-light.png"><img src="docs/images/history-fr-light.png" width="350" alt="History in French and light mode: temperature curve, recent state changes and clear-history control"></a>
+</p>
+<p align="center"><sub>OpenDente 0.9.1 · History shown in French · Dark and light appearance · Click to enlarge.</sub></p>
 
 ## Features
 
@@ -59,7 +63,7 @@ The compact status puts the percentage **inside the battery**, with a separate l
 
 ## Screenshots
 
-Every view below shows **version 0.8.0**, in English or French. Colors follow the Mac’s appearance; choose a language in **Settings → General → Interface language**. Switching takes effect immediately and preserves charging settings.
+The history screenshots above show **version 0.9.1**. The following panel and settings gallery shows **version 0.8.0**, in English or French. Colors follow the Mac’s appearance; choose a language in **Settings → General → Interface language**. Switching takes effect immediately and preserves charging settings.
 
 <p align="center">
   <a href="docs/images/general-en-light.png"><img src="docs/images/general-en-light.png" width="360" alt="English General settings in light mode: language selection, launch at login and version 0.8.0"></a>
